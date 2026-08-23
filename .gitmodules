@@ -1,0 +1,3 @@
+[submodule "vendors/oryxos"]
+	path = vendors/oryxos
+	url = https://github.com/oryx-labs/oryxos.git
