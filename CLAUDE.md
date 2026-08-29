@@ -13,3 +13,7 @@
 ### Domain docs
 
 单上下文布局：根 `CONTEXT.md` + `docs/adr/`。见 `docs/agents/domain.md`。
+
+### Initiation docs
+
+立项文档链五篇与参照库立项期 docs 一一对应（ADR 0007）：业界调研 `docs/IndustryResearch.md` → 产品定位 `docs/yokeos.md` → 需求分析 → 技术方案 → AI 编程指南。
