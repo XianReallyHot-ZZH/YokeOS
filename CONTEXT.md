@@ -35,3 +35,21 @@ _Avoid_: 总结、复盘报告（指代验收文档时）
 **对照学习层**:
 每节复刻后用实践反检自有 SDD 方法论、并做作者工具链与 mattpocock 技能映射对照的学习闭环；沉淀在 `docs/methodology/`。
 _Avoid_: 学习笔记（指代该闭环时）
+
+## Language — 产品与定位
+
+**复刻型起步**:
+YokeOS 进入 Agent 底座品类的方式：以 OryxOS 为参照实现逐节复刻其运行时内核，第一阶段不做产品功能差异化，差异化立在过程——可追溯的规格、验收证据与方法论沉淀。
+_Avoid_: 仿制、贴牌、二次开发（指 YokeOS 与 OryxOS 的关系时）
+
+**Agent 底座（Agent OS）**:
+装在企业自己基础设施上、私有可审计、不锁云的运行底座，让一群 Agent 被管起来；YokeOS 自称用"Agent 底座"或"Agent Harness OS"。完整行业定义见 `docs/IndustryResearch.md` 附录 A。
+_Avoid_: Agent 平台、智能体中台
+
+**Harness**:
+套在模型外面、让"会生成文本的模型"变成"能可靠做事的 Agent"的运行骨架；介于 agent runtime（让一个 Agent 跑起来）与 Agent 底座（让一群 Agent 被管起来）之间。
+_Avoid_: 挽具（直译）、Agent 框架（指 Harness 层时）
+
+**锚需求不锚概念**:
+定位原则：产品锚在不会变的企业刚需（私有、可控、可审计、跟 Java 体系对齐）上，不锚在可能被稀释或改名的技术概念（如"Agent OS"）上。
+_Avoid_: 蹭概念、追风口（表述定位依据时）
