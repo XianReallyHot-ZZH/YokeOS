@@ -102,4 +102,4 @@ Agent 干完活要能触达人，没人触发也要能自己跑。Notify 把执�
 - **语言**：Java（JDK 21）
 - **协议**：Apache 2.0
 - **参照实现**：[oryx-labs/oryxos](https://github.com/oryx-labs/oryxos)——YokeOS 以「复刻型起步」进入 Agent 底座品类：第一阶段以 OryxOS 为参照实现逐节复刻其运行时内核，同类、同栈、同锚点的后来者；不掩饰这个起点，也不重复宣称这个品类已验证的设计首创。
-- **立项文档链**：业界调研（`IndustryResearch.md`）→ 产品定位（本篇）→ 需求分析 → 技术方案 → AI 编程指南。
+- **立项文档链**：业界调研（`IndustryResearch.md`）→ 产品定位（本篇）→ 需求分析（`DemandAnalysis.md`）→ 技术方案 → AI 编程指南。
