@@ -1,5 +1,15 @@
 # YokeOS
 
-@AGENTS.md
+## Agent skills
 
-（本文件是官方桥接：Claude Code 只读 CLAUDE.md、不读 AGENTS.md；用 @ 导入让两类工具共享同一份指令，见 https://code.claude.com/docs/en/memory）
+### Issue tracker
+
+工单与规格存放在 GitHub Issues（XianReallyHot-ZZH/YokeOS），通过 `gh` CLI 操作。见 `docs/agents/issue-tracker.md`。
+
+### Triage labels
+
+默认五角色标签，标签字符串与角色名相同。见 `docs/agents/triage-labels.md`。
+
+### Domain docs
+
+单上下文布局：根 `CONTEXT.md` + `docs/adr/`。见 `docs/agents/domain.md`。
