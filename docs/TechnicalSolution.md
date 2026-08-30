@@ -93,6 +93,8 @@ YokeOS 的整体架构按"六个核心能力加支撑模块"组织。六个核�
 1. 所有能力收敛到一个引擎、一套存储、一个进程内，符合"单二进制、装好就跑"的定位，外部依赖（LLM 厂商 API、外部 MCP server）都在应用边界之外，YokeOS 自身不绑定任何一家。
 2. 引擎和能力之间、能力和外部之间都通过抽象接口解耦，这让扩展阶段加新 Channel、新 Provider、新 Tool 时只需在边缘扩展，不动核心引擎。
 
+![YokeOS 整体架构：接入层→引擎层→能力层→基础层，三个触发源汇入同一个 AgentService](./images/docs-architecture.svg)
+
 ### 2.1 分层视图
 
 从上到下分四层：
@@ -129,6 +131,8 @@ LLM 调用的复杂度都被 **Spring AI Alibaba** 吸收掉了。YokeOS 在其�
 
 **Provider 配置模块。** 通过 `application.yaml` 配置 Provider 的 API key 和 base URL，Spring AI Alibaba 根据配置创建对应的 `ChatModel` Bean。API key 一律用 `${ENV_VAR}` 占位从环境变量解析（见 8.8），不明文写进配置。
 
+![Provider 架构：ReAct 循环 → ProviderService → 显式映射的 ChatModel → 各家 LLM API](./images/docs-provider.svg)
+
 ### 3.2 Provider 名到 ChatModel 的显式映射
 
 这是一个需要讲清楚的关键点。Spring AI Alibaba 配多个 Provider 时，Spring 容器里会有多个 `ChatModel` Bean。仅靠"扫描容器里所有 `ChatModel`"无法可靠区分哪个是 deepseek、哪个是 kimi，因为 Bean 类型相同、Bean name 未必等于 provider name。
@@ -162,6 +166,8 @@ ReAct 是 **Reason** 加 **Act** 的简称。算法步骤：
 5. 如果**有** Tool 调用，YokeOS 执行 Tool 并把结果作为 tool 消息追加到对话历史
 6. 回到组装 Prompt 步骤继续循环
 7. 达到最大迭代次数（默认 10 次）强制结束
+
+![ReAct 循环：Reason → Act → Observe，循环直到无工具调用或达到最大轮数](./images/docs-react-loop.svg)
 
 ### 4.2 模块组成
 
@@ -200,6 +206,8 @@ Memory 是 Agent 底座区别于普通 chatbot 的核心能力。两层记忆是
 
 **`MemoryService` 模块（统一门面）。** 对 ReAct 循环暴露统一的记忆读写接口。内部把会话记忆委托给 `SessionManager`（底层是 SQLite 的 Session 存储），把长期记忆委托给 `LongTermMemoryStore` 后端（默认底层是 `MEMORY.md` 文件）。ReAct 循环组装 prompt 时只调 `MemoryService` 一个接口拿到完整上下文。这是避免 Memory 概念横跨两个模块却没有统一入口的关键调整。
 
+![Memory 架构：MemoryService 门面统一收口 SessionManager 和 LongTermMemoryStore](./images/docs-memory-service.svg)
+
 **`LongTermMemoryStore` 后端接口（可插拔）。** 长期记忆抽成一个后端接口，把"长期记忆的读写契约"和"具体存哪、怎么存"解耦。对外三个方法：
 
 - `append(content, scope)`（追加内容到指定分区，`scope` 取 `MemoryScope.CORE` 或 `ARCHIVAL`，默认 `ARCHIVAL`，自动加日期 header）
@@ -222,7 +230,11 @@ Memory 是 Agent 底座区别于普通 chatbot 的核心能力。两层记忆是
 
 ### 5.2 MEMORY.md 文件设计（默认后端 `MarkdownMemoryStore`）
 
-默认后端的文件位置 `.yokeos/memory/MEMORY.md`，内部用两个一级分区组织，每条记忆带日期 header。格式不做更严格的规定，Agent 写什么 LLM 自己理解就行，简单但有效；两个分区只是组织方式上的区分，不引入独立文件或独立存储。换到 `SqliteMemoryStore` 时同一套"核心/归档"语义落到 `memory_entries` 表的 `scope` 列，换到 `Mem0MemoryStore` 时落到 Mem0 的 metadata——分区约定不变，存储形态随后端而变。
+默认后端的文件位置 `.yokeos/memory/MEMORY.md`，内部用两个一级分区组织，每条记忆带日期 header：
+
+![MEMORY.md 内部结构：核心记忆区永远保留，截断和检索只作用在归档记忆区](./images/docs-memory-structure.svg)
+
+格式不做更严格的规定，Agent 写什么 LLM 自己理解就行，简单但有效；两个分区只是组织方式上的区分，不引入独立文件或独立存储。换到 `SqliteMemoryStore` 时同一套"核心/归档"语义落到 `memory_entries` 表的 `scope` 列，换到 `Mem0MemoryStore` 时落到 Mem0 的 metadata——分区约定不变，存储形态随后端而变。
 
 ### 5.3 Memory 注入到 system prompt
 
@@ -268,6 +280,8 @@ YokeOS 内部统一的 Tool 抽象接口。内置 Tool、`@Tool` 注解的扩展
 
 `ToolResult` 包含成功标识、结果内容、错误信息、是否可重试。
 
+![Tool 调用流程：LLM 决定调用 → YokeOS 执行 → 外部世界 → 结果回填](./images/docs-tool-flow.svg)
+
 ### 6.2 内置 Tool（九个）
 
 第一阶段提供九个内置 Tool，分五组：
@@ -279,6 +293,8 @@ YokeOS 内部统一的 Tool 抽象接口。内置 Tool、`@Tool` 注解的扩展
 - **`NotifyTools`**：`notify`（把消息推送到 Agent 配置好的通知渠道，详见 6.8）
 
 这九个覆盖"让 Agent 能读写文件、跑命令、调外部 API、记事、往外推通知"的最短链路。
+
+![扩展 Tool 三档：零代码 AGENT.md 目录+MCP、轻代码自写 MCP server、重代码 @Tool Java Bean，门槛从低到高](./images/docs-plugin-tool-tiers.svg)
 
 ### 6.3 扩展 Tool 方式一：零代码 Agent 目录 加复用 MCP
 
@@ -333,6 +349,8 @@ ActionType     = FILE_READ | FILE_WRITE | SHELL_COMMAND | HTTP_REQUEST
 
 `FileTools`、`ShellTools`、`HttpTools` 在各自 `execute` 方法开头调用 `sandbox.enforce(...)`，校验通过才执行真正的 IO。
 
+![Sandbox 校验流程：FileTools/ShellTools/HttpTools 调用 WhitelistSandbox.enforce，通过则继续执行，拒绝则抛异常并走既有审计路径](./images/docs-sandbox-flow.svg)
+
 **扩展阶段按信号驱动升级，接口不变，只新增实现类：**
 
 | 阶段 | 实现 | 升级信号 |
@@ -374,6 +392,8 @@ NotifyTarget = { channelType: String, config: Map<String, String> }
 ```
 
 `channel` 参数对应 Agent frontmatter 的 `notify.channels` 字段（声明这个 Agent 能推送到哪些目标，每项含 `name`、`type: webhook`、`config`，见 8.2）；LLM 大多数时候只需要传 `content`，不需要知道具体 webhook 地址——地址是运行时配置，不是对话里的信息，这跟 Sandbox 域名白名单"配置在配置文件、不暴露在接口签名里"是同一个设计考虑。`NotifyTools` 从 `ProfileContext` 取当前 Agent 的通知渠道解析适配器和 URL。
+
+![NotifyTools 设计：接口先行，第一阶段只实现 WebhookNotifyAdapter，扩展阶段新增专用渠道 Adapter](./images/docs-notify.svg)
 
 **跟已有机制的关系：**
 
@@ -520,6 +540,8 @@ Channel 是 Agent 对外的消息接入入口，主要解决"消息进来、响�
 ### 8.5 定时任务（第三种触发源）
 
 定时任务不是新增的核心能力，而是给 `AgentService` 加第三条触发路径。CLI 和 Web Service 都是"人推"——需要有人发起一次调用；`AgentScheduler` 是"钟推"——按 cron 表达式到点自动生成一条消息，调用链路跟人推完全一样，`ReActLoop` 不感知消息从哪个入口来。
+
+![定时任务是第三种触发源：CLI/Web Service（人推）和 AgentScheduler（钟推）都调同一个 AgentService](./images/docs-scheduler.svg)
 
 **`AgentScheduler` 模块（归 `yokeos-core`）。** 基于 Spring 的 `ThreadPoolTaskScheduler` 加 `CronTrigger` 动态注册任务，不用静态的 `@Scheduled` 注解，因为触发规则要按 Agent 定义动态生成，编译期写死的注解做不到。frontmatter 的 `schedules` 字段声明 cron 表达式、时区、要发给 Agent 的消息内容；YokeOS 启动时扫描所有 Profile 的 `schedules` 字段逐个注册。
 
@@ -763,6 +785,8 @@ mvn clean package
 - `PUT /api/v1/agents/{name}`：更新正文、provider、`notify.channels`（覆写即时生效）和/或 `schedules`（变则先注销旧定时句柄再注册新的）
 - `DELETE /api/v1/agents/{name}`：注销定时 → 移出索引 → **整个 Agent 目录**归档 `.yokeos/archive/`（不物理删）
 - `POST /api/v1/agents/{name}/invoke`：无状态调用
+
+![两条录入路径一段注册代码：API 创建与手工丢目录（经 WorkspaceWatcher）都汇到 AgentLifecycleService.register，deriveProfile + 注册 + 注册定时，免重启即上线](./images/docs-agent-lifecycle.svg)
 
 **一个目录、两条录入路径 + 实时监听。** `.yokeos/agents/` 是**唯一真相源**，填充它两条路殊途同归：API 创建（校验 + 写 Agent 目录 + 注册）、手工丢目录（scp/git/编辑器）。`WorkspaceWatcher`（装配层一个守护线程，用 JDK `WatchService`；启动全量扫 + 之后实时监听 `.yokeos/agents/` 变更）是**统一注册入口**：任何 Agent 目录新增/改/删都调 `AgentLifecycleService.register(agentDir)`（与 API 创建写完目录后调的是**同一个方法**）或注销。于是"上传即上线 = 丢目录即上线、全程免重启"。此外 `WorkspaceApiController` 提供**只读**的工作区文件浏览（`GET /workspace/tree` 列目录树、`GET /workspace/file?path=` 读文件内容，**必做防目录穿越**：`normalize()` 后 `startsWith(root)` 校验），供管理台"工作区"页钻进一个 Agent 目录看它的 `AGENT.md`/附属资源。
 
