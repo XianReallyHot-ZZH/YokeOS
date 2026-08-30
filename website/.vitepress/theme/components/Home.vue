@@ -717,6 +717,9 @@ a { text-decoration: none; }
   gap: 20px;
   transition: background 0.2s;
   cursor: default;
+  /* Let 1fr tracks shrink below content size — `white-space: pre` code
+     blocks would otherwise blow the grid out and clip the last column. */
+  min-width: 0;
 }
 .cap-card:hover {
   background: #16223d;
@@ -755,6 +758,8 @@ a { text-decoration: none; }
   margin: 0;
   white-space: pre;
   flex: 1;
+  min-width: 0;
+  max-width: 100%;
 }
 .cap-code code {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
@@ -783,6 +788,7 @@ a { text-decoration: none; }
   border-left: 3px solid transparent;
   transition: border-color 0.2s, background 0.2s;
   cursor: default;
+  min-width: 0;
 }
 .case-card:hover {
   border-left-color: #f5a623;
@@ -831,6 +837,7 @@ a { text-decoration: none; }
   gap: 16px;
   border-left: 3px solid transparent;
   transition: background 0.2s;
+  min-width: 0;
 }
 
 .roadmap-card--active {
