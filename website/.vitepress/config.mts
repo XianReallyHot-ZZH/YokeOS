@@ -10,7 +10,9 @@ export default defineConfig({
   description: 'The self-hosted, fully auditable Agent Harness OS for the enterprise — one directory defines an agent, one foundation runs the fleet',
   base,
   cleanUrls: true,
-  appearance: 'force-dark',
+  // Dark is the default; the nav sun/moon toggle switches to light.
+  // Preference persists in localStorage (vitepress-theme-appearance).
+  appearance: 'dark',
 
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: `${base}favicon.svg` }],

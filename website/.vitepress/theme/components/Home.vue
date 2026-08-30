@@ -436,8 +436,8 @@ const whatLink = computed(() => isZh.value ? '/zh/docs/what' : '/docs/what')
 ──────────────────────────────────────────────── */
 .home {
   min-height: 100vh;
-  background: #0b1220;
-  color: #e6eaf2;
+  background: var(--yoke-bg);
+  color: var(--yoke-text-1);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   /* Override VitePress default page padding */
   margin: 0;
@@ -450,7 +450,7 @@ a { text-decoration: none; }
    HERO
 ──────────────────────────────────────────────── */
 .hero {
-  background: #0b1220;
+  background: var(--yoke-bg);
   padding: 96px 24px 80px;
   text-align: center;
 }
@@ -465,11 +465,11 @@ a { text-decoration: none; }
 .hero-eyebrow {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 13px;
-  color: #5c6a85;
+  color: var(--yoke-text-3);
   margin: 0 0 32px;
   letter-spacing: 0.02em;
 }
-.eyebrow-comment { color: #f5a623; }
+.eyebrow-comment { color: var(--yoke-accent-text); }
 
 .hero-headline {
   font-size: clamp(38px, 6.5vw, 66px);
@@ -484,20 +484,20 @@ a { text-decoration: none; }
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #4f7cff;
-  border: 1px solid rgba(79, 124, 255, 0.5);
+  color: var(--yoke-brand-text);
+  border: 1px solid var(--yoke-tag-border);
   border-radius: 4px;
   padding: 3px 10px;
   margin-bottom: 12px;
   vertical-align: middle;
 }
-.headline-white { color: #e6eaf2; }
-.headline-amber { color: #f5a623; }
+.headline-white { color: var(--yoke-text-1); }
+.headline-amber { color: var(--yoke-accent-text); }
 
 .hero-sub {
   font-size: 16px;
   line-height: 1.75;
-  color: #97a3bc;
+  color: var(--yoke-text-2);
   max-width: 640px;
   margin: 0 0 40px;
 }
@@ -516,27 +516,27 @@ a { text-decoration: none; }
   gap: 8px;
   padding: 12px 28px;
   border-radius: 6px;
-  background: #4f7cff;
+  background: var(--yoke-brand);
   color: #ffffff;
   font-weight: 700;
   font-size: 14px;
   letter-spacing: 0.01em;
   transition: background 0.15s, transform 0.15s;
 }
-.btn-primary:hover { background: #6b90ff; transform: translateY(-1px); }
+.btn-primary:hover { background: var(--yoke-brand-hover); transform: translateY(-1px); }
 .btn-ghost {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
   border-radius: 6px;
-  border: 1px solid #1e2c4a;
-  color: #e6eaf2;
+  border: 1px solid var(--yoke-border);
+  color: var(--yoke-text-1);
   font-weight: 600;
   font-size: 14px;
   transition: border-color 0.15s, color 0.15s;
 }
-.btn-ghost:hover { border-color: #f5a623; color: #f5a623; }
+.btn-ghost:hover { border-color: var(--yoke-accent-text); color: var(--yoke-accent-text); }
 
 /* Terminal */
 .terminal {
@@ -609,9 +609,9 @@ a { text-decoration: none; }
    STATS BAR
 ──────────────────────────────────────────────── */
 .stats-bar {
-  background: #0d1526;
-  border-top: 1px solid #1e2c4a;
-  border-bottom: 1px solid #1e2c4a;
+  background: var(--yoke-bg-deep);
+  border-top: 1px solid var(--yoke-border);
+  border-bottom: 1px solid var(--yoke-border);
   padding: 0 24px;
 }
 .stats-inner {
@@ -633,19 +633,19 @@ a { text-decoration: none; }
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 28px;
   font-weight: 900;
-  color: #f5a623;
+  color: var(--yoke-accent-text);
   line-height: 1;
 }
 .stat-label {
   font-size: 11px;
-  color: #5c6a85;
+  color: var(--yoke-text-3);
   text-align: center;
   letter-spacing: 0.03em;
 }
 .stat-divider {
   width: 1px;
   height: 40px;
-  background: #1e2c4a;
+  background: var(--yoke-border);
   flex-shrink: 0;
 }
 
@@ -654,8 +654,8 @@ a { text-decoration: none; }
 ──────────────────────────────────────────────── */
 .section { padding: 88px 24px; }
 .section-inner { max-width: 1040px; margin: 0 auto; }
-.section-dark { background: #0b1220; }
-.section-use-cases { border-top: 1px solid #1e2c4a; }
+.section-dark { background: var(--yoke-bg); }
+.section-use-cases { border-top: 1px solid var(--yoke-border); }
 
 .section-header {
   text-align: center;
@@ -667,7 +667,7 @@ a { text-decoration: none; }
   font-weight: 700;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: #4f7cff;
+  color: var(--yoke-brand-text);
   display: block;
   margin-bottom: 16px;
 }
@@ -675,7 +675,7 @@ a { text-decoration: none; }
 .section-h2 {
   font-size: clamp(26px, 4vw, 42px);
   font-weight: 800;
-  color: #e6eaf2;
+  color: var(--yoke-text-1);
   margin: 0;
   letter-spacing: -0.02em;
   line-height: 1.1;
@@ -704,13 +704,13 @@ a { text-decoration: none; }
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1px;
-  background: #1e2c4a;
-  border: 1px solid #1e2c4a;
+  background: var(--yoke-border);
+  border: 1px solid var(--yoke-border);
   border-radius: 12px;
   overflow: hidden;
 }
 .cap-card {
-  background: #111b31;
+  background: var(--yoke-bg-soft);
   padding: 32px 28px;
   display: flex;
   flex-direction: column;
@@ -722,27 +722,27 @@ a { text-decoration: none; }
   min-width: 0;
 }
 .cap-card:hover {
-  background: #16223d;
-  box-shadow: inset 0 0 0 1px #4f7cff;
+  background: var(--yoke-bg-elev);
+  box-shadow: inset 0 0 0 1px var(--yoke-brand);
 }
 .cap-top { display: flex; flex-direction: column; gap: 10px; }
 .cap-num {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 11px;
   font-weight: 700;
-  color: #f5a623;
+  color: var(--yoke-accent-text);
   letter-spacing: 0.1em;
 }
 .cap-title {
   font-size: 18px;
   font-weight: 700;
-  color: #e6eaf2;
+  color: var(--yoke-text-1);
   margin: 0;
   line-height: 1.2;
 }
 .cap-desc {
   font-size: 13px;
-  color: #97a3bc;
+  color: var(--yoke-text-2);
   line-height: 1.7;
   margin: 0;
 }
@@ -774,13 +774,13 @@ a { text-decoration: none; }
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1px;
-  background: #1e2c4a;
-  border: 1px solid #1e2c4a;
+  background: var(--yoke-border);
+  border: 1px solid var(--yoke-border);
   border-radius: 12px;
   overflow: hidden;
 }
 .case-card {
-  background: #111b31;
+  background: var(--yoke-bg-soft);
   padding: 28px 24px;
   display: flex;
   flex-direction: column;
@@ -791,25 +791,25 @@ a { text-decoration: none; }
   min-width: 0;
 }
 .case-card:hover {
-  border-left-color: #f5a623;
-  background: #16223d;
+  border-left-color: var(--yoke-accent);
+  background: var(--yoke-bg-elev);
 }
 .case-num {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 11px;
-  color: #5c6a85;
+  color: var(--yoke-text-3);
   font-weight: 700;
   align-self: flex-end;
 }
 .case-title {
   font-size: 15px;
   font-weight: 700;
-  color: #e6eaf2;
+  color: var(--yoke-text-1);
   margin: 0;
 }
 .case-desc {
   font-size: 12px;
-  color: #97a3bc;
+  color: var(--yoke-text-2);
   line-height: 1.65;
   margin: 0;
 }
@@ -817,20 +817,20 @@ a { text-decoration: none; }
 /* ────────────────────────────────────────────────
    ROADMAP
 ──────────────────────────────────────────────── */
-.section-roadmap { border-top: 1px solid #1e2c4a; }
+.section-roadmap { border-top: 1px solid var(--yoke-border); }
 
 .roadmap-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1px;
-  background: #1e2c4a;
-  border: 1px solid #1e2c4a;
+  background: var(--yoke-border);
+  border: 1px solid var(--yoke-border);
   border-radius: 12px;
   overflow: hidden;
 }
 
 .roadmap-card {
-  background: #111b31;
+  background: var(--yoke-bg-soft);
   padding: 32px 28px;
   display: flex;
   flex-direction: column;
@@ -841,8 +841,8 @@ a { text-decoration: none; }
 }
 
 .roadmap-card--active {
-  border-left-color: #f5a623;
-  background: #16223d;
+  border-left-color: var(--yoke-accent);
+  background: var(--yoke-bg-elev);
 }
 
 .roadmap-top {
@@ -855,7 +855,7 @@ a { text-decoration: none; }
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 11px;
   font-weight: 700;
-  color: #f5a623;
+  color: var(--yoke-accent-text);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -866,22 +866,22 @@ a { text-decoration: none; }
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #5c6a85;
+  color: var(--yoke-text-3);
   padding: 3px 8px;
-  border: 1px solid #1e2c4a;
+  border: 1px solid var(--yoke-border);
   border-radius: 4px;
 }
 
 .roadmap-status--active {
-  color: #f5a623;
-  border-color: #f5a623;
+  color: var(--yoke-accent-text);
+  border-color: var(--yoke-accent-text);
   background: rgba(245, 166, 35, 0.1);
 }
 
 .roadmap-title {
   font-size: 17px;
   font-weight: 700;
-  color: #e6eaf2;
+  color: var(--yoke-text-1);
   margin: 0;
   line-height: 1.25;
 }
@@ -897,7 +897,7 @@ a { text-decoration: none; }
 
 .roadmap-item {
   font-size: 13px;
-  color: #97a3bc;
+  color: var(--yoke-text-2);
   line-height: 1.5;
   padding-left: 16px;
   position: relative;
@@ -907,7 +907,7 @@ a { text-decoration: none; }
   content: '—';
   position: absolute;
   left: 0;
-  color: #1e2c4a;
+  color: var(--yoke-border);
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
@@ -1001,8 +1001,8 @@ a { text-decoration: none; }
    FOOTER
 ──────────────────────────────────────────────── */
 .footer {
-  background: #0b1220;
-  border-top: 1px solid #16223d;
+  background: var(--yoke-bg);
+  border-top: 1px solid var(--yoke-border);
   padding: 32px 24px;
 }
 .footer-inner {
@@ -1016,21 +1016,21 @@ a { text-decoration: none; }
 .footer-logo {
   font-size: 18px;
   font-weight: 400;
-  color: #e6eaf2;
+  color: var(--yoke-text-1);
   letter-spacing: -0.01em;
 }
-.footer-logo strong { font-weight: 900; color: #4f7cff; }
+.footer-logo strong { font-weight: 900; color: var(--yoke-brand-text); }
 .footer-tagline {
   font-size: 12px;
-  color: #5c6a85;
+  color: var(--yoke-text-3);
 }
 .footer-links { display: flex; gap: 24px; }
 .footer-link {
   font-size: 13px;
-  color: #5c6a85;
+  color: var(--yoke-text-3);
   transition: color 0.15s;
 }
-.footer-link:hover { color: #f5a623; }
+.footer-link:hover { color: var(--yoke-accent-text); }
 
 /* ────────────────────────────────────────────────
    RESPONSIVE

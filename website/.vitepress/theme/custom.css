@@ -1,5 +1,13 @@
-/* ─── Brand tokens ────────────────────────────────────────────── */
+/* ─── Theme tokens ──────────────────────────────────────────────
+   Dark is the default (the site's signature look) and applies via
+   :root — VitePress keeps html.dark on it anyway. The light theme
+   overrides under html:not(.dark). Every component rule below goes
+   through these tokens, and --yoke-* is shared with Home.vue so the
+   homepage and the docs chrome switch together. */
+
+/* ── Dark (default) ── */
 :root {
+  /* VitePress chrome mappings */
   --vp-nav-bg-color: rgba(11, 18, 32, 0.92);
   --vp-local-nav-bg-color: #0b1220;
   --vp-sidebar-bg-color: #0b1220;
@@ -22,23 +30,72 @@
 
   --vp-c-divider: #1e2c4a;
   --vp-c-border: #1e2c4a;
+
+  /* YokeOS tokens (shared with Home.vue) */
+  --yoke-bg: #0b1220;
+  --yoke-bg-soft: #111b31;
+  --yoke-bg-elev: #16223d;
+  --yoke-bg-deep: #0d1526;
+  --yoke-border: #1e2c4a;
+  --yoke-text-1: #e6eaf2;
+  --yoke-text-2: #97a3bc;
+  --yoke-text-3: #5c6a85;
+  --yoke-brand: #4f7cff;
+  --yoke-brand-hover: #6b90ff;
+  --yoke-brand-text: #4f7cff;
+  --yoke-tag-border: rgba(79, 124, 255, 0.5);
+  --yoke-accent: #f5a623;
+  --yoke-accent-text: #f5a623;
+  --yoke-code-text: #c9d3e8;
 }
 
-/* ─── Global deep-night-blue background ───────────────────────── */
+/* ── Light ── */
+html:not(.dark) {
+  --vp-nav-bg-color: rgba(247, 249, 254, 0.92);
+  --vp-local-nav-bg-color: #f7f9fe;
+  --vp-sidebar-bg-color: #f7f9fe;
+  --vp-c-brand-1: #3d66e0;
+  --vp-c-brand-2: #2e51c4;
+  --vp-c-brand-3: #4f7cff;
+  --vp-c-brand-soft: rgba(79, 124, 255, 0.12);
+
+  --vp-c-bg: #f7f9fe;
+  --vp-c-bg-soft: #ffffff;
+  --vp-c-bg-mute: #eef2fb;
+
+  --vp-c-text-1: #0b1220;
+  --vp-c-text-2: #44506b;
+  --vp-c-text-3: #7c87a0;
+
+  --vp-c-divider: #dbe3f2;
+  --vp-c-border: #dbe3f2;
+
+  --yoke-bg: #f7f9fe;
+  --yoke-bg-soft: #ffffff;
+  --yoke-bg-elev: #eef2fb;
+  --yoke-bg-deep: #eef2fb;
+  --yoke-border: #dbe3f2;
+  --yoke-text-1: #0b1220;
+  --yoke-text-2: #44506b;
+  --yoke-text-3: #7c87a0;
+  --yoke-brand: #3d66e0;
+  --yoke-brand-hover: #2e51c4;
+  --yoke-brand-text: #3d66e0;
+  --yoke-tag-border: rgba(61, 102, 224, 0.4);
+  --yoke-accent: #f5a623;
+  --yoke-accent-text: #b87400;
+  --yoke-code-text: #35415f;
+}
+
+/* ─── Global page background ──────────────────────────────────── */
 html, body, #app {
-  background: #0b1220 !important;
-}
-
-/* ─── Hide dark mode toggle (dark-only site) ──────────────────── */
-.VPNavBarAppearance,
-.VPSwitchAppearance {
-  display: none !important;
+  background: var(--vp-c-bg) !important;
 }
 
 /* ─── Nav ─────────────────────────────────────────────────────── */
 .VPNav {
-  border-bottom: 1px solid #1e2c4a !important;
-  background: rgba(11, 18, 32, 0.92) !important;
+  border-bottom: 1px solid var(--yoke-border) !important;
+  background: var(--vp-nav-bg-color) !important;
   backdrop-filter: blur(12px) !important;
 }
 
@@ -52,7 +109,7 @@ html, body, #app {
 }
 
 .VPNavBarTitle .title {
-  color: #e6eaf2 !important;
+  color: var(--yoke-text-1) !important;
 }
 
 .VPNavBarTitle .title:hover {
@@ -62,12 +119,12 @@ html, body, #app {
 .VPNavBarMenu .VPNavBarMenuLink {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #97a3bc !important;
+  color: var(--yoke-text-2) !important;
   transition: color 0.15s;
 }
 
 .VPNavBarMenu .VPNavBarMenuLink:hover {
-  color: #f5a623 !important;
+  color: var(--yoke-accent-text) !important;
 }
 
 /* ─── Nav dropdown ────────────────────────────────────────────── */
@@ -78,29 +135,29 @@ html, body, #app {
 .VPMenu,
 .VPFlyout > .menu,
 .VPNavBarMenuGroup > .menu {
-  background: #111b31 !important;
-  border: 1px solid #1e2c4a !important;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6) !important;
+  background: var(--yoke-bg-soft) !important;
+  border: 1px solid var(--yoke-border) !important;
+  box-shadow: 0 4px 24px rgba(11, 18, 32, 0.35) !important;
 }
 
 .VPMenu .item .VPMenuLink,
 .VPMenu .item .link,
 .VPFlyout .VPMenuLink,
 .VPFlyout .link {
-  color: #e6eaf2 !important;
+  color: var(--yoke-text-1) !important;
 }
 
 .VPMenu .item .VPMenuLink:hover,
 .VPMenu .item .link:hover,
 .VPFlyout .VPMenuLink:hover,
 .VPFlyout .link:hover {
-  background: #1a2742 !important;
-  color: #f5a623 !important;
+  background: var(--yoke-bg-elev) !important;
+  color: var(--yoke-accent-text) !important;
 }
 
 /* ─── Content page ────────────────────────────────────────────── */
 .VPDoc {
-  background: #0b1220 !important;
+  background: var(--vp-c-bg) !important;
 }
 
 .VPDoc .container {
@@ -116,7 +173,7 @@ html, body, #app {
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.2;
-  color: #e6eaf2;
+  color: var(--yoke-text-1);
   margin-bottom: 0.5rem;
 }
 
@@ -124,76 +181,78 @@ html, body, #app {
   font-size: 1.25rem;
   font-weight: 600;
   letter-spacing: -0.02em;
-  border-top: 1px solid #1e2c4a;
+  border-top: 1px solid var(--yoke-border);
   padding-top: 2rem;
   margin-top: 2rem;
-  color: #e6eaf2;
+  color: var(--yoke-text-1);
 }
 
 .VPDoc h3 {
   font-size: 1rem;
   font-weight: 600;
-  color: #e6eaf2;
+  color: var(--yoke-text-1);
 }
 
 .VPDoc p {
   line-height: 1.75;
-  color: #97a3bc;
+  color: var(--yoke-text-2);
 }
 
 .VPDoc li {
-  color: #97a3bc;
+  color: var(--yoke-text-2);
 }
 
 .VPDoc a {
-  color: #8faaff !important;
+  color: var(--vp-c-brand-1) !important;
 }
 
 .VPDoc a:hover {
-  color: #f5a623 !important;
+  color: var(--yoke-accent-text) !important;
 }
 
 /* Embedded diagrams: the source SVGs are light-background cards —
-   round them so they read as cards on the dark page. */
+   round them and give them a hairline border so they read as cards
+   in both themes. */
 .VPDoc img {
   border-radius: 10px;
+  border: 1px solid var(--yoke-border);
 }
 
 /* Code blocks */
 .vp-code-group,
 div[class*='language-'] {
   border-radius: 8px !important;
-  border: 1px solid #1e2c4a !important;
-  background: #0d1526 !important;
+  border: 1px solid var(--yoke-border) !important;
+  background: var(--yoke-bg-deep) !important;
 }
 
 div[class*='language-'] pre,
 div[class*='language-'] pre code {
-  background: #0d1526 !important;
+  background: var(--yoke-bg-deep) !important;
 }
 
 div[class*='language-'] code,
 div[class*='language-'] code span {
   font-size: 0.82rem;
-  color: #c9d3e8 !important;
+  color: var(--yoke-code-text) !important;
 }
 
 div[class*='language-'] > span.lang {
-  color: #5c6a85 !important;
+  color: var(--yoke-text-3) !important;
 }
 
 div[class*='language-'] > button.copy {
-  color: #5c6a85 !important;
+  color: var(--yoke-text-3) !important;
 }
 
 /* Inline code */
 :not(pre) > code {
-  background: #111b31 !important;
-  border: 1px solid #1e2c4a !important;
+  background: var(--yoke-bg-soft) !important;
+  border: 1px solid var(--yoke-border) !important;
   border-radius: 4px !important;
   padding: 0.1em 0.35em !important;
   font-size: 0.85em !important;
-  color: #8faaff !important;
+  color: var(--vp-c-brand-1) !important;
 }
 
 /* Tables */
@@ -204,18 +263,18 @@ div[class*='language-'] > button.copy {
 }
 
 .vp-doc table th {
-  background: #111b31;
+  background: var(--yoke-bg-soft);
   font-weight: 600;
-  color: #e6eaf2;
+  color: var(--yoke-text-1);
   text-align: left;
   padding: 0.5rem 1rem;
-  border-bottom: 2px solid #1e2c4a;
+  border-bottom: 2px solid var(--yoke-border);
 }
 
 .vp-doc table td {
   padding: 0.5rem 1rem;
-  border-bottom: 1px solid #16223d;
-  color: #97a3bc;
+  border-bottom: 1px solid var(--yoke-border);
+  color: var(--yoke-text-2);
 }
 
 .vp-doc table tr:last-child td {
@@ -224,9 +283,9 @@ div[class*='language-'] > button.copy {
 
 /* Blockquote */
 .vp-doc blockquote {
-  border-left: 3px solid #4f7cff;
-  color: #97a3bc;
-  background: rgba(79, 124, 255, 0.06);
+  border-left: 3px solid var(--yoke-brand);
+  color: var(--yoke-text-2);
+  background: var(--vp-c-brand-soft);
   border-radius: 0 6px 6px 0;
   padding: 2px 16px;
 }
@@ -237,52 +296,52 @@ div[class*='language-'] > button.copy {
 }
 
 .VPSidebar {
-  background: #0b1220 !important;
-  border-right: 1px solid #16223d !important;
+  background: var(--vp-sidebar-bg-color) !important;
+  border-right: 1px solid var(--yoke-border) !important;
 }
 
 .VPSidebarItem .item .link {
-  color: #97a3bc !important;
+  color: var(--yoke-text-2) !important;
 }
 
 .VPSidebarItem .item .link:hover {
-  color: #f5a623 !important;
+  color: var(--yoke-accent-text) !important;
 }
 
 .VPSidebarItem .item .link.is-active,
 .VPSidebarItem .item .link.is-active:hover {
-  color: #f5a623 !important;
+  color: var(--yoke-accent-text) !important;
   font-weight: 600 !important;
 }
 
 .VPSidebarItem .item .link.is-active .text {
-  color: #f5a623 !important;
+  color: var(--yoke-accent-text) !important;
   font-weight: 600 !important;
 }
 
 .VPSidebarItem.is-active > .item > .link,
 .VPSidebarItem.is-active > .item > .link:hover {
-  background: rgba(79, 124, 255, 0.12) !important;
+  background: var(--vp-c-brand-soft) !important;
   border-radius: 6px !important;
-  color: #f5a623 !important;
+  color: var(--yoke-accent-text) !important;
   font-weight: 600 !important;
 }
 
 .VPSidebarItem.level-1.is-active > .item > .indicator {
-  background: #f5a623 !important;
+  background: var(--yoke-accent) !important;
 }
 
 /* ─── Home page layout overrides ──────────────────────────────── */
 .VPHome {
   padding-bottom: 0 !important;
   padding-top: 0 !important;
-  background: #0b1220 !important;
+  background: var(--vp-c-bg) !important;
 }
 
 .VPPage,
 .VPContent,
 .VPLayout {
-  background: #0b1220 !important;
+  background: var(--vp-c-bg) !important;
   padding-bottom: 0 !important;
 }
 
