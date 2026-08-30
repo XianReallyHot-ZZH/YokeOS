@@ -1,19 +1,19 @@
 ---
 name: arch-diagram
-description: 为设计文档手写 SVG 架构图与流程图——语义化 Tailwind 配色（角色定色）、正交连线、分色带构图，配 Edge headless 转 PNG 的像素级自检闭环。触发：画架构图、画设计图、画流程图、给文档补图、重画 diagram、diagram 好看。快速草图与一次性流程图走 mermaid 内联（claude-mermaid）；数据图表、KPI 看板归 dataviz；两者都不归本 skill。
+description: 为设计文档手写 SVG 架构图与流程图——语义化 Tailwind 配色（角色定色）、正交连线、分色带构图，配 headless 浏览器截图的像素级自检闭环。触发：画架构图、画设计图、画流程图、给文档补图、重画 diagram、diagram 好看。快速草图与一次性流程图走 mermaid 内联；数据图表、KPI 看板走 dataviz（环境里有该 skill 时）或 matplotlib；都不归本 skill。
 ---
 
 # 手写 SVG 设计图（arch-diagram）
 
-为文档产出「参照库品质」的架构图/流程图：不用作图工具、不用布局引擎，直接手写 SVG 源码——每个坐标手摆、颜色按语义角色分配。品质来自克制的设计系统，不来自工具；布局引擎给得了「不丑」，给不了「讲究」。
+为文档产出出版级的架构图/流程图：不用作图工具、不用布局引擎，直接手写 SVG 源码——每个坐标手摆、颜色按语义角色分配。品质来自克制的设计系统，不来自工具；布局引擎给得了「不丑」，给不了「讲究」。
 
-全量颜色/几何 token 与构图配方见 [design-system.md](references/design-system.md)，写图前先读它——**一个 token 都不现场发明**。
+全量颜色/几何 token 与构图配方见 [design-system.md](references/design-system.md)，写图前先读它——**一个 token 都不现场发明**。该设计系统项目无关：换项目直接用，换品牌色板时保持「角色→颜色」映射唯一即可（见 design-system.md 卷首）。
 
 四条铁律：
 
 1. **一图一论点**。动笔前先写出 alt 结论句（如「定时任务是第三种触发源：人推和钟推都调同一个 AgentService」）。图是配菜，论点是主菜；写不出论点就不画。
 2. **角色定色，全仓一致**。调用方/主角/实例/外部/数据/拒绝路径各占一种语义色，映射表唯一（见 design-system.md 第 1 节），新图不新增色相、不换语义。
-3. **必须自检到像素级**。SVG 源码合法 ≠ 渲染正确。每张图走完「Edge headless 转 PNG → Read 亲自看 → 挑毛病改坐标」闭环才算完成；文字越界、箭头穿框、留白失衡都是不合格。
+3. **必须自检到像素级**。SVG 源码合法 ≠ 渲染正确。每张图走完「headless 截 PNG → Read 亲自看 → 挑毛病改坐标」闭环才算完成；文字越界、箭头穿框、留白失衡都是不合格。
 4. **图随文改**。设计修订时对应图同一个 commit 更新——图是第二真相源，漂移即失真。
 
 ## 第 0 步 · 定论点与构图
@@ -37,27 +37,27 @@ description: 为设计文档手写 SVG 架构图与流程图——语义化 Tail
 
 完成判据：XML 合法、marker 引用完整、分节注释齐全。
 
-- `<defs>` 放最前；每种线色一个 marker，id 用项目缩写前缀（本仓 `yk`）。
+- `<defs>` 放最前；每种线色一个 marker，id 用**项目缩写**前缀（如 yoke→`yk`、oryx→`ts`，取两字母即可），避免多项目图混用时 id 冲突。
 - 根元素带 `font-family="Arial, sans-serif"`，第一子元素画白底 rect。
 - 框内文本两行制：bold 深色标题 + 浅一档副标题，`text-anchor="middle"`；超宽先缩副标题字号、再砍字、最后加宽框。
 - 源码加 `<!-- ════════ 分节 ════════ -->` 注释——SVG 是源码，后人要改坐标。
-- 落 `docs/images/`，文件名与既有图对位命名；正文引用 `![alt 结论句](./images/xxx.svg)`。
+- 落点按**仓库既有惯例**（有 `website/public/images/` 就跟它走）；无惯例则 `docs/images/`。正文引用 `![alt 结论句](<相对路径>.svg)`。
 
 ## 第 3 步 · 校验与自检（带病不出门）
 
 完成判据：机检全过 + 亲眼看全过，无一项残留。
 
-1. **机检**：跑 design-system.md 第 7 节脚本——XML well-formed、marker 引用完整、文本越界估算（transform rotate 是已知误报源，人工复核）。
-2. **转图**（Windows/Edge，已验证命令见 design-system.md 第 8 节）：headless 截 PNG。
+1. **机检**：跑 design-system.md 第 7 节脚本（目录与前缀可传参）——XML well-formed、marker 引用完整、文本越界估算（transform rotate 是已知误报源，脚本已跳过，人工复核带 transform 的文字）。
+2. **转图**：headless 浏览器截 PNG，跨平台命令表见 design-system.md 第 8 节；`--window-size` 取该图 viewBox 宽高。
 3. **亲眼看**：`Read` 那个 PNG，逐项过——文字越界？元素重叠？箭头穿框？密度过载？留白失衡？逐项改坐标重截，直到挑不出毛病。
 4. 最后对照 alt 句再问一次：这张图还能不能**更直接**地证明论点？能就再改一轮。
 
 ## 第 4 步 · 交付
 
-- 图与（若有）文档改动**同一 commit**，message 说明对位关系（对齐参照哪张、改了什么）。
+- 图与（若有）文档改动**同一 commit**，message 说明对位关系（对齐哪张既有图、改了什么）。
 - 设计后续修订：先改文，同 commit 改图并重走第 3 步。
-- 需要深色变体时加 `-dark` 后缀成对维护（参照用 `-light` 成对的惯例）。
+- 需要深色变体时加 `-dark` 后缀与亮版成对维护，且深色版必须单独重走第 3 步。
 
 ---
 
-与 mermaid（快速草图、会频繁改的图）、dataviz（数据图表）分界见 description；一张文档里两者可并存——架构叙事用手写 SVG，数据叙事用 dataviz。
+与 mermaid（快速草图、会频繁改的图）、dataviz（数据图表）分界见 description；一张文档里两者可并存——架构叙事用手写 SVG，数据叙事走数据图路线。
