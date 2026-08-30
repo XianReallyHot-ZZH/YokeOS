@@ -16,4 +16,4 @@
 
 ### Initiation docs
 
-立项文档链五篇与参照库立项期 docs 一一对应（ADR 0007）：业界调研 `docs/IndustryResearch.md` → 产品定位 `docs/yokeos.md` → 需求分析 `docs/DemandAnalysis.md` → 技术方案 `docs/TechnicalSolution.md` → AI 编程指南。
+立项文档链五篇与参照库立项期 docs 一一对应（ADR 0007）：业界调研 `docs/IndustryResearch.md` → 产品定位 `docs/yokeos.md` → 需求分析 `docs/DemandAnalysis.md` → 技术方案 `docs/TechnicalSolution.md` → AI 编程指南 `docs/AiProgrammingGuide.md`。
