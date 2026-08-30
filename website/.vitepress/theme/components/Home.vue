@@ -1,10 +1,53 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { useData, withBase } from 'vitepress'
 
 const { lang } = useData()
 const isZh = computed(() => lang.value === 'zh-CN')
 const t = (zh, en) => isZh.value ? zh : en
+
+// Hero highlight carousel — the highlighter mark cycles through real claims.
+// The track renders the words plus a clone of the first, so the loop's
+// -300% frame is identical to its 0% frame and the restart is invisible.
+const heroFlip = computed(() => {
+  const words = isZh.value
+    ? ['管起一群 Agent', '私有可审计', '不锁任何云']
+    : ['runs the fleet', 'never leaves home', 'stays auditable']
+  return [...words, words[0]]
+})
+
+// Scroll reveal: classes are added here (not in markup) so the SSG-rendered
+// page stays fully visible without JS; skipped entirely for reduced motion.
+let revealObserver = null
+onMounted(() => {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  if (!('IntersectionObserver' in window)) return
+  const targets = document.querySelectorAll(
+    '.home .section-head, .home .cap-card, .home .case-card, .home .roadmap-card, .home .arch-diagram, .home .stats-bar'
+  )
+  if (!targets.length) return
+  revealObserver = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue
+      const el = entry.target
+      el.classList.add('revealed')
+      const delay = el.style.transitionDelay
+      if (delay) setTimeout(() => { el.style.transitionDelay = '' }, 800)
+      revealObserver.unobserve(el)
+    }
+  }, { threshold: 0.15 })
+  targets.forEach((el) => {
+    el.classList.add('reveal')
+    if (el.classList.contains('cap-card') || el.classList.contains('case-card')) {
+      const idx = [...el.parentElement.children].indexOf(el)
+      el.style.transitionDelay = `${(idx % 3) * 80}ms`
+    }
+    revealObserver.observe(el)
+  })
+})
+onBeforeUnmount(() => {
+  if (revealObserver) revealObserver.disconnect()
+})
 
 // Minimal stroke icons (20×20, lucide-style, hand-approximated)
 const icons = {
@@ -204,7 +247,8 @@ const docsBase = computed(() => isZh.value ? '/zh/docs' : '/docs')
 
         <h1 class="hero-headline">
           {{ t('一个目录定义一个 Agent，', 'A directory defines an agent.') }}<br>
-          {{ t('一套底座', 'One foundation') }}<span class="mark">{{ t('管起一群 Agent', 'runs the fleet') }}</span>{{ t('。', '.') }}
+          {{ t('一套底座', 'One foundation') }}<span class="flip"><span class="flip-track"><span
+            v-for="(w, i) in heroFlip" :key="i" class="mark flip-word">{{ w }}</span></span></span>{{ t('。', '.') }}
         </h1>
 
         <p class="hero-sub">
@@ -437,6 +481,34 @@ a { text-decoration: none; }
   -webkit-box-decoration-break: clone;
 }
 
+/* Highlight carousel: pure-CSS word flipper (the track holds the three
+   words plus a clone of the first, so the loop point is invisible) */
+.flip {
+  display: inline-block;
+  height: 1.2em;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+.flip-track {
+  display: block;
+  animation: yoke-flip 9s infinite;
+}
+.flip-word {
+  display: block;
+  height: 1.2em;
+  line-height: 1.2em;
+}
+@keyframes yoke-flip {
+  /* em, not %: percentages resolve against the whole track's height */
+  0%, 30%  { transform: translateY(0); }
+  35%, 61% { transform: translateY(-1.2em); }
+  66%, 92% { transform: translateY(-2.4em); }
+  100%     { transform: translateY(-3.6em); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flip-track { animation: none; }
+}
+
 /* ────────────────────────────────────────────────
    HERO — editorial, left-aligned
 ──────────────────────────────────────────────── */
@@ -461,10 +533,9 @@ a { text-decoration: none; }
 .hero-headline {
   font-size: clamp(38px, 6vw, 76px);
   font-weight: 900;
-  line-height: 1.12;
+  line-height: 1.2;
   letter-spacing: -0.03em;
   margin: 0 0 28px;
-  max-width: 21em;
 }
 
 .hero-sub {
@@ -581,6 +652,7 @@ a { text-decoration: none; }
   border-top: 1px solid var(--yoke-border);
   border-bottom: 1px solid var(--yoke-border);
   padding: 0 24px;
+  transition: opacity 0.45s ease, transform 0.45s ease;
 }
 .stats-inner {
   max-width: 1080px;
@@ -624,9 +696,22 @@ a { text-decoration: none; }
 .section-inner { max-width: 1080px; margin: 0 auto; }
 .section-borders { border-top: 1px solid var(--yoke-border); }
 
+/* Scroll reveal — classes are added by JS in onMounted, so the
+   SSG-rendered page is fully visible without JS; reduced-motion
+   users never get the initial hidden state. */
+.reveal {
+  opacity: 0;
+  transform: translateY(12px);
+}
+.revealed {
+  opacity: 1;
+  transform: none;
+}
+
 .section-head {
   text-align: left;
   margin-bottom: 48px;
+  transition: opacity 0.45s ease, transform 0.45s ease;
 }
 .section-label {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
@@ -654,6 +739,7 @@ a { text-decoration: none; }
 .arch-diagram {
   width: 100%;
   overflow-x: auto;
+  transition: opacity 0.45s ease, transform 0.45s ease;
 }
 .arch-img {
   display: block;
@@ -681,12 +767,17 @@ a { text-decoration: none; }
   display: flex;
   flex-direction: column;
   gap: 12px;
-  transition: background 0.2s;
+  /* Shannon-style hover: the hairline flips to full contrast and the
+     card lifts — no color change, no glow. */
+  transition: box-shadow 0.2s, transform 0.2s;
   cursor: default;
   /* Let 1fr tracks shrink below content size. */
   min-width: 0;
 }
-.cap-card:hover { background: var(--yoke-bg-elev); }
+.cap-card:hover {
+  box-shadow: inset 0 0 0 1px var(--yoke-text-1), 0 12px 28px rgba(0, 0, 0, 0.18);
+  transform: translateY(-2px);
+}
 .cap-ico {
   width: 40px;
   height: 40px;
@@ -765,11 +856,14 @@ a { text-decoration: none; }
   display: flex;
   flex-direction: column;
   gap: 8px;
-  transition: background 0.2s;
+  transition: box-shadow 0.2s, transform 0.2s;
   cursor: default;
   min-width: 0;
 }
-.case-card:hover { background: var(--yoke-bg-elev); }
+.case-card:hover {
+  box-shadow: inset 0 0 0 1px var(--yoke-text-1);
+  transform: translateY(-2px);
+}
 .case-num {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 11px;
