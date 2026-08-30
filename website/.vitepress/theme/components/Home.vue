@@ -6,109 +6,94 @@ const { lang } = useData()
 const isZh = computed(() => lang.value === 'zh-CN')
 const t = (zh, en) => isZh.value ? zh : en
 
+// Minimal stroke icons (20×20, lucide-style, hand-approximated)
+const icons = {
+  folder: ['M3 5.5A1.5 1.5 0 0 1 4.5 4h4.2l2 2.5h4.8A1.5 1.5 0 0 1 17 8v6.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 3 14.5z'],
+  route: ['M3 7h11M11.5 3.5 15 7l-3.5 3.5', 'M17 13H6M8.5 9.5 5 13l3.5 3.5'],
+  loop: ['M16.5 10a6.5 6.5 0 1 1-1.9-4.6', 'M14.8 2.6v3.2h3.2'],
+  layers: ['M10 3l7 4-7 4-7-4 7-4z', 'M3 11.5l7 4 7-4'],
+  shield: ['M10 2.5l6.5 2.4v5.2c0 3.9-2.7 6.2-6.5 7.4-3.8-1.2-6.5-3.5-6.5-7.4V4.9z', 'M7.3 9.6l2 2 3.6-3.6'],
+  bell: ['M10 3a4.8 4.8 0 0 1 4.8 4.8v3.1l1.5 2.6H3.7l1.5-2.6V7.8A4.8 4.8 0 0 1 10 3z', 'M8.4 16.5a1.7 1.7 0 0 0 3.2 0'],
+}
+
 const capabilities = computed(() => [
   {
-    num: '01',
+    icon: 'folder',
     title: t('一个目录 = 一个 Agent', 'One Directory = One Agent'),
     desc: t(
-      '一个 Agent 就是一个目录：AGENT.md = frontmatter（运行配置）+ 正文（任务指令），可选 Skill 按名引用与附属资源。REST 创建、一句话生成草稿，或直接把目录放进工作区——免重启即上线。',
-      'An agent is a directory: AGENT.md = frontmatter (runtime config) + a body of task instructions, plus optional by-name Skill references and side resources. Create via REST, draft from one sentence, or drop the directory into the workspace — live with no restart.'
+      'AGENT.md = frontmatter（运行配置）+ 正文（任务指令）。REST 创建、一句话生成草稿，或直接把目录放进工作区——免重启即上线。',
+      'AGENT.md = frontmatter (runtime config) + a body of instructions. Create via REST, draft from one sentence, or drop the directory into the workspace — live with no restart.'
     ),
-    code: `.yokeos/agents/ops-agent/
-└── AGENT.md   # frontmatter + task body
-
-# frontmatter: provider / tools / skills /
-#   notify / schedules / bootstrap / settings
-# body: the task instructions
-
-# Drop the dir in → live, no restart
-# Or: POST /api/v1/agents`,
+    tags: t(
+      ['免重启', '一句话生成', '多 Agent 并存'],
+      ['No restarts', 'One-sentence drafts', 'Multi-agent']
+    ),
+    link: '/agent',
   },
   {
-    num: '02',
-    title: t('对接 LLM：显式多模型路由', 'LLM Routing: Explicit Multi-Provider'),
+    icon: 'route',
+    title: t('对接 LLM', 'LLM Routing'),
     desc: t(
-      'Provider 抽象统一对接主流大模型，Agent 不感知具体厂商。多 Provider 并存靠显式 name → ChatModel 映射区分，不靠类型扫描；运行时切换零代码改动，支持本地推理。',
-      'A Provider abstraction unifies mainstream models — Agents are vendor-agnostic. Multiple providers coexist via an explicit name → ChatModel map, never type scanning. Switch at runtime with zero code change; local inference supported.'
+      'Provider 抽象统一对接主流大模型，Agent 不感知具体厂商；多 Provider 并存靠显式 name → ChatModel 映射区分，不靠类型扫描。',
+      'A Provider abstraction unifies mainstream models — agents are vendor-agnostic. Multiple providers coexist via an explicit name → ChatModel map, never type scanning.'
     ),
-    code: `# AGENT.md — the agent references a provider by name
-provider:
-  name: deepseek        # → explicit ChatModel map
-  model: deepseek-chat
-  api_key: \${DEEPSEEK_API_KEY}
-
-# DeepSeek / Qwen / Kimi / GLM / Anthropic /
-# OpenAI-compatible / Ollama & vLLM (local)`,
+    tags: t(
+      ['显式映射', '运行时切换', '本地推理'],
+      ['Explicit map', 'Runtime switch', 'Local inference']
+    ),
+    link: '/provider',
   },
   {
-    num: '03',
+    icon: 'loop',
     title: t('自实现 ReAct 循环', 'Self-implemented ReAct Loop'),
     desc: t(
-      'Agent 的推理引擎自己实现，不套外部 Agent 框架。LLM 思考是否调工具、调哪个，底座执行后回填结果，LLM 再决定下一步——循环行为完全可控，每次调用都落审计。',
-      'The reasoning engine is implemented in-house, wrapped by no external agent framework. The LLM decides whether and which tool to call; the foundation executes and feeds the result back; the LLM decides the next step — fully controllable, every call audited.'
+      '推理引擎自己实现，不套外部 Agent 框架。LLM 决定调哪个工具，底座执行后回填结果，循环行为完全可控。',
+      'The reasoning engine is implemented in-house — no external agent framework. The LLM picks the tool, the foundation executes and feeds results back. Loop behavior stays fully controllable.'
     ),
-    code: `User message → append to Session
-  → PromptBuilder: system + memory + history + tools
-  → ProviderService.call()          # llm_calls audit
-  → [Tool call?]
-      → Sandbox.enforce() whitelist
-      → ToolExecutor.execute()      # tool_invocations audit
-      → append result → loop
-  → [Final reply] → return`,
+    tags: t(
+      ['自实现', '迭代上限', '全程审计'],
+      ['In-house', 'Iteration cap', 'Fully audited']
+    ),
+    link: '/react-loop',
   },
   {
-    num: '04',
+    icon: 'layers',
     title: t('两层记忆', 'Two-layer Memory'),
     desc: t(
-      '会话记忆持久化、跨重启恢复；长期记忆是一个 MEMORY.md 文件，核心/归档两个分区，Agent 用 save_memory / recall_memory 主动读写。每次组装 prompt 自动注入，后端可插拔（markdown / sqlite / mem0）。',
-      'Session memory persists across restarts; long-term memory is one MEMORY.md file with core and archival partitions, read and written by the agent via save_memory / recall_memory. Auto-injected into every prompt; pluggable backends (markdown / sqlite / mem0).'
+      '会话记忆跨重启恢复；长期记忆是一个 MEMORY.md 文件，核心/归档两个分区，每次组装 prompt 自动注入，后端可插拔。',
+      'Session memory survives restarts; long-term memory is one MEMORY.md file with core/archival partitions, auto-injected into every prompt. Pluggable backends.'
     ),
-    code: `# Agent saves a fact for tomorrow
-Tool: save_memory
-  {"content": "用户更关注 AI 和芯片方向"}
-
-# MEMORY.md — ## 核心记忆 / ## 归档记忆
-# core: never truncated; archival: capped
-
-Tool: recall_memory
-  {"query": "关注方向"}
-
-# Injected into every system prompt`,
+    tags: t(
+      ['会话 + 长期', '核心/归档', '三档后端'],
+      ['Session + long-term', 'Core/archival', '3 backends']
+    ),
+    link: '/memory',
   },
   {
-    num: '05',
-    title: t('沙箱工具 + MCP', 'Sandboxed Tools + MCP'),
+    icon: 'shield',
+    title: t('工具体系与沙箱', 'Tools & Sandbox'),
     desc: t(
-      '九个内置工具覆盖读写文件、跑命令、调 API、记事、推送。路径/命令/域名三重白名单校验真实路径，全程留痕。扩展三档：零代码 AGENT.md 目录 + 社区 MCP server → 自写 MCP server → 原生 @Tool Bean。',
-      'Nine built-in tools cover files, shell, HTTP, memory, and push. Path / command / domain whitelists verify real paths, every call traced. Three extension tiers: zero-code AGENT.md + community MCP server → custom MCP server → native @Tool bean.'
+      '九个内置工具覆盖最短链路，每次调用过路径/命令/域名三重白名单并落审计；扩展三档，零代码起步。',
+      'Nine built-in tools cover the shortest path; every call passes path/command/domain whitelists and lands in the audit trail. Three extension tiers, zero code first.'
     ),
-    code: `# Whitelists in application.yaml
-file.allowed_paths:  [workspace root]
-shell.allowed_commands: [ls, cat, python3]
-http.allowed_domains: ["api.open-meteo.com"]
-
-# Enforced via Sandbox.enforce() before any IO
-# Violation → tool aborted + audited
-
-# Extend: MCP server in mcp_servers.yaml`,
+    tags: t(
+      ['三重白名单', 'MCP', '三档扩展'],
+      ['3 whitelists', 'MCP', '3 tiers']
+    ),
+    link: '/tool-sandbox',
   },
   {
-    num: '06',
+    icon: 'bell',
     title: t('通知、定时与对外服务', 'Notify, Schedule & Web Service'),
     desc: t(
-      'Agent 干完活把结果推到 Webhook 通知渠道；cron 到点自跑——继 CLI、REST API 之后的第三触发源，同一条执行链路。REST API 18 个端点对外暴露全部能力，附 Web 管理台第一版。',
-      'Agents push results to webhook channels when done; cron schedules run them on their own — the third trigger source after CLI and REST, on the same execution path. 18 REST endpoints expose every capability, plus a Phase-1 web console.'
+      'Agent 干完活推 Webhook 通知；cron 到点自跑——第三触发源。REST API 18 个端点对外暴露全部能力，附 Web 管理台第一版。',
+      'Agents push results via webhook when done; cron runs them on their own — the third trigger source. 18 REST endpoints expose everything, plus a Phase-1 web console.'
     ),
-    code: `schedules:
-  - cron: "0 0 8 * * ?"   # clock-pushed
-
-notify:
-  channels:
-    - name: team-im
-      type: webhook
-
-/api/v1/**   18 endpoints
-/admin/      web console (Phase 1)`,
+    tags: t(
+      ['Webhook', 'cron 钟推', '18 端点'],
+      ['Webhook', 'Cron', '18 endpoints']
+    ),
+    link: '/web-service',
   },
 ])
 
@@ -142,6 +127,29 @@ const scenarios = computed(() => [
     num: '06',
     title: t('数据分析', 'Data Analysis'),
     desc: t('生成 SQL，执行查询并出图，记住业务表结构，接 BI 系统与看板。', 'Generates SQL, runs queries, draws charts, remembers schema conventions, connects to BI tools and dashboards.'),
+  },
+])
+
+const stats = computed(() => [
+  {
+    num: '0',
+    label: t('云锁定', 'CLOUD LOCK-IN'),
+    why: t('私有部署在你自己的 K8s、虚拟机与物理机上', 'Runs on your own K8s, VMs, and bare metal'),
+  },
+  {
+    num: 'day-one',
+    label: t('审计落库', 'AUDIT PERSISTED'),
+    why: t('llm_calls 与 tool_invocations 从第一节就写入', 'llm_calls and tool_invocations written from the first lesson'),
+  },
+  {
+    num: '3',
+    label: t('触发源', 'TRIGGER SOURCES'),
+    why: t('CLI · REST API · cron 钟推，同一条执行链路', 'CLI · REST API · cron — one execution path'),
+  },
+  {
+    num: '6',
+    label: t('核心能力', 'CORE CAPABILITIES'),
+    why: t('单机运行时内核的最小完备集', 'The minimal complete Phase-1 kernel'),
   },
 ])
 
@@ -181,8 +189,7 @@ const roadmapPhases = computed(() => [
   },
 ])
 
-const docsLink = computed(() => isZh.value ? '/zh/docs/quick-start' : '/docs/quick-start')
-const whatLink = computed(() => isZh.value ? '/zh/docs/what' : '/docs/what')
+const docsBase = computed(() => isZh.value ? '/zh/docs' : '/docs')
 </script>
 
 <template>
@@ -196,21 +203,20 @@ const whatLink = computed(() => isZh.value ? '/zh/docs/what' : '/docs/what')
         </p>
 
         <h1 class="hero-headline">
-          <span class="headline-tag">{{ t('企业 Agent 底座', 'The Enterprise Agent Foundation') }}</span><br>
-          <span class="headline-white">{{ t('一个目录定义一个 Agent，', 'A directory defines an agent.') }}</span><br>
-          <span class="headline-amber">{{ t('一套底座管起一群 Agent。', 'One foundation runs the fleet.') }}</span>
+          {{ t('一个目录定义一个 Agent，', 'A directory defines an agent.') }}<br>
+          {{ t('一套底座', 'One foundation') }}<span class="mark">{{ t('管起一群 Agent', 'runs the fleet') }}</span>{{ t('。', '.') }}
         </h1>
 
         <p class="hero-sub">
           {{ t(
-            'YokeOS 是装在企业自己基础设施上的 Java 原生 Agent 底座（Agent Harness OS）：一个目录定义一个 Agent，一套底座运行一群 Agent——共享渠道接入、模型路由、工具调用、记忆、沙箱与调度，全链路审计从第一天落库，数据不出域，不锁任何云。第一阶段运行时内核正逐节交付中。',
-            'YokeOS is a Java-native Agent foundation (Agent Harness OS) installed on your own infrastructure: one directory defines an agent, one foundation runs the fleet — shared channels, model routing, tools, memory, sandbox, and scheduling, with full-chain audit persisted from day one. Data stays home; no cloud lock-in. The Phase-1 runtime kernel is being delivered unit by unit.'
+            'YokeOS 是装在企业自己基础设施上的 Java 原生 Agent 底座（Agent Harness OS）——私有部署、全链路可审计、不锁任何云。不是又一个聊天机器人，而是让一群 Agent 可靠运行、被管起来的那层底座。第一阶段运行时内核正逐节交付中。',
+            'YokeOS is a Java-native Agent foundation (Agent Harness OS) on your own infrastructure — private, fully auditable, no cloud lock-in. Not another chatbot: the layer that lets a fleet of agents run reliably and be managed. The Phase-1 runtime kernel is being delivered unit by unit.'
           ) }}
         </p>
 
         <div class="hero-ctas">
-          <a class="btn-primary" :href="docsLink">
-            {{ t('快速开始', 'Get Started') }}
+          <a class="btn-primary" :href="`${docsBase}/quick-start`">
+            {{ t('快速开始', 'Get started') }}
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7h10M8 3l4 4-4 4"/></svg>
           </a>
           <a class="btn-ghost" href="https://github.com/XianReallyHot-ZZH/YokeOS" target="_blank" rel="noopener">
@@ -269,42 +275,25 @@ const whatLink = computed(() => isZh.value ? '/zh/docs/what' : '/docs/what')
       </div>
     </section>
 
-    <!-- ── STATS BAR ── -->
+    <!-- ── STATS BAND ── -->
     <div class="stats-bar">
       <div class="stats-inner">
-        <div class="stat">
-          <span class="stat-num">6</span>
-          <span class="stat-label">{{ t('核心能力', 'core capabilities') }}</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat">
-          <span class="stat-num">18</span>
-          <span class="stat-label">{{ t('REST 端点', 'REST endpoints') }}</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat">
-          <span class="stat-num">9</span>
-          <span class="stat-label">{{ t('内置工具', 'built-in tools') }}</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat">
-          <span class="stat-num">12</span>
-          <span class="stat-label">{{ t('CLI 命令', 'CLI commands') }}</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat">
-          <span class="stat-num">3</span>
-          <span class="stat-label">{{ t('触发源：CLI · REST · 定时', 'trigger sources: CLI · REST · cron') }}</span>
+        <div v-for="s in stats" :key="s.label" class="stat">
+          <span class="stat-num">{{ s.num }}</span>
+          <span class="stat-label">{{ s.label }}</span>
+          <span class="stat-why">{{ s.why }}</span>
         </div>
       </div>
     </div>
 
     <!-- ── HOW IT WORKS ── -->
-    <section class="section section-dark">
+    <section class="section">
       <div class="section-inner">
-        <div class="section-header">
-          <span class="section-label">{{ t('运行原理', 'HOW IT WORKS') }}</span>
-          <h2 class="section-h2">{{ t('三个入口，一个引擎，一套存储。', 'Three entrances. One engine. One storage.') }}</h2>
+        <div class="section-head">
+          <span class="section-label"><span class="eyebrow-comment">// </span>{{ t('运行原理', 'HOW IT WORKS') }}</span>
+          <h2 class="section-h2">
+            {{ t('三个入口，', 'Three entrances.') }}<span class="mark">{{ t('一个引擎', 'One engine') }}</span>{{ t('，一套存储。', ', one storage.') }}
+          </h2>
         </div>
 
         <div class="arch-diagram">
@@ -314,32 +303,41 @@ const whatLink = computed(() => isZh.value ? '/zh/docs/what' : '/docs/what')
     </section>
 
     <!-- ── CORE CAPABILITIES ── -->
-    <section class="section section-dark">
+    <section class="section section-borders">
       <div class="section-inner">
-        <div class="section-header">
-          <span class="section-label">{{ t('核心能力', 'CORE CAPABILITIES') }}</span>
-          <h2 class="section-h2">{{ t('放一个目录，得一个 Agent。', 'Drop a directory. Get an agent.') }}</h2>
+        <div class="section-head">
+          <span class="section-label"><span class="eyebrow-comment">// </span>{{ t('核心能力', 'CORE CAPABILITIES') }}</span>
+          <h2 class="section-h2">
+            {{ t('放一个目录，', 'Drop a directory.') }}<span class="mark">{{ t('得一个 Agent', 'Get an agent') }}</span>{{ t('。', '.') }}
+          </h2>
         </div>
 
         <div class="caps-grid">
-          <div v-for="cap in capabilities" :key="cap.num" class="cap-card">
-            <div class="cap-top">
-              <span class="cap-num">{{ cap.num }}</span>
-              <h3 class="cap-title">{{ cap.title }}</h3>
-              <p class="cap-desc">{{ cap.desc }}</p>
+          <div v-for="cap in capabilities" :key="cap.link" class="cap-card">
+            <div class="cap-ico">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path v-for="(d, i) in icons[cap.icon]" :key="i" :d="d"/>
+              </svg>
             </div>
-            <pre class="cap-code"><code>{{ cap.code }}</code></pre>
+            <h3 class="cap-title">{{ cap.title }}</h3>
+            <p class="cap-desc">{{ cap.desc }}</p>
+            <div class="cap-tags">
+              <span v-for="tag in cap.tags" :key="tag" class="chip">{{ tag }}</span>
+            </div>
+            <a class="cap-more" :href="docsBase + cap.link">{{ t('文档', 'Learn more') }} →</a>
           </div>
         </div>
       </div>
     </section>
 
     <!-- ── USE CASES ── -->
-    <section class="section section-dark section-use-cases">
+    <section class="section section-borders">
       <div class="section-inner">
-        <div class="section-header">
-          <span class="section-label">{{ t('使用场景', 'USE CASES') }}</span>
-          <h2 class="section-h2">{{ t('六个能力，拼出企业的真实场景', 'Six capabilities, real enterprise scenarios') }}</h2>
+        <div class="section-head">
+          <span class="section-label"><span class="eyebrow-comment">// </span>{{ t('使用场景', 'USE CASES') }}</span>
+          <h2 class="section-h2">
+            {{ t('六个能力，拼出企业的', 'Six capabilities, real ') }}<span class="mark">{{ t('真实场景', 'enterprise scenarios') }}</span>{{ t('。', '.') }}
+          </h2>
         </div>
 
         <div class="cases-grid">
@@ -353,11 +351,13 @@ const whatLink = computed(() => isZh.value ? '/zh/docs/what' : '/docs/what')
     </section>
 
     <!-- ── ROADMAP ── -->
-    <section class="section section-dark section-roadmap">
+    <section class="section section-borders">
       <div class="section-inner">
-        <div class="section-header">
-          <span class="section-label">{{ t('路线图', 'ROADMAP') }}</span>
-          <h2 class="section-h2">{{ t('慢就是快，分阶段克制。', 'Slow is fast. Phase by phase.') }}</h2>
+        <div class="section-head">
+          <span class="section-label"><span class="eyebrow-comment">// </span>{{ t('路线图', 'ROADMAP') }}</span>
+          <h2 class="section-h2">
+            <span class="mark">{{ t('慢就是快', 'Slow is fast') }}</span>{{ t('，分阶段克制。', ' — phase by phase.') }}
+          </h2>
         </div>
 
         <div class="roadmap-grid">
@@ -375,40 +375,22 @@ const whatLink = computed(() => isZh.value ? '/zh/docs/what' : '/docs/what')
       </div>
     </section>
 
-    <!-- ── CTA ── -->
+    <!-- ── FINAL CTA ── -->
     <section class="section section-cta">
       <div class="section-inner">
-        <div class="cta-grid">
-          <div class="cta-left">
-            <span class="section-label label-dark">{{ t('了解 YokeOS', 'EXPLORE YOKEOS') }}</span>
-            <h2 class="cta-h2">{{ t('把一群 Agent，装进你能掌控的底座。', 'Run the fleet on infrastructure you control.') }}</h2>
-            <p class="cta-sub">{{ t('从定位到需求到技术方案，整套立项文档链已经公开——YokeOS 的每一个能力都有可追溯的规格。第一阶段运行时内核正逐节交付，欢迎对照阅读。', 'From positioning to requirements to technical design, the whole initiation document chain is public — every capability has a traceable spec. The Phase-1 runtime kernel is being delivered unit by unit; read along.') }}
-            </p>
-            <div class="cta-btns">
-              <a class="btn-dark" :href="whatLink">{{ t('阅读文档', 'Read the Docs') }}</a>
-              <a class="btn-dark-ghost" href="https://github.com/XianReallyHot-ZZH/YokeOS" target="_blank" rel="noopener">GitHub</a>
-            </div>
-          </div>
-          <div class="cta-right">
-            <div class="cta-terminal">
-              <div class="cta-terminal-bar">
-                <span class="dot dot-dark"></span>
-                <span class="dot dot-dark"></span>
-                <span class="dot dot-dark"></span>
-              </div>
-              <pre class="cta-code"><code><span class="code-comment"># 1. {{ t('初始化工作区', 'Initialize the workspace') }}</span>
-<span class="code-prompt">❯</span> yokeos init
-
-<span class="code-comment"># 2. {{ t('创建一个 Agent 并写好 AGENT.md', 'Create an agent and write its AGENT.md') }}</span>
-<span class="code-prompt">❯</span> yokeos profile create ops-agent
-
-<span class="code-comment"># 3. {{ t('开始对话', 'Start chatting') }}</span>
-<span class="code-prompt">❯</span> yokeos chat --profile ops-agent
-
-<span class="code-comment"># {{ t('或启动 REST API 与管理台', 'Or launch the REST API + console') }}</span>
-<span class="code-prompt">❯</span> yokeos serve --port 8080</code></pre>
-            </div>
-          </div>
+        <span class="section-label"><span class="eyebrow-comment">// </span>{{ t('开始', 'GET STARTED') }}</span>
+        <h2 class="cta-h2">
+          {{ t('让一群 Agent，跑在你', 'Run the fleet on infrastructure you ') }}<span class="mark">{{ t('完全掌控', 'fully control') }}</span>{{ t('的底座上。', '.') }}
+        </h2>
+        <p class="cta-sub">
+          {{ t(
+            '从定位到技术方案，整套立项文档链已经公开——每一个能力都有可追溯的规格。第一阶段运行时内核正逐节交付，欢迎对照阅读。',
+            'From positioning to technical design, the whole initiation document chain is public — every capability has a traceable spec. The Phase-1 runtime kernel is being delivered unit by unit; read along.'
+          ) }}
+        </p>
+        <div class="cta-btns">
+          <a class="btn-primary" :href="`${docsBase}/quick-start`">{{ t('阅读文档', 'Read the docs') }}</a>
+          <a class="btn-ghost" href="https://github.com/XianReallyHot-ZZH/YokeOS" target="_blank" rel="noopener">GitHub</a>
         </div>
       </div>
     </section>
@@ -421,7 +403,7 @@ const whatLink = computed(() => isZh.value ? '/zh/docs/what' : '/docs/what')
           <span class="footer-tagline">{{ t('企业 Agent 底座 · 私有部署 · 全链路可审计', 'Enterprise Agent Harness OS · self-hosted · fully auditable') }}</span>
         </div>
         <div class="footer-links">
-          <a :href="whatLink" class="footer-link">{{ t('文档', 'Docs') }}</a>
+          <a :href="`${docsBase}/what`" class="footer-link">{{ t('文档', 'Docs') }}</a>
           <a href="https://github.com/XianReallyHot-ZZH/YokeOS" target="_blank" rel="noopener" class="footer-link">GitHub</a>
         </div>
       </div>
@@ -439,60 +421,51 @@ const whatLink = computed(() => isZh.value ? '/zh/docs/what' : '/docs/what')
   background: var(--yoke-bg);
   color: var(--yoke-text-1);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  /* Override VitePress default page padding */
   margin: 0;
   padding: 0;
 }
 .home * { box-sizing: border-box; }
 a { text-decoration: none; }
 
+/* Highlighter mark — the editorial signature */
+.mark {
+  background: var(--yoke-accent);
+  color: #0b1220;
+  padding: 0 0.16em;
+  border-radius: 0.12em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
 /* ────────────────────────────────────────────────
-   HERO
+   HERO — editorial, left-aligned
 ──────────────────────────────────────────────── */
 .hero {
   background: var(--yoke-bg);
-  padding: 96px 24px 80px;
-  text-align: center;
+  padding: 110px 24px 88px;
 }
 .hero-inner {
-  max-width: 800px;
+  max-width: 1080px;
   margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
 .hero-eyebrow {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 13px;
   color: var(--yoke-text-3);
-  margin: 0 0 32px;
+  margin: 0 0 28px;
   letter-spacing: 0.02em;
 }
 .eyebrow-comment { color: var(--yoke-accent-text); }
 
 .hero-headline {
-  font-size: clamp(38px, 6.5vw, 66px);
+  font-size: clamp(38px, 6vw, 76px);
   font-weight: 900;
-  line-height: 1.08;
+  line-height: 1.12;
   letter-spacing: -0.03em;
   margin: 0 0 28px;
+  max-width: 21em;
 }
-.headline-tag {
-  display: inline-block;
-  font-size: 0.38em;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--yoke-brand-text);
-  border: 1px solid var(--yoke-tag-border);
-  border-radius: 4px;
-  padding: 3px 10px;
-  margin-bottom: 12px;
-  vertical-align: middle;
-}
-.headline-white { color: var(--yoke-text-1); }
-.headline-amber { color: var(--yoke-accent-text); }
 
 .hero-sub {
   font-size: 16px;
@@ -507,14 +480,13 @@ a { text-decoration: none; }
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
-  justify-content: center;
-  margin-bottom: 56px;
+  margin-bottom: 64px;
 }
 .btn-primary {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 28px;
+  padding: 12px 26px;
   border-radius: 6px;
   background: var(--yoke-brand);
   color: #ffffff;
@@ -528,7 +500,7 @@ a { text-decoration: none; }
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 24px;
+  padding: 12px 22px;
   border-radius: 6px;
   border: 1px solid var(--yoke-border);
   color: var(--yoke-text-1);
@@ -538,16 +510,16 @@ a { text-decoration: none; }
 }
 .btn-ghost:hover { border-color: var(--yoke-accent-text); color: var(--yoke-accent-text); }
 
-/* Terminal */
+/* Terminal — dark in both themes, the product's signature look */
 .terminal {
   width: 100%;
-  max-width: 680px;
+  max-width: 780px;
   border-radius: 10px;
   border: 1px solid #1e2c4a;
   background: #0d1526;
   overflow: hidden;
   text-align: left;
-  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px #1e2c4a;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.5);
 }
 .terminal-titlebar {
   display: flex;
@@ -584,11 +556,7 @@ a { text-decoration: none; }
 .term-output { color: #c9d3e8; padding-left: 0; }
 .term-output.dim { color: #5c6a85; }
 .term-spacer { height: 6px; }
-.term-user {
-  color: #34d399;
-  font-weight: 700;
-  flex-shrink: 0;
-}
+.term-user { color: #34d399; font-weight: 700; flex-shrink: 0; }
 .term-msg { color: #e6eaf2; }
 .agent-label { color: #4f7cff; font-weight: 700; }
 .term-cursor {
@@ -606,7 +574,7 @@ a { text-decoration: none; }
 }
 
 /* ────────────────────────────────────────────────
-   STATS BAR
+   STATS BAND — claims, Shannon-style
 ──────────────────────────────────────────────── */
 .stats-bar {
   background: var(--yoke-bg-deep);
@@ -615,51 +583,50 @@ a { text-decoration: none; }
   padding: 0 24px;
 }
 .stats-inner {
-  max-width: 960px;
+  max-width: 1080px;
   margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 28px 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  padding: 40px 0;
 }
 .stat {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  flex: 1;
+  gap: 6px;
 }
 .stat-num {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 28px;
+  font-size: clamp(30px, 3.4vw, 46px);
   font-weight: 900;
-  color: var(--yoke-accent-text);
+  color: var(--yoke-text-1);
   line-height: 1;
+  letter-spacing: -0.02em;
 }
 .stat-label {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 11px;
-  color: var(--yoke-text-3);
-  text-align: center;
-  letter-spacing: 0.03em;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--yoke-accent-text);
 }
-.stat-divider {
-  width: 1px;
-  height: 40px;
-  background: var(--yoke-border);
-  flex-shrink: 0;
+.stat-why {
+  font-size: 12px;
+  color: var(--yoke-text-3);
+  line-height: 1.55;
 }
 
 /* ────────────────────────────────────────────────
-   SECTIONS BASE
+   SECTIONS — editorial, left-aligned
 ──────────────────────────────────────────────── */
 .section { padding: 88px 24px; }
-.section-inner { max-width: 1040px; margin: 0 auto; }
-.section-dark { background: var(--yoke-bg); }
-.section-use-cases { border-top: 1px solid var(--yoke-border); }
+.section-inner { max-width: 1080px; margin: 0 auto; }
+.section-borders { border-top: 1px solid var(--yoke-border); }
 
-.section-header {
-  text-align: center;
-  margin-bottom: 56px;
+.section-head {
+  text-align: left;
+  margin-bottom: 48px;
 }
 .section-label {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
@@ -667,18 +634,18 @@ a { text-decoration: none; }
   font-weight: 700;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--yoke-brand-text);
+  color: var(--yoke-text-3);
   display: block;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
-.label-dark { color: #0b1220; }
 .section-h2 {
-  font-size: clamp(26px, 4vw, 42px);
-  font-weight: 800;
+  font-size: clamp(28px, 4.2vw, 54px);
+  font-weight: 900;
   color: var(--yoke-text-1);
   margin: 0;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  max-width: 22em;
 }
 
 /* ────────────────────────────────────────────────
@@ -686,19 +653,18 @@ a { text-decoration: none; }
 ──────────────────────────────────────────────── */
 .arch-diagram {
   width: 100%;
-  margin-top: 8px;
   overflow-x: auto;
 }
 .arch-img {
   display: block;
   width: 100%;
   max-width: 960px;
-  margin: 0 auto;
   border-radius: 10px;
+  border: 1px solid var(--yoke-border);
 }
 
 /* ────────────────────────────────────────────────
-   CORE CAPABILITIES
+   CORE CAPABILITIES — hairline grid, light cards
 ──────────────────────────────────────────────── */
 .caps-grid {
   display: grid;
@@ -710,61 +676,75 @@ a { text-decoration: none; }
   overflow: hidden;
 }
 .cap-card {
-  background: var(--yoke-bg-soft);
-  padding: 32px 28px;
+  background: var(--yoke-bg);
+  padding: 28px 26px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
   transition: background 0.2s;
   cursor: default;
-  /* Let 1fr tracks shrink below content size — `white-space: pre` code
-     blocks would otherwise blow the grid out and clip the last column. */
+  /* Let 1fr tracks shrink below content size. */
   min-width: 0;
 }
-.cap-card:hover {
-  background: var(--yoke-bg-elev);
-  box-shadow: inset 0 0 0 1px var(--yoke-brand);
-}
-.cap-top { display: flex; flex-direction: column; gap: 10px; }
-.cap-num {
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--yoke-accent-text);
-  letter-spacing: 0.1em;
+.cap-card:hover { background: var(--yoke-bg-elev); }
+.cap-ico {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--yoke-border);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--yoke-brand);
+  background: var(--yoke-bg-soft);
+  margin-bottom: 4px;
 }
 .cap-title {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  /* no text-transform: would mangle brand casing like "ReAct" in mixed CJK/Latin titles */
   color: var(--yoke-text-1);
   margin: 0;
-  line-height: 1.2;
+  line-height: 1.35;
 }
 .cap-desc {
   font-size: 13px;
   color: var(--yoke-text-2);
   line-height: 1.7;
   margin: 0;
-}
-.cap-code {
-  background: #0d1526;
-  border: 1px solid #1e2c4a;
-  border-radius: 6px;
-  padding: 16px;
-  font-size: 12px;
-  line-height: 1.65;
-  color: #c9d3e8;
-  overflow-x: auto;
-  margin: 0;
-  white-space: pre;
   flex: 1;
-  min-width: 0;
-  max-width: 100%;
 }
-.cap-code code {
+.cap-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  font-size: 11px;
+  line-height: 1;
+  padding: 5px 9px;
+  border: 1px solid var(--yoke-border);
+  border-radius: 999px;
+  color: var(--yoke-text-2);
+  white-space: nowrap;
+}
+.cap-more {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  background: none;
-  color: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--yoke-text-1);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: var(--yoke-border);
+  transition: color 0.15s, text-decoration-color 0.15s;
+  margin-top: 4px;
+}
+.cap-more:hover {
+  color: var(--yoke-accent-text);
+  text-decoration-color: var(--yoke-accent-text);
 }
 
 /* ────────────────────────────────────────────────
@@ -780,30 +760,26 @@ a { text-decoration: none; }
   overflow: hidden;
 }
 .case-card {
-  background: var(--yoke-bg-soft);
-  padding: 28px 24px;
+  background: var(--yoke-bg);
+  padding: 26px 24px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  border-left: 3px solid transparent;
-  transition: border-color 0.2s, background 0.2s;
+  gap: 8px;
+  transition: background 0.2s;
   cursor: default;
   min-width: 0;
 }
-.case-card:hover {
-  border-left-color: var(--yoke-accent);
-  background: var(--yoke-bg-elev);
-}
+.case-card:hover { background: var(--yoke-bg-elev); }
 .case-num {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 11px;
-  color: var(--yoke-text-3);
+  color: var(--yoke-accent-text);
   font-weight: 700;
-  align-self: flex-end;
 }
 .case-title {
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
   color: var(--yoke-text-1);
   margin: 0;
 }
@@ -817,8 +793,6 @@ a { text-decoration: none; }
 /* ────────────────────────────────────────────────
    ROADMAP
 ──────────────────────────────────────────────── */
-.section-roadmap { border-top: 1px solid var(--yoke-border); }
-
 .roadmap-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -828,29 +802,25 @@ a { text-decoration: none; }
   border-radius: 12px;
   overflow: hidden;
 }
-
 .roadmap-card {
-  background: var(--yoke-bg-soft);
-  padding: 32px 28px;
+  background: var(--yoke-bg);
+  padding: 30px 28px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
   border-left: 3px solid transparent;
   transition: background 0.2s;
   min-width: 0;
 }
-
 .roadmap-card--active {
   border-left-color: var(--yoke-accent);
   background: var(--yoke-bg-elev);
 }
-
 .roadmap-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
-
 .roadmap-phase {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 11px;
@@ -859,7 +829,6 @@ a { text-decoration: none; }
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
-
 .roadmap-status {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 10px;
@@ -871,21 +840,18 @@ a { text-decoration: none; }
   border: 1px solid var(--yoke-border);
   border-radius: 4px;
 }
-
 .roadmap-status--active {
   color: var(--yoke-accent-text);
   border-color: var(--yoke-accent-text);
   background: rgba(245, 166, 35, 0.1);
 }
-
 .roadmap-title {
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 800;
   color: var(--yoke-text-1);
   margin: 0;
-  line-height: 1.25;
+  line-height: 1.3;
 }
-
 .roadmap-items {
   list-style: none;
   margin: 0;
@@ -894,7 +860,6 @@ a { text-decoration: none; }
   flex-direction: column;
   gap: 8px;
 }
-
 .roadmap-item {
   font-size: 13px;
   color: var(--yoke-text-2);
@@ -902,7 +867,6 @@ a { text-decoration: none; }
   padding-left: 16px;
   position: relative;
 }
-
 .roadmap-item::before {
   content: '—';
   position: absolute;
@@ -912,90 +876,26 @@ a { text-decoration: none; }
 }
 
 /* ────────────────────────────────────────────────
-   CTA
+   FINAL CTA — manifesto on page background
 ──────────────────────────────────────────────── */
-.section-cta {
-  background: #f5a623;
-  padding: 88px 24px;
-}
-.cta-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 64px;
-  align-items: center;
-  max-width: 1040px;
-  margin: 0 auto;
-}
+.section-cta { padding-bottom: 104px; }
 .cta-h2 {
-  font-size: clamp(26px, 4vw, 44px);
+  font-size: clamp(30px, 4.6vw, 58px);
   font-weight: 900;
-  color: #0b1220;
-  margin: 12px 0 16px;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
+  color: var(--yoke-text-1);
+  margin: 0 0 20px;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  max-width: 20em;
 }
 .cta-sub {
   font-size: 15px;
-  color: rgba(11, 18, 32, 0.7);
+  color: var(--yoke-text-2);
   line-height: 1.7;
-  margin: 0 0 32px;
+  max-width: 620px;
+  margin: 0 0 36px;
 }
 .cta-btns { display: flex; gap: 12px; flex-wrap: wrap; }
-.btn-dark {
-  display: inline-flex;
-  align-items: center;
-  padding: 12px 24px;
-  border-radius: 6px;
-  background: #0b1220;
-  color: #e6eaf2;
-  font-weight: 700;
-  font-size: 14px;
-  transition: background 0.15s;
-}
-.btn-dark:hover { background: #16223d; }
-.btn-dark-ghost {
-  display: inline-flex;
-  align-items: center;
-  padding: 12px 24px;
-  border-radius: 6px;
-  border: 2px solid rgba(11, 18, 32, 0.3);
-  color: #0b1220;
-  font-weight: 700;
-  font-size: 14px;
-  transition: border-color 0.15s;
-}
-.btn-dark-ghost:hover { border-color: #0b1220; }
-.cta-terminal {
-  border-radius: 10px;
-  border: 1px solid rgba(11, 18, 32, 0.2);
-  background: #0d1526;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(11, 18, 32, 0.45);
-}
-.cta-terminal-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background: #111b31;
-  border-bottom: 1px solid #1e2c4a;
-}
-.dot-dark { background: #1e2c4a; }
-.cta-code {
-  padding: 24px 20px;
-  font-size: 13px;
-  line-height: 1.75;
-  margin: 0;
-  white-space: pre;
-  overflow-x: auto;
-}
-.cta-code code {
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  background: none;
-  color: #c9d3e8;
-}
-.code-comment { color: #5c6a85; }
-.code-prompt { color: #f5a623; font-weight: 700; }
 
 /* ────────────────────────────────────────────────
    FOOTER
@@ -1006,7 +906,7 @@ a { text-decoration: none; }
   padding: 32px 24px;
 }
 .footer-inner {
-  max-width: 1040px;
+  max-width: 1080px;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -1036,25 +936,11 @@ a { text-decoration: none; }
    RESPONSIVE
 ──────────────────────────────────────────────── */
 @media (max-width: 900px) {
-  .caps-grid { grid-template-columns: 1fr; }
-  .cases-grid { grid-template-columns: 1fr; }
-  .roadmap-grid { grid-template-columns: 1fr; }
-  .cta-grid { grid-template-columns: 1fr; gap: 40px; }
-}
-
-@media (max-width: 768px) {
-  .hero { padding: 72px 20px 64px; }
-  .hero-headline { font-size: clamp(32px, 9vw, 48px); }
+  .caps-grid, .cases-grid, .roadmap-grid { grid-template-columns: 1fr; }
+  .stats-inner { grid-template-columns: repeat(2, 1fr); gap: 32px 24px; }
+  .hero { padding: 80px 20px 64px; }
   .section { padding: 64px 20px; }
-  .stats-inner { flex-wrap: wrap; gap: 24px; justify-content: center; }
-  .stat-divider { display: none; }
-  .stat { flex: none; width: 100px; }
   .footer-inner { flex-direction: column; gap: 20px; text-align: center; }
   .footer-links { justify-content: center; }
-}
-
-@media (max-width: 480px) {
-  .hero-ctas { flex-direction: column; align-items: center; }
-  .btn-primary, .btn-ghost { width: 200px; justify-content: center; }
 }
 </style>

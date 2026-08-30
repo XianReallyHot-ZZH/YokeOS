@@ -29,9 +29,15 @@
 
 The demand side is no longer in question — every enterprise has work that should go to Agents. What blocks enterprises is not *building* an Agent but *running it under control*:
 
-- Core data must stay in-house — putting business Agents on a SaaS or public-cloud control plane fails compliance.
-- Execution is a black box — nobody signs off on a system that leaves no trace. **88.4%** of organizations experienced an AI-Agent-related security incident in the past 12 months (AvePoint, 750 IT leaders); **31%** admit they lack observability or auditability for Agent systems (Trend AI, 3,700 decision makers). The top self-reported blockers are integrating existing systems (46%), data access and quality (42%), and security and compliance (40%) — *"agent adoption is no longer limited by model capability"* (Anthropic, 2026 State of AI Agents Report).
-- Over-privileged identities are the new attack surface — **90%** of deployed Agents carry excess permissions (CyberArk), and MIT NANDA finds **95%** of GenAI pilots produce no measurable P&L impact, with the gap in organizational integration, not model capability.
+| The problem | YokeOS's answer |
+| --- | --- |
+| *Agents on SaaS or cloud control planes fail compliance?* | Private deployment on your own K8s, VMs, or bare metal — data never leaves, no cloud lock-in |
+| *Nobody signs off on a black box?* | Path/command/domain whitelist sandbox + audit tables (`tool_invocations`, `llm_calls`) persisted from day one |
+| *Over-privileged agent identities?* | Least privilege by construction — explicit tool subsets, credential via environment variables, never persisted |
+| *Every agent rebuilds the same plumbing?* | One foundation: channels, model routing, tools, memory, and scheduling shared across the whole fleet |
+| *Cross-language glue tax for Java enterprises?* | Java 21 + Spring Boot native — your existing ops toolchain, audit process, and services just fit |
+
+The hard numbers behind these problems: **88.4%** of organizations experienced an AI-Agent-related security incident in the past 12 months (AvePoint, 750 IT leaders); **31%** admit they lack observability or auditability for Agent systems (Trend AI, 3,700 decision makers). The top self-reported blockers are integrating existing systems (46%), data access and quality (42%), and security and compliance (40%) — *"agent adoption is no longer limited by model capability"* (Anthropic, 2026 State of AI Agents Report). **90%** of deployed Agents carry excess permissions (CyberArk), and MIT NANDA finds **95%** of GenAI pilots produce no measurable P&L impact — the gap is organizational integration, not model capability.
 
 **None of these are solved by a stronger model. They are all foundation problems.** The deepest judgment behind YokeOS: *the bottleneck for reliable agents in production is not the model — it's the runtime environment.* YokeOS doesn't claim to have invented this judgment; it stands on it. What it builds is not yet another Agent, but the foundation that lets a fleet of Agents run reliably and be governed.
 
