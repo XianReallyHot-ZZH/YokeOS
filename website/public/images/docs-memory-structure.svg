@@ -1,0 +1,42 @@
+<svg viewBox="0 0 820 360" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+  <rect width="820" height="360" fill="#ffffff"/>
+  <defs>
+    <marker id="ykbl4" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#3b82f6"/></marker>
+    <marker id="ykam4" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f59e0b"/></marker>
+    <marker id="ykgr4" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#22c55e"/></marker>
+  </defs>
+
+  <!-- File container -->
+  <rect x="60" y="46" width="380" height="270" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.6"/>
+  <text x="250" y="72" fill="#334155" font-size="14" font-weight="bold" text-anchor="middle">.yokeos/memory/MEMORY.md</text>
+
+  <!-- CORE partition -->
+  <rect x="76" y="86" width="348" height="98" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="250" y="112" fill="#1d4ed8" font-size="13" font-weight="bold" text-anchor="middle">## 核心记忆区 · scope=CORE</text>
+  <text x="250" y="136" fill="#334155" font-size="11" text-anchor="middle">Agent 显式指定才写入 · 永不截断</text>
+  <text x="250" y="156" fill="#334155" font-size="11" text-anchor="middle">不参与检索 —— 每轮全量注入 system prompt</text>
+
+  <!-- ARCHIVAL partition -->
+  <rect x="76" y="200" width="348" height="98" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+  <text x="250" y="226" fill="#b45309" font-size="13" font-weight="bold" text-anchor="middle">## 归档记忆区 · scope=ARCHIVAL（默认）</text>
+  <text x="250" y="250" fill="#334155" font-size="11" text-anchor="middle">超 4000 字截断 · 只保留最近内容（每条带日期 header）</text>
+  <text x="250" y="270" fill="#334155" font-size="11" text-anchor="middle">recallByKeyword 只在这里做关键词匹配</text>
+
+  <!-- save_memory chip -->
+  <rect x="520" y="96" width="240" height="48" rx="8" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+  <text x="640" y="118" fill="#4338ca" font-size="13" font-weight="bold" text-anchor="middle">save_memory(content, scope)</text>
+  <text x="640" y="136" fill="#6366f1" font-size="10" text-anchor="middle">写核心还是写归档，Agent 显式指定</text>
+
+  <!-- recall_memory chip -->
+  <rect x="520" y="220" width="240" height="48" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+  <text x="640" y="242" fill="#15803d" font-size="13" font-weight="bold" text-anchor="middle">recall_memory(query)</text>
+  <text x="640" y="260" fill="#166534" font-size="10" text-anchor="middle">只在归档区做关键词匹配</text>
+
+  <!-- Arrows -->
+  <line x1="520" y1="118" x2="432" y2="118" stroke="#3b82f6" stroke-width="2" marker-end="url(#ykbl4)"/>
+  <path d="M520,132 L472,132 L472,244 L432,244" fill="none" stroke="#f59e0b" stroke-width="2" marker-end="url(#ykam4)"/>
+  <line x1="520" y1="240" x2="432" y2="240" stroke="#22c55e" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#ykgr4)"/>
+
+  <!-- Bottom note -->
+  <text x="410" y="342" fill="#475569" font-size="12" text-anchor="middle">LongTermMemoryStore.load()：核心区全量 + 归档区截断后内容 —— 每次重新读不缓存，save_memory 下一轮立刻可见</text>
+</svg>

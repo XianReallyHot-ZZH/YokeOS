@@ -1,0 +1,58 @@
+<svg viewBox="0 0 820 460" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+  <rect width="820" height="460" fill="#ffffff"/>
+  <defs>
+    <marker id="yks3" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/></marker>
+    <marker id="yksa3" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f59e0b"/></marker>
+    <marker id="ykpu3" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#a855f7"/></marker>
+  </defs>
+
+  <!-- Caller -->
+  <rect x="250" y="24" width="320" height="54" rx="10" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+  <text x="410" y="48" fill="#4338ca" font-size="16" font-weight="bold" text-anchor="middle">上层 · ReAct 循环 / PromptBuilder</text>
+  <text x="410" y="68" fill="#6366f1" font-size="12" text-anchor="middle">每轮组装 prompt 时取记忆上下文</text>
+
+  <line x1="410" y1="78" x2="410" y2="100" stroke="#94a3b8" stroke-width="2" marker-end="url(#yks3)"/>
+
+  <!-- Facade -->
+  <rect x="185" y="102" width="450" height="58" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2.6"/>
+  <text x="410" y="128" fill="#b45309" font-size="16" font-weight="bold" text-anchor="middle">MemoryService（统一门面）</text>
+  <text x="410" y="148" fill="#92400e" font-size="12" text-anchor="middle">ReAct 循环只调一个接口，拿到完整上下文</text>
+
+  <!-- Fan to two halves -->
+  <line x1="410" y1="160" x2="410" y2="180" stroke="#f59e0b" stroke-width="2"/>
+  <line x1="190" y1="180" x2="630" y2="180" stroke="#f59e0b" stroke-width="2"/>
+  <line x1="190" y1="180" x2="190" y2="208" stroke="#f59e0b" stroke-width="2" marker-end="url(#yksa3)"/>
+  <line x1="630" y1="180" x2="630" y2="208" stroke="#f59e0b" stroke-width="2" marker-end="url(#yksa3)"/>
+
+  <!-- Session memory -->
+  <rect x="40" y="210" width="300" height="60" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="190" y="234" fill="#1d4ed8" font-size="14" font-weight="bold" text-anchor="middle">SessionManager（会话记忆）</text>
+  <text x="190" y="254" fill="#334155" font-size="11" text-anchor="middle">SQLite · sessions 表 · channel+user+agent 联合标识</text>
+
+  <!-- Long-term pluggable interface -->
+  <rect x="480" y="210" width="300" height="60" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="630" y="234" fill="#1d4ed8" font-size="14" font-weight="bold" text-anchor="middle">LongTermMemoryStore（可插拔接口）</text>
+  <text x="630" y="254" fill="#334155" font-size="11" text-anchor="middle">append(content, scope) · load · recallByKeyword</text>
+
+  <!-- Backend trunk -->
+  <line x1="630" y1="270" x2="630" y2="298" stroke="#a855f7" stroke-width="2"/>
+  <line x1="152" y1="298" x2="692" y2="298" stroke="#a855f7" stroke-width="2"/>
+  <line x1="152" y1="298" x2="152" y2="322" stroke="#a855f7" stroke-width="2" marker-end="url(#ykpu3)"/>
+  <line x1="422" y1="298" x2="422" y2="322" stroke="#a855f7" stroke-width="2" marker-end="url(#ykpu3)"/>
+  <line x1="692" y1="298" x2="692" y2="322" stroke="#a855f7" stroke-width="2" marker-end="url(#ykpu3)"/>
+
+  <!-- Three backends -->
+  <rect x="40" y="324" width="225" height="60" rx="8" fill="#ede9fe" stroke="#a855f7" stroke-width="2"/>
+  <text x="152" y="348" fill="#6b21a8" font-size="13" font-weight="bold" text-anchor="middle">MarkdownMemoryStore（默认）</text>
+  <text x="152" y="368" fill="#7c3aed" font-size="10" text-anchor="middle">MEMORY.md · 核心记忆/归档记忆 分区</text>
+  <rect x="310" y="324" width="225" height="60" rx="8" fill="#ede9fe" stroke="#a855f7" stroke-width="2"/>
+  <text x="422" y="348" fill="#6b21a8" font-size="13" font-weight="bold" text-anchor="middle">SqliteMemoryStore</text>
+  <text x="422" y="368" fill="#7c3aed" font-size="10" text-anchor="middle">memory_entries 表 · 零外部依赖</text>
+  <rect x="580" y="324" width="225" height="60" rx="8" fill="#ede9fe" stroke="#a855f7" stroke-width="2"/>
+  <text x="692" y="348" fill="#6b21a8" font-size="13" font-weight="bold" text-anchor="middle">Mem0MemoryStore</text>
+  <text x="692" y="368" fill="#7c3aed" font-size="10" text-anchor="middle">自托管 Mem0 · REST 集成 · 数据不出域</text>
+
+  <!-- Notes -->
+  <text x="410" y="418" fill="#475569" font-size="12" text-anchor="middle">换后端只改 memory.backend 一行配置，MemoryService 以上零改动 —— 接口墙的价值兑现</text>
+  <text x="410" y="440" fill="#94a3b8" font-size="11" text-anchor="middle">四条行为契约：不缓存 · 核心区永不截断 · scope 显式指定 · recall 只做关键词检索</text>
+</svg>

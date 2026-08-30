@@ -1,0 +1,297 @@
+/* ─── Brand tokens ────────────────────────────────────────────── */
+:root {
+  --vp-nav-bg-color: rgba(11, 18, 32, 0.92);
+  --vp-local-nav-bg-color: #0b1220;
+  --vp-sidebar-bg-color: #0b1220;
+  --vp-c-brand-1: #8faaff;
+  --vp-c-brand-2: #6b90ff;
+  --vp-c-brand-3: #4f7cff;
+  --vp-c-brand-soft: rgba(79, 124, 255, 0.14);
+
+  --vp-font-family-base: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --vp-font-family-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+
+  --vp-c-bg: #0b1220;
+  --vp-c-bg-soft: #111b31;
+  --vp-c-bg-mute: #1a2742;
+
+  --vp-c-text-1: #e6eaf2;
+  --vp-c-text-2: #97a3bc;
+  --vp-c-text-3: #5c6a85;
+
+  --vp-c-divider: #1e2c4a;
+  --vp-c-border: #1e2c4a;
+}
+
+/* ─── Global deep-night-blue background ───────────────────────── */
+html, body, #app {
+  background: #0b1220 !important;
+}
+
+/* ─── Hide dark mode toggle (dark-only site) ──────────────────── */
+.VPNavBarAppearance,
+.VPSwitchAppearance {
+  display: none !important;
+}
+
+/* ─── Nav ─────────────────────────────────────────────────────── */
+.VPNav {
+  border-bottom: 1px solid #1e2c4a !important;
+  background: rgba(11, 18, 32, 0.92) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+.VPNavBar {
+  background: transparent !important;
+}
+
+.VPNavBarTitle .logo {
+  height: 36px;
+  width: auto;
+}
+
+.VPNavBarTitle .title {
+  color: #e6eaf2 !important;
+}
+
+.VPNavBarTitle .title:hover {
+  opacity: 0.8;
+}
+
+.VPNavBarMenu .VPNavBarMenuLink {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #97a3bc !important;
+  transition: color 0.15s;
+}
+
+.VPNavBarMenu .VPNavBarMenuLink:hover {
+  color: #f5a623 !important;
+}
+
+/* ─── Nav dropdown ────────────────────────────────────────────── */
+.VPFlyout .menu,
+.VPFlyout .panel,
+.VPNavBarMenuGroup .panel,
+.VPNavBarMenuGroup .menu,
+.VPMenu,
+.VPFlyout > .menu,
+.VPNavBarMenuGroup > .menu {
+  background: #111b31 !important;
+  border: 1px solid #1e2c4a !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6) !important;
+}
+
+.VPMenu .item .VPMenuLink,
+.VPMenu .item .link,
+.VPFlyout .VPMenuLink,
+.VPFlyout .link {
+  color: #e6eaf2 !important;
+}
+
+.VPMenu .item .VPMenuLink:hover,
+.VPMenu .item .link:hover,
+.VPFlyout .VPMenuLink:hover,
+.VPFlyout .link:hover {
+  background: #1a2742 !important;
+  color: #f5a623 !important;
+}
+
+/* ─── Content page ────────────────────────────────────────────── */
+.VPDoc {
+  background: #0b1220 !important;
+}
+
+.VPDoc .container {
+  max-width: 1200px !important;
+}
+
+.VPDoc .content {
+  max-width: 1000px !important;
+}
+
+.VPDoc h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  color: #e6eaf2;
+  margin-bottom: 0.5rem;
+}
+
+.VPDoc h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  border-top: 1px solid #1e2c4a;
+  padding-top: 2rem;
+  margin-top: 2rem;
+  color: #e6eaf2;
+}
+
+.VPDoc h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e6eaf2;
+}
+
+.VPDoc p {
+  line-height: 1.75;
+  color: #97a3bc;
+}
+
+.VPDoc li {
+  color: #97a3bc;
+}
+
+.VPDoc a {
+  color: #8faaff !important;
+}
+
+.VPDoc a:hover {
+  color: #f5a623 !important;
+}
+
+/* Embedded diagrams: the source SVGs are light-background cards —
+   round them so they read as cards on the dark page. */
+.VPDoc img {
+  border-radius: 10px;
+}
+
+/* Code blocks */
+.vp-code-group,
+div[class*='language-'] {
+  border-radius: 8px !important;
+  border: 1px solid #1e2c4a !important;
+  background: #0d1526 !important;
+}
+
+div[class*='language-'] pre,
+div[class*='language-'] pre code {
+  background: #0d1526 !important;
+}
+
+div[class*='language-'] code,
+div[class*='language-'] code span {
+  font-size: 0.82rem;
+  color: #c9d3e8 !important;
+}
+
+div[class*='language-'] > span.lang {
+  color: #5c6a85 !important;
+}
+
+div[class*='language-'] > button.copy {
+  color: #5c6a85 !important;
+}
+
+/* Inline code */
+:not(pre) > code {
+  background: #111b31 !important;
+  border: 1px solid #1e2c4a !important;
+  border-radius: 4px !important;
+  padding: 0.1em 0.35em !important;
+  font-size: 0.85em !important;
+  color: #8faaff !important;
+}
+
+/* Tables */
+.vp-doc table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.875rem;
+}
+
+.vp-doc table th {
+  background: #111b31;
+  font-weight: 600;
+  color: #e6eaf2;
+  text-align: left;
+  padding: 0.5rem 1rem;
+  border-bottom: 2px solid #1e2c4a;
+}
+
+.vp-doc table td {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid #16223d;
+  color: #97a3bc;
+}
+
+.vp-doc table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Blockquote */
+.vp-doc blockquote {
+  border-left: 3px solid #4f7cff;
+  color: #97a3bc;
+  background: rgba(79, 124, 255, 0.06);
+  border-radius: 0 6px 6px 0;
+  padding: 2px 16px;
+}
+
+/* ─── Sidebar ─────────────────────────────────────────────────── */
+.VPSidebarItem.level-0:first-child {
+  padding-top: 24px !important;
+}
+
+.VPSidebar {
+  background: #0b1220 !important;
+  border-right: 1px solid #16223d !important;
+}
+
+.VPSidebarItem .item .link {
+  color: #97a3bc !important;
+}
+
+.VPSidebarItem .item .link:hover {
+  color: #f5a623 !important;
+}
+
+.VPSidebarItem .item .link.is-active,
+.VPSidebarItem .item .link.is-active:hover {
+  color: #f5a623 !important;
+  font-weight: 600 !important;
+}
+
+.VPSidebarItem .item .link.is-active .text {
+  color: #f5a623 !important;
+  font-weight: 600 !important;
+}
+
+.VPSidebarItem.is-active > .item > .link,
+.VPSidebarItem.is-active > .item > .link:hover {
+  background: rgba(79, 124, 255, 0.12) !important;
+  border-radius: 6px !important;
+  color: #f5a623 !important;
+  font-weight: 600 !important;
+}
+
+.VPSidebarItem.level-1.is-active > .item > .indicator {
+  background: #f5a623 !important;
+}
+
+/* ─── Home page layout overrides ──────────────────────────────── */
+.VPHome {
+  padding-bottom: 0 !important;
+  padding-top: 0 !important;
+  background: #0b1220 !important;
+}
+
+.VPPage,
+.VPContent,
+.VPLayout {
+  background: #0b1220 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Hide default VitePress home hero — custom hero in Home.vue */
+.VPHero {
+  display: none;
+}
+
+/* Hide VitePress default footer — custom footer in Home.vue */
+.VPFooter {
+  display: none !important;
+}

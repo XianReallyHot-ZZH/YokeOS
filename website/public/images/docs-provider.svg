@@ -1,0 +1,51 @@
+<svg viewBox="0 0 820 420" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+  <rect width="820" height="420" fill="#ffffff"/>
+  <defs>
+    <marker id="yks1" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/></marker>
+    <marker id="ykam1" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f59e0b"/></marker>
+    <marker id="ykgr1" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#22c55e"/></marker>
+  </defs>
+
+  <!-- Caller -->
+  <rect x="250" y="24" width="320" height="54" rx="10" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+  <text x="410" y="48" fill="#4338ca" font-size="16" font-weight="bold" text-anchor="middle">上层 · ReAct 循环</text>
+  <text x="410" y="68" fill="#6366f1" font-size="12" text-anchor="middle">传入 Profile + Prompt</text>
+
+  <line x1="410" y1="78" x2="410" y2="104" stroke="#94a3b8" stroke-width="2" marker-end="url(#yks1)"/>
+
+  <!-- Hero -->
+  <rect x="185" y="106" width="450" height="58" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2.6"/>
+  <text x="410" y="132" fill="#b45309" font-size="16" font-weight="bold" text-anchor="middle">ProviderService（统一抽象层）</text>
+  <text x="410" y="152" fill="#92400e" font-size="12" text-anchor="middle">按 Profile 选对应模型 · token 统计统一落 llm_calls</text>
+
+  <!-- Config note (right) -->
+  <rect x="655" y="106" width="150" height="58" rx="10" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="5,3"/>
+  <text x="730" y="130" fill="#475569" font-size="11" font-weight="bold" text-anchor="middle">application.yaml</text>
+  <text x="730" y="148" fill="#64748b" font-size="10" text-anchor="middle">api_key = ${ENV_VAR}</text>
+  <line x1="655" y1="135" x2="639" y2="135" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="4,3" marker-end="url(#yks1)"/>
+
+  <!-- Fan out: explicit mapping -->
+  <line x1="410" y1="164" x2="410" y2="184" stroke="#f59e0b" stroke-width="2"/>
+  <line x1="140" y1="184" x2="680" y2="184" stroke="#f59e0b" stroke-width="2"/>
+  <line x1="140" y1="184" x2="140" y2="212" stroke="#f59e0b" stroke-width="2" marker-end="url(#ykam1)"/>
+  <line x1="410" y1="184" x2="410" y2="212" stroke="#f59e0b" stroke-width="2" marker-end="url(#ykam1)"/>
+  <line x1="680" y1="184" x2="680" y2="212" stroke="#f59e0b" stroke-width="2" marker-end="url(#ykam1)"/>
+  <text x="410" y="204" fill="#64748b" font-size="10" text-anchor="middle">provider name → ChatModel 显式映射（启动建表 · 不靠类型扫描）</text>
+
+  <!-- ChatModel instances -->
+  <rect x="40" y="214" width="200" height="48" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="140" y="243" fill="#1d4ed8" font-size="14" font-weight="bold" text-anchor="middle">ChatModel · DeepSeek</text>
+  <rect x="310" y="214" width="200" height="48" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="410" y="243" fill="#1d4ed8" font-size="14" font-weight="bold" text-anchor="middle">ChatModel · Kimi</text>
+  <rect x="580" y="214" width="200" height="48" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="680" y="243" fill="#1d4ed8" font-size="14" font-weight="bold" text-anchor="middle">ChatModel · Qwen</text>
+
+  <line x1="410" y1="262" x2="410" y2="298" stroke="#22c55e" stroke-width="2" marker-end="url(#ykgr1)"/>
+
+  <!-- External -->
+  <rect x="40" y="300" width="740" height="52" rx="10" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+  <text x="410" y="331" fill="#15803d" font-size="14" font-weight="bold" text-anchor="middle">各家 LLM API（OpenAI / Anthropic / Gemini 协议 · 支持本地推理）</text>
+
+  <!-- Bottom note -->
+  <text x="410" y="390" fill="#64748b" font-size="12" text-anchor="middle">多 Provider 并存靠显式映射区分，Agent 不感知具体厂商 · 第一阶段不做 fallback / hedge racing</text>
+</svg>
