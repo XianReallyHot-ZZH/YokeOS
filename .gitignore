@@ -1,0 +1,4 @@
+# Node / VitePress build artifacts
+website/node_modules/
+website/.vitepress/dist/
+website/.vitepress/cache/
