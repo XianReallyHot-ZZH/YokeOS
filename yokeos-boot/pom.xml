@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.yokeos</groupId>
+        <artifactId>yokeos</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>yokeos-boot</artifactId>
+    <name>YokeOS Boot</name>
+    <description>Spring Boot startup module: application main class, configuration (virtual threads, actuator, logging), dependency aggregation. Builds the deployable fat JAR.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.yokeos</groupId>
+            <artifactId>yokeos-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.yokeos</groupId>
+            <artifactId>yokeos-provider</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.yokeos</groupId>
+            <artifactId>yokeos-memory</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.yokeos</groupId>
+            <artifactId>yokeos-tool</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.yokeos</groupId>
+            <artifactId>yokeos-channel-cli</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.yokeos</groupId>
+            <artifactId>yokeos-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.yokeos</groupId>
+            <artifactId>yokeos-storage</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.yokeos</groupId>
+            <artifactId>yokeos-cli</artifactId>
+        </dependency>
+
+        <!-- Observability -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+        <!-- Structured JSON logging (prod profile) -->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <!-- mainClass points at the real user entry. Until the Picocli entry lands
+                         (section 16/18), that is the Spring Boot application itself; once
+                         com.yokeos.cli.YokeOsCli exists, switch this to it (skill 坑表: fat JAR
+                         mainClass must be the CLI entry or CLI args never reach the app). -->
+                    <mainClass>com.yokeos.boot.YokeosBootApplication</mainClass>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

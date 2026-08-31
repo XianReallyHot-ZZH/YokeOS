@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Two-stage local format gate (spring-foundation-init step 11):
+#   stage 1  mvn spotless:apply   — auto-fix formatting
+#   stage 2  mvn spotless:check   — re-verify before the commit lands
+# Triggered only when staged changes include .java files. Enable once per clone:
+#   git config core.hooksPath .githooks
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+staged_java=$(git diff --cached --name-only --diff-filter=ACMR | grep '\.java$' || true)
+if [ -z "$staged_java" ]; then
+  exit 0
+fi
+
+mvn -q spotless:apply
+
+# Re-stage files reformatted by spotless:apply so the commit carries canonical formatting.
+reformatted=$(git diff --name-only | grep '\.java$' || true)
+if [ -n "$reformatted" ]; then
+  printf '%s\n' "$reformatted" | while IFS= read -r file; do
+    git add -- "$file"
+  done
+fi
+
+mvn -q spotless:check

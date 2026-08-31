@@ -2,3 +2,12 @@
 website/node_modules/
 website/.vitepress/dist/
 website/.vitepress/cache/
+
+# Java / Maven
+target/
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/

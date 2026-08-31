@@ -85,7 +85,7 @@ management:
 
 - Spotless + google-java-format（GOOGLE 风格，`removeUnusedImports` / `importOrder`，`check` 挂 verify）
 - PMD + 阿里 P3C rulesets（命名/并发/异常/集合/OOP 等）
-- Checkstyle `google_checks.xml`（validate 阶段，仅 error 级）+ 根目录 `.editorconfig`
+- Checkstyle `google_checks.xml`（validate 阶段，仅 error 级；google_checks ≥10.x 把违规默认记为 warning，**必须加 `<propertyExpansion>org.checkstyle.google.severity=error</propertyExpansion>`**，否则 error 级过滤 = 门禁哑火）+ 根目录 `.editorconfig` + `.gitattributes` 钉 LF（Windows 开发机必需）
 
 ```xml
 <plugin>
@@ -137,6 +137,10 @@ management:
 | fat JAR mainClass 指到应用类，CLI 进不了 jar | `spring-boot-maven-plugin` 的 `mainClass` 指向**真实用户入口**（CLI 主类） |
 | 表结构演进依赖 `ddl-auto=update` | SQLite 等嵌入式库 ALTER 支持弱；手工 DDL 脚本 |
 | OWASP 拖垮本地构建 | 本地 skip + CI 独立 job 分离（快慢分离） |
+| Windows 开发机新建文件是 CRLF，google-java-format 要求 LF → spotless 全量红 | 仓库根放 `.gitattributes`（`* text=auto eol=lf`）+ 跑一次 `spotless:apply` 归一；参照库无此文件（作者 Linux 开发），Windows 原生开发必须补 |
+| google_checks ≥10.x 全部违规默认 `severity=warning`，配 `violationSeverity=error` 等于关掉 Checkstyle 门禁（旧版默认 error，参照库配置已哑而不自知） | 插件配置加 `<propertyExpansion>org.checkstyle.google.severity=error</propertyExpansion>`；红测必须验证 Checkstyle 真能红，不能只验 Spotless |
+| 激活 error 级后，门禁红测只在单模块跑会漏掉其他模块的存量违规（如 public 方法缺 Javadoc），直到全量 verify 才爆 | 红测之后、收尾之前，必须跑一次**全 reactor** `mvn clean verify` 作为最终绿证据；骨架期就把 public/接口方法 Javadoc 写全 |
+| 参照库/既有项目的 CVE 补丁版本属性会过期——NVD 以扫描当日为准，钉版之后披露的新洞照样命中 | 参照版本属性只当起点；扫描红了就在同补丁线内取最新版复扫收敛，把「超出参照的 bump 及原因」写进注释 |
 | skill 与实际实现漂移 | 执行后回写：本表 + 配置片段以实际跑通的为准 |
 
 ---

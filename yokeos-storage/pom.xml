@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.yokeos</groupId>
+        <artifactId>yokeos</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>yokeos-storage</artifactId>
+    <name>YokeOS Storage</name>
+    <description>Persistence: SQLite + Spring Data JPA repositories (sessions, tool_invocations, llm_calls, JpaScheduledTaskStore). The foundation reserves the audit-table DDL only; the datasource and repositories land with section 16+.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.yokeos</groupId>
+            <artifactId>yokeos-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

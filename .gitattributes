@@ -1,0 +1,14 @@
+# Normalize all text files to LF in the repository and on checkout. google-java-format
+# (Spotless) emits LF; without this, a Windows clone rewrites every Java file to CRLF and
+# the format gate goes red on untouched files.
+* text=auto eol=lf
+
+# Windows-only script exceptions.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets.
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary

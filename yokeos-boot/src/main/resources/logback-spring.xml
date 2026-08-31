@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  YokeOS structured logging.
+  - default (dev): colored, human-readable console pattern carrying the traceId MDC field
+  - profile=prod : single-line JSON via LogstashEncoder, application tag included
+  All logging goes through SLF4J; System.out is forbidden by the coding rules.
+-->
+<configuration>
+    <!-- Registers Spring Boot's %clr / %wEx converters and base properties used below. -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <property name="LOG_PATTERN"
+              value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr([%X{traceId:-}]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx"/>
+
+    <!-- Development: colored console -->
+    <springProfile name="!prod">
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>${LOG_PATTERN}</pattern>
+                <!-- Explicit UTF-8: Chinese Windows consoles default to GBK; pair with
+                     chcp 65001 / UTF-8 OutputEncoding on the caller side. -->
+                <charset>UTF-8</charset>
+            </encoder>
+        </appender>
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+        <logger name="com.yokeos" level="DEBUG"/>
+    </springProfile>
+
+    <!-- Production: structured JSON -->
+    <springProfile name="prod">
+        <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <includeMdcKeyName>traceId</includeMdcKeyName>
+                <customFields>{"application":"yokeos"}</customFields>
+            </encoder>
+        </appender>
+        <root level="INFO">
+            <appender-ref ref="JSON"/>
+        </root>
+        <logger name="com.yokeos" level="INFO"/>
+    </springProfile>
+</configuration>

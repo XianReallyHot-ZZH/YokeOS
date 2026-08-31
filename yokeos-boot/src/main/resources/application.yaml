@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: yokeos
+  threads:
+    virtual:
+      # 决策四 / 宪法 4：同步阻塞 + JDK 21 虚拟线程承载并发，不引入响应式栈。
+      enabled: true
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: yokeos
