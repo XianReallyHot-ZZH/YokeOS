@@ -1,24 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  YokeOS structured logging.
-  - default (dev): colored, human-readable console pattern carrying the traceId MDC field
-  - profile=prod : single-line JSON via LogstashEncoder, application tag included
-  All logging goes through SLF4J; System.out is forbidden by the coding rules.
+  YokeOS 结构化日志。
+  - 默认（dev）：彩色、人类可读的控制台 pattern，携带 traceId MDC 字段
+  - profile=prod：经 LogstashEncoder 输出单行 JSON，带 application 标签
+  所有日志走 SLF4J；编码规约禁用 System.out。
 -->
 <configuration>
-    <!-- Registers Spring Boot's %clr / %wEx converters and base properties used below. -->
+    <!-- 注册下方用到的 Spring Boot %clr / %wEx 转换器与基础属性。 -->
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
 
     <property name="LOG_PATTERN"
               value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr([%X{traceId:-}]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx"/>
 
-    <!-- Development: colored console -->
+    <!-- 开发：彩色控制台 -->
     <springProfile name="!prod">
         <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
             <encoder>
                 <pattern>${LOG_PATTERN}</pattern>
-                <!-- Explicit UTF-8: Chinese Windows consoles default to GBK; pair with
-                     chcp 65001 / UTF-8 OutputEncoding on the caller side. -->
+                <!-- 显式 UTF-8：中文 Windows 控制台默认 GBK；调用侧配合 chcp 65001 / UTF-8 OutputEncoding。 -->
                 <charset>UTF-8</charset>
             </encoder>
         </appender>
@@ -28,7 +27,7 @@
         <logger name="com.yokeos" level="DEBUG"/>
     </springProfile>
 
-    <!-- Production: structured JSON -->
+    <!-- 生产：结构化 JSON -->
     <springProfile name="prod">
         <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
             <encoder class="net.logstash.logback.encoder.LogstashEncoder">

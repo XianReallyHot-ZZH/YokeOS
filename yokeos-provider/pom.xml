@@ -12,7 +12,7 @@
 
     <artifactId>yokeos-provider</artifactId>
     <name>YokeOS Provider</name>
-    <description>Capability 1 (LLM): ProviderService thin wrapper, Function Calling adaptation, explicit provider name -> ChatModel mapping (constitution 3). Spring AI dependencies land with section 16.</description>
+    <description>核心能力一（对接 LLM）：ProviderService 薄包装、Function Calling 适配、provider name → ChatModel 显式映射（宪法 3）。Spring AI 依赖随第 16 节落地。</description>
 
     <dependencies>
         <dependency>

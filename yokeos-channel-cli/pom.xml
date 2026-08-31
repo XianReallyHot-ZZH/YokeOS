@@ -12,7 +12,7 @@
 
     <artifactId>yokeos-channel-cli</artifactId>
     <name>YokeOS CLI Channel</name>
-    <description>Inbound channel: CliChannel implementation of `yokeos chat` (reads stdin, writes stdout, calls AgentService.process). Lands with section 18.</description>
+    <description>入站渠道：CliChannel 实现 yokeos chat（读 stdin 写 stdout，调 AgentService.process）。随第 18 节落地。</description>
 
     <dependencies>
         <dependency>

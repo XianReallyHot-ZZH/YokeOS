@@ -15,11 +15,11 @@ on:
       - 'docs/**'
   workflow_dispatch:
 
-# Least privilege: this workflow only needs to read the repo.
+# 最小权限：本 workflow 只需要读仓库。
 permissions:
   contents: read
 
-# One run per PR / branch; cancel superseded pushes to save runners.
+# 每个 PR / 分支一次运行；同分支新推送自动取消旧运行，省 runner。
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -36,8 +36,8 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
-      # Full quality gate: spotless → checkstyle → compile → test → pmd/p3c →
-      # spotbugs+findsecbugs. Any violation fails the job.
+      # 全量质量门禁：spotless → checkstyle → compile → test → pmd/p3c →
+      # spotbugs+findsecbugs。任何违规即 job 失败。
       - name: mvn verify
         run: mvn -B clean verify
 
@@ -47,7 +47,7 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
-      actions: write # upload-artifact
+      actions: write # 上传 artifact 报告
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-java@v5
@@ -55,9 +55,8 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
-      # Package only (skip quality plugins already covered by `build`), then run
-      # Dependency-Check aggregate. Keeps CVE failures easy to spot. NVD feed uses
-      # Dependency-Check's nightly cache (no NVD API key needed).
+      # 只打包（跳过 build job 已覆盖的质量插件），再跑 Dependency-Check aggregate——
+      # CVE 失败一眼可辨。NVD 数据走 Dependency-Check 夜间缓存（无需 API key）。
       - name: package (skip quality plugins)
         run: >-
           mvn -B clean package -DskipTests

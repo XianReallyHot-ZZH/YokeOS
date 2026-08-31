@@ -10,9 +10,7 @@ import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/**
- * ${ENV_VAR} placeholder resolution and required-key validation (docs/TechnicalSolution.md §8.8).
- */
+/** ${ENV_VAR} 占位符解析与必填键校验（docs/TechnicalSolution.md §8.8）。 */
 class ConfigLoaderTest {
 
   private final ConfigLoader loader = new ConfigLoader();

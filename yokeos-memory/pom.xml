@@ -12,7 +12,7 @@
 
     <artifactId>yokeos-memory</artifactId>
     <name>YokeOS Memory</name>
-    <description>Capability 3 (Memory): MemoryService unified facade, LongTermMemoryStore pluggable backends (markdown / sqlite / mem0), MemoryTools (save/recall). Lands with section 22.</description>
+    <description>核心能力三（记忆）：MemoryService 统一门面、LongTermMemoryStore 可插拔三档后端（markdown / sqlite / mem0）、MemoryTools（save/recall）。随第 22 节落地。</description>
 
     <dependencies>
         <dependency>

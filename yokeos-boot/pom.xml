@@ -12,7 +12,7 @@
 
     <artifactId>yokeos-boot</artifactId>
     <name>YokeOS Boot</name>
-    <description>Spring Boot startup module: application main class, configuration (virtual threads, actuator, logging), dependency aggregation. Builds the deployable fat JAR.</description>
+    <description>Spring Boot 启动模块：应用主类、配置（虚拟线程、actuator、日志）、依赖聚合。产出可部署的 fat JAR。</description>
 
     <dependencies>
         <dependency>
@@ -48,7 +48,7 @@
             <artifactId>yokeos-cli</artifactId>
         </dependency>
 
-        <!-- Observability -->
+        <!-- 可观测性 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
@@ -58,7 +58,7 @@
             <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
 
-        <!-- Structured JSON logging (prod profile) -->
+        <!-- 结构化 JSON 日志（prod profile） -->
         <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
@@ -77,10 +77,9 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <!-- mainClass points at the real user entry. Until the Picocli entry lands
-                         (section 16/18), that is the Spring Boot application itself; once
-                         com.yokeos.cli.YokeOsCli exists, switch this to it (skill 坑表: fat JAR
-                         mainClass must be the CLI entry or CLI args never reach the app). -->
+                    <!-- mainClass 指向真实用户入口。Picocli 入口落地（第 16/18 节）之前就是
+                         Spring Boot 应用本体；com.yokeos.cli.YokeOsCli 出现后切过去
+                         （skill 坑表：fat JAR mainClass 必须指 CLI 入口，否则 CLI 参数进不了 jar）。 -->
                     <mainClass>com.yokeos.boot.YokeosBootApplication</mainClass>
                 </configuration>
                 <executions>

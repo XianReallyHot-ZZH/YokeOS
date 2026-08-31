@@ -1,13 +1,12 @@
-# Normalize all text files to LF in the repository and on checkout. google-java-format
-# (Spotless) emits LF; without this, a Windows clone rewrites every Java file to CRLF and
-# the format gate goes red on untouched files.
+# 仓库内与检出时统一为 LF。google-java-format（Spotless）产出 LF；没有这份文件，
+# Windows 克隆会把每个 Java 文件重写成 CRLF，格式门禁在没人动过的文件上直接变红。
 * text=auto eol=lf
 
-# Windows-only script exceptions.
+# Windows 专属脚本的例外。
 *.bat text eol=crlf
 *.cmd text eol=crlf
 
-# Binary assets.
+# 二进制资产。
 *.png binary
 *.jpg binary
 *.gif binary

@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** Envelope contract: four fields, shared by success and error (docs/TechnicalSolution.md §7.1). */
+/** 信封契约：四个字段，成功与错误共用（docs/TechnicalSolution.md §7.1）。 */
 class ApiResponseTest {
 
   @Test

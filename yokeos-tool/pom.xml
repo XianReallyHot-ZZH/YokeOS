@@ -12,7 +12,7 @@
 
     <artifactId>yokeos-tool</artifactId>
     <name>YokeOS Tool</name>
-    <description>Capability 4 (Tool), one module by constitution 5: built-in Tools (File/Shell/Http/Memory/Notify), MCP client, ToolRegistry, Sandbox interface + WhitelistSandbox, NotifyChannelAdapter interface + WebhookNotifyAdapter. Lands with sections 19/20/24.</description>
+    <description>核心能力四（工具），宪法 5 三合一模块：内置 Tool（File/Shell/Http/Memory/Notify）、MCP Client、ToolRegistry、Sandbox 接口 + WhitelistSandbox、NotifyChannelAdapter 接口 + WebhookNotifyAdapter。随第 19/20/24 节落地。</description>
 
     <dependencies>
         <dependency>

@@ -1,13 +1,9 @@
 package com.yokeos.cli.config;
 
-/**
- * Configuration is missing or invalid at load time. Carries every offending key in its message so a
- * broken setup is fixable in one pass — configuration problems fail loudly at startup, never
- * silently (docs/TechnicalSolution.md §8.8).
- */
+/** 配置缺失或非法时抛出。message 里点名每一个问题键，坏掉的配置一轮就能改全——配置问题在启动时 大声失败，绝不静默（docs/TechnicalSolution.md §8.8）。 */
 public class ConfigLoadException extends RuntimeException {
 
-  /** Creates the exception with a message naming every offending configuration key. */
+  /** 以点名全部问题配置键的消息创建异常。 */
   public ConfigLoadException(String message) {
     super(message);
   }

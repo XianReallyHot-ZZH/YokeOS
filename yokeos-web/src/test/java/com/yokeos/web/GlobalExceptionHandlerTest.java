@@ -10,10 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-/**
- * Exception-to-envelope mappings (docs/TechnicalSolution.md §7.4): 400 / 404 / 503 / 500, with
- * sanitized outbound messages and full details only in server logs.
- */
+/** 异常到信封的映射（docs/TechnicalSolution.md §7.4）：400 / 404 / 503 / 500，对外消息净化， 完整细节只进服务端日志。 */
 class GlobalExceptionHandlerTest {
 
   private final GlobalExceptionHandler handler = new GlobalExceptionHandler();

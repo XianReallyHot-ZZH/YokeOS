@@ -12,7 +12,7 @@
 
     <artifactId>yokeos-web</artifactId>
     <name>YokeOS Web</name>
-    <description>Capability 6 (Web Service): 7 ApiControllers, GlobalExceptionHandler, OpenAPI docs, Web admin console static hosting. The foundation ships the response envelope, exception mapping and OpenAPI wiring; endpoints land with section 26.</description>
+    <description>核心能力六（对外服务）：7 个 ApiController、GlobalExceptionHandler、OpenAPI 文档、Web 管理台静态资源托管。地基交付响应信封、异常映射与 OpenAPI 接线；端点随第 26 节落地。</description>
 
     <dependencies>
         <dependency>

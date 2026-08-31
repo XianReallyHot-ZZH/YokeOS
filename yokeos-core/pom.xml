@@ -12,7 +12,7 @@
 
     <artifactId>yokeos-core</artifactId>
     <name>YokeOS Core</name>
-    <description>Core abstractions and contracts: YokeTool, Session, Profile, AgentLoader, ContextLoader, ReActLoop, PromptBuilder, ToolExecutor, AgentService, AgentScheduler, AgentLifecycleService, ScheduledTaskStore. Depends on no internal module — downstream modules implement these contracts.</description>
+    <description>核心抽象与契约：YokeTool、Session、Profile、AgentLoader、ContextLoader、ReActLoop、PromptBuilder、ToolExecutor、AgentService、AgentScheduler、AgentLifecycleService、ScheduledTaskStore。不依赖任何内部模块——契约由此下发，下游模块实现。</description>
 
     <dependencies>
         <dependency>

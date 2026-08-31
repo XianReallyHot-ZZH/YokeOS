@@ -25,6 +25,8 @@ YokeOS 是用 Java 实现的面向企业场景的 **Agent 底座（Agent Harness
 | API 文档 | springdoc-openapi 2.6.0 |
 | 构建 | Maven 多模块（groupId `com.yokeos`），fat JAR |
 
+**代码注释约定**：中文为主，技术术语保留英文原词（traceId、fat JAR、`${ENV_VAR}` 等）；注释只写为什么（H5），出处逐字引用宪法/文档条款（如「宪法 7：审计 day one」）。
+
 ---
 
 ## 模块结构（9 个）

@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
 
-/** Aggregated context must load with every module attached, on the foundation configuration. */
+/** 聚合后的上下文必须带着全部模块装载成功，并跑在地基配置上。 */
 @SpringBootTest
 class YokeosBootApplicationLoadTest {
 
@@ -17,7 +17,7 @@ class YokeosBootApplicationLoadTest {
   @Test
   @DisplayName("Spring 上下文随九模块聚合正常装配")
   void contextLoads() {
-    // Reaching here means the aggregated context loaded; pin the application identity too.
+    // 能跑到这里说明聚合上下文已装载；顺带钉住应用标识。
     assertEquals("yokeos", environment.getProperty("spring.application.name"));
   }
 

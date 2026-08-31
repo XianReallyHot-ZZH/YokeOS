@@ -3,12 +3,10 @@ package com.yokeos.web.common;
 import java.time.Instant;
 
 /**
- * Unified REST response envelope returned by every YokeOS API endpoint (docs/TechnicalSolution.md
- * §7.1): success and error share one shape, so clients always parse the same four fields.
- * Convention mirrors the reference implementation: {@code code} is 0 on success and the HTTP status
- * value on errors.
+ * 统一 REST 响应信封，所有 YokeOS API 端点共用（docs/TechnicalSolution.md §7.1）：成功与错误共用
+ * 同一形状，客户端永远解析同样的四个字段。约定镜像参照实现：{@code code} 成功为 0，错误为 HTTP 状态值。
  *
- * @param <T> payload type
+ * @param <T> 载荷类型
  */
 public class ApiResponse<T> {
 
@@ -17,7 +15,7 @@ public class ApiResponse<T> {
   private final T data;
   private final long timestamp;
 
-  /** Creates an envelope with the given body code, message and payload; timestamp is set to now. */
+  /** 按给定 body code、message、载荷创建信封；timestamp 取当前时刻。 */
   public ApiResponse(int code, String message, T data) {
     this.code = code;
     this.message = message;
@@ -25,12 +23,12 @@ public class ApiResponse<T> {
     this.timestamp = Instant.now().toEpochMilli();
   }
 
-  /** Builds a success response carrying the given payload. */
+  /** 构建成功响应，携带给定载荷。 */
   public static <T> ApiResponse<T> ok(T data) {
     return new ApiResponse<>(0, "success", data);
   }
 
-  /** Builds an error response with the HTTP status value as the body code. */
+  /** 构建错误响应，body 的 code 取 HTTP 状态值。 */
   public static <T> ApiResponse<T> error(int code, String message) {
     return new ApiResponse<>(code, message, null);
   }

@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  OWASP Dependency-Check suppressions.
+  OWASP Dependency-Check 抑制清单。
 
-  Only first-party false positives belong here (e.g. the scanner matching a YokeOS artifact
-  to an unrelated CVE by name similarity). Suppressing a real finding on a third-party
-  dependency is a design decision: stop, record it in an ADR, then suppress with rationale.
+  只放「第一方误报」（例如扫描器按名字相似度把 YokeOS 构件匹配到不相关 CVE）。
+  压制第三方依赖上的真实发现属于设计决策：停下、落 ADR 记录，再带理由压制。
 -->
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.4.xsd"/>

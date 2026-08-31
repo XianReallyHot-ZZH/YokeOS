@@ -9,24 +9,19 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Foundation config loader (docs/TechnicalSolution.md §8.8): resolves {@code ${ENV_VAR}}
- * placeholders against environment variables and validates required keys up front. The sections
- * that actually consume provider/MCP credentials call this from the startup path; the class lives
- * in {@code yokeos-cli} because it is the process entry module.
+ * 地基配置加载器（docs/TechnicalSolution.md §8.8）：把 {@code ${ENV_VAR}} 占位符解析为环境变量 取值，并提前校验必填键。真正消费
+ * Provider/MCP 凭证的节次从启动路径调用它；类放 {@code yokeos-cli} 是因为它是进程入口模块。
  */
 public final class ConfigLoader {
 
   private static final Pattern PLACEHOLDER = Pattern.compile("\\$\\{([^}]+)}");
 
-  /** Resolves every {@code ${ENV_VAR}} placeholder against the real process environment. */
+  /** 把原始配置里的每个 {@code ${ENV_VAR}} 占位符按真实进程环境解析。 */
   public Map<String, String> resolve(Map<String, String> raw) {
     return resolve(raw, System.getenv()::get);
   }
 
-  /**
-   * Resolves {@code ${ENV_VAR}} placeholders using the given environment lookup. Reports all
-   * unresolved placeholders in one error — the missing-variable list is fixable in one pass.
-   */
+  /** 用给定的环境查找源解析 {@code ${ENV_VAR}} 占位符。一次报出全部未解析占位符——缺失变量清单 一轮补齐。 */
   public Map<String, String> resolve(Map<String, String> raw, EnvLookup env) {
     Map<String, String> resolved = new LinkedHashMap<>();
     List<String> missing = new ArrayList<>();
@@ -40,10 +35,7 @@ public final class ConfigLoader {
     return resolved;
   }
 
-  /**
-   * Validates that required keys exist and are non-blank after placeholder resolution. Blank counts
-   * as missing: an empty value is an invalid credential, not a present one.
-   */
+  /** 校验必填键在占位符解析后存在且非空白。空白按缺失算：空值是无效凭证，不是已配置。 */
   public void requireKeys(Map<String, String> resolved, Collection<String> required) {
     List<String> missing = new ArrayList<>();
     for (String key : required) {
@@ -77,11 +69,11 @@ public final class ConfigLoader {
     return result.toString();
   }
 
-  /** Environment lookup seam; production passes {@link System#getenv}, tests pass a fixed map. */
+  /** 环境查找接缝；生产传 {@link System#getenv}，测试传固定映射。 */
   @FunctionalInterface
   public interface EnvLookup {
 
-    /** Returns the environment value for the variable, or {@code null} when it is unset. */
+    /** 返回变量对应的环境值；未设置时返回 {@code null}。 */
     String get(String variable);
   }
 }

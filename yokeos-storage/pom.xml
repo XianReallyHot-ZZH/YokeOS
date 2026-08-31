@@ -12,7 +12,7 @@
 
     <artifactId>yokeos-storage</artifactId>
     <name>YokeOS Storage</name>
-    <description>Persistence: SQLite + Spring Data JPA repositories (sessions, tool_invocations, llm_calls, JpaScheduledTaskStore). The foundation reserves the audit-table DDL only; the datasource and repositories land with section 16+.</description>
+    <description>持久化：SQLite + Spring Data JPA 仓储（sessions、tool_invocations、llm_calls、JpaScheduledTaskStore）。地基只预留审计两表 DDL；数据源与仓储随第 16+ 节落地。</description>
 
     <dependencies>
         <dependency>

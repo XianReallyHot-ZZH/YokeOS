@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+<!--
+  Checkstyle 定点豁免清单（经 google_checks 内置的 optional SuppressionFilter 生效）。
+  只豁免工具对中文的盲区，不豁免真实检查项；新增豁免必须写明盲区原因。
+-->
+<suppressions>
+    <!-- SummaryJavadoc 只认 ASCII 句号 '.'，不识别中文句号「。」——对中文 javadoc 是工具
+         盲区而非写法问题（本项目注释约定：中文为主，见 CLAUDE.md）。定点豁免此一项，
+         其余 error 级检查照常执法。 -->
+    <suppress checks="SummaryJavadoc"/>
+</suppressions>

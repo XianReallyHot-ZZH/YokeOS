@@ -12,7 +12,7 @@
 
     <artifactId>yokeos-cli</artifactId>
     <name>YokeOS CLI</name>
-    <description>Command-line entry: Picocli main entry, 12 subcommands, ConfigLoader. The foundation ships ConfigLoader (${ENV_VAR} resolution + startup validation); the CLI entry and subcommands land with sections 16/18.</description>
+    <description>命令行入口：Picocli 主入口、12 个子命令、ConfigLoader。地基交付 ConfigLoader（${ENV_VAR} 解析 + 启动校验）；CLI 主类与子命令随第 16/18 节落地。</description>
 
     <dependencies>
         <dependency>

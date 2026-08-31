@@ -1,13 +1,13 @@
-# Node / VitePress build artifacts
+# Node / VitePress 构建产物
 website/node_modules/
 website/.vitepress/dist/
 website/.vitepress/cache/
 
-# Java / Maven
+# Java / Maven 构建产物
 target/
 *.class
 
-# IDE
+# IDE 工程文件
 .idea/
 *.iml
 .vscode/

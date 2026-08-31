@@ -9,10 +9,7 @@ import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/**
- * Skeleton-period smoke test for the reserved audit DDL (constitution 7): both day-one audit tables
- * must exist as hand-maintained scripts before section 16 starts writing to them.
- */
+/** 审计 DDL 预留位的骨架期冒烟测试（宪法 7）：第 16 节开始写入之前，两张 day-one 审计表必须先以 手工脚本的形式存在。 */
 class StorageAuditDdlTest {
 
   @Test
