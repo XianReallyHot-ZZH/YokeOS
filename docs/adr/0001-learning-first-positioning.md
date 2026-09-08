@@ -8,7 +8,7 @@ YokeOS 定位为学习型项目：通过全程 AI 编程复刻 OryxOS，学习 A
 4. 等价第 32 节：阶段总结 + SDD 方法论反检记录
 5. 测试密度 ≥88%
 
-参照库 `vendors/oryxos` submodule 钉 `origin/main`（课后演进与 release 参照）；教学文章不在 main 上，经本地保留的 `class-30` 分支访问，因版权不拷入本仓。
+参照库 `vendors/oryxos` submodule 钉 `v0.1.0-RELEASE`（`bb0e7ef` = 第 31 节发布形态，第一阶段功能与结构对标锚点；课后演进与 release 可随时 fetch `origin/main` 参照）；教学文章不在 main 上，经本地保留的 `class-30` 分支访问，因版权不拷入本仓。
 
 ## Considered Options
 
