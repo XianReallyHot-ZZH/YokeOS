@@ -1,0 +1,36 @@
+<svg viewBox="0 0 820 380" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+  <rect width="820" height="380" fill="#ffffff"/>
+  <!-- ════════ defs：marker（yk 前缀） ════════ -->
+  <defs>
+    <marker id="yks" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/></marker>
+    <marker id="ykam" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f59e0b"/></marker>
+    <marker id="ykgr" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#22c55e"/></marker>
+  </defs>
+  <!-- ════════ 上层调用方 ════════ -->
+  <rect x="250" y="24" width="320" height="54" rx="10" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+  <text x="410" y="48" fill="#4338ca" font-size="16" font-weight="bold" text-anchor="middle">上层 · ReAct 循环</text>
+  <text x="410" y="68" fill="#6366f1" font-size="12" text-anchor="middle">传入 Profile（AGENT.md frontmatter 派生）+ Prompt</text>
+  <line x1="410" y1="78" x2="410" y2="102" stroke="#94a3b8" stroke-width="2" marker-end="url(#yks)"/>
+  <!-- ════════ 主角：ProviderService ════════ -->
+  <rect x="185" y="104" width="450" height="58" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2.6"/>
+  <text x="410" y="130" fill="#b45309" font-size="16" font-weight="bold" text-anchor="middle">ProviderService（前台 / 统一抽象层）</text>
+  <text x="410" y="150" fill="#92400e" font-size="12" text-anchor="middle">按 Profile 挑对模型 · 吸收各家协议差异 · 只翻译不执行</text>
+  <!-- ════════ 显式映射 fan-out ════════ -->
+  <line x1="410" y1="162" x2="410" y2="182" stroke="#f59e0b" stroke-width="2"/>
+  <line x1="140" y1="182" x2="680" y2="182" stroke="#f59e0b" stroke-width="2"/>
+  <text x="548" y="176" fill="#92400e" font-size="10.5" text-anchor="middle">provider name → ChatModel 显式映射（不靠类型扫描）</text>
+  <line x1="140" y1="182" x2="140" y2="210" stroke="#f59e0b" stroke-width="2" marker-end="url(#ykam)"/>
+  <line x1="410" y1="182" x2="410" y2="210" stroke="#f59e0b" stroke-width="2" marker-end="url(#ykam)"/>
+  <line x1="680" y1="182" x2="680" y2="210" stroke="#f59e0b" stroke-width="2" marker-end="url(#ykam)"/>
+  <!-- ════════ 实例行：ChatModel ════════ -->
+  <rect x="40" y="212" width="200" height="48" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="140" y="241" fill="#1d4ed8" font-size="14" font-weight="bold" text-anchor="middle">ChatModel · DeepSeek</text>
+  <rect x="310" y="212" width="200" height="48" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="410" y="241" fill="#1d4ed8" font-size="14" font-weight="bold" text-anchor="middle">ChatModel · Kimi</text>
+  <rect x="580" y="212" width="200" height="48" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="680" y="241" fill="#1d4ed8" font-size="14" font-weight="bold" text-anchor="middle">ChatModel · Qwen</text>
+  <!-- ════════ 外部：LLM API ════════ -->
+  <line x1="410" y1="260" x2="410" y2="296" stroke="#22c55e" stroke-width="2" marker-end="url(#ykgr)"/>
+  <rect x="40" y="300" width="740" height="52" rx="10" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+  <text x="410" y="331" fill="#15803d" font-size="14" font-weight="bold" text-anchor="middle">各家 LLM API（协议差异由 Spring AI Alibaba 吸收）</text>
+</svg>

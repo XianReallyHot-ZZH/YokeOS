@@ -666,6 +666,8 @@ session list
 | `prompt_tokens` | 输入 token 数 |
 | `completion_tokens` | 输出 token 数 |
 | `total_tokens` | 总 token 数 |
+| `success` | 是否成功（与 `tool_invocations` 对称；失败事故必须在库里有痕迹） |
+| `error_message` | 错误信息（可空） |
 | `duration_ms` | 调用耗时（毫秒） |
 | `created_at` | 调用时间 |
 

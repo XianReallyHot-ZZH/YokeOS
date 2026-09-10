@@ -115,7 +115,7 @@ yokeos/
 |----|------|------|
 | `sessions` | 会话元数据 + JSON 对话历史 | `session_id` = channel+user+agent 联合生成；`active`/`archived` |
 | `tool_invocations` | 审计：每次 Tool 调用 | **day one 写入**；Sandbox 拒绝也走此表（`success=false`） |
-| `llm_calls` | 审计：每次 LLM 调用 | **day one 写入**；token 用量 + 耗时 |
+| `llm_calls` | 审计：每次 LLM 调用 | **day one 写入**；token 用量 + 耗时 + 成败与失败原因（`success`/`error_message`） |
 | `scheduled_tasks` | 定时任务登记与运行状态 | 定义源仍是 frontmatter，此表只存状态+历史 |
 | `task_executions` | 定时任务执行历史 | 成功失败都记 |
 | `memory_entries` | 长期记忆条目 | 仅 `SqliteMemoryStore` 档使用 |

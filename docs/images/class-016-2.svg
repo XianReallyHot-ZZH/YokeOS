@@ -1,0 +1,17 @@
+<svg viewBox="0 0 820 240" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+  <rect width="820" height="240" fill="#ffffff"/>
+  <!-- ════════ 左：Provider 负责（主角） ════════ -->
+  <rect x="30" y="28" width="360" height="188" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2.6"/>
+  <text x="52" y="62" fill="#b45309" font-size="18" font-weight="bold">Provider 负责</text>
+  <text x="52" y="98" fill="#3f3f46" font-size="15">· 挑对哪家模型（显式映射）</text>
+  <text x="52" y="128" fill="#3f3f46" font-size="15">· 发起一次调用并拿回结果</text>
+  <text x="52" y="158" fill="#3f3f46" font-size="15">· 把工具 schema 翻译成各家格式</text>
+  <text x="52" y="188" fill="#3f3f46" font-size="15">· 落一笔审计（成败都记 llm_calls）</text>
+  <!-- ════════ 右：Provider 不管（中性容器） ════════ -->
+  <rect x="430" y="28" width="360" height="188" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
+  <text x="452" y="62" fill="#475569" font-size="18" font-weight="bold">Provider 不管</text>
+  <text x="452" y="98" fill="#64748b" font-size="15">· 循环怎么转 → ReActLoop</text>
+  <text x="452" y="128" fill="#64748b" font-size="15">· 工具怎么执行 → ToolExecutor</text>
+  <text x="452" y="158" fill="#64748b" font-size="15">· 上下文怎么拼 → PromptBuilder</text>
+  <text x="452" y="188" fill="#64748b" font-size="15">· 记忆怎么存 → MemoryService</text>
+</svg>
