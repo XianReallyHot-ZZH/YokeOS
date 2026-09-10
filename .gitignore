@@ -12,3 +12,6 @@ target/
 *.iml
 .vscode/
 
+
+# Python 字节码缓存（specify-cli 配套脚本运行产物）
+__pycache__/
