@@ -13,7 +13,7 @@ _Avoid_: MVP、初期版本
 _Avoid_: 仿写、重写、抄代码
 
 **参照库**:
-`vendors/oryxos` submodule，钉在 `v0.1.0-RELEASE`（`bb0e7ef`，第 31 节发布形态，第一阶段功能与结构对标锚点，第 16~31 节课程提交皆为其祖先）；技术栈版本另对标 `origin/main`（课程期实为 Boot 3.3.5 / Spring AI 1.0.0-M6，逐节 diff 留意 API 代差）。教学文章（第 1~32 节课件）不在 main 上，经 `class-30` 分支访问。
+`vendors/oryxos` submodule，钉在 `963d4f1`（第 30 节 merge 提交 = 删课件提交 `8f12f11` 的父——`docs/class` 全套教学文档在树：第 1~32 节课件 + Harness 设计 + Spec-Kit 执行指导，作节级开发语料参照；代码至第 30 节）；第 31 节发布形态（release 工程、日跑 Demo）经 tag `v0.1.0-RELEASE`（`bb0e7ef`）随取；技术栈版本另对标 `origin/main`（课程期实为 Boot 3.3.5 / Spring AI 1.0.0-M6，逐节 diff 留意 API 代差）。
 _Avoid_: 上游、原仓库、oryxos 项目（指代不清时）
 
 **逐节跟拍**:
