@@ -218,6 +218,10 @@ VitePress 双语站点：en 根 + `/zh/`，深色默认 + 浅色切换，base �
 
 `industry-research` → `product-positioning` → `demand-analysis` → `technical-solution` → `ai-programming-guide`：五篇的过程固化，触发词见各 SKILL.md；`arch-diagram` 为设计文档手绘 SVG。文档链已完结，后续仅随 ADR 演进。
 
+### 节级开发 skill
+
+`yokeos-lesson-dev`：逐节开发（16→31）的一站式流程——H0 备料 → specify → clarify → plan（人工 review）→ tasks（固定停点）→ analyze → implement（三层门禁）→ 六项证据验收。输入节号即用（`/yokeos-lesson-dev 17`）；七步细则与门禁以 `docs/AiProgrammingGuide.md` §4~5 为权威，worked example 见 `specs/001-provider-abstraction/`。
+
 ### Issue tracker
 
 工单与规格存放在 GitHub Issues（XianReallyHot-ZZH/YokeOS），通过 `gh` CLI 操作。见 `docs/agents/issue-tracker.md`。
