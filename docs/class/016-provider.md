@@ -4,7 +4,7 @@
 >
 > **语料出处**：[需] `docs/DemandAnalysis.md` · [技] `docs/TechnicalSolution.md` · [宪] CLAUDE.md 宪法 · [指] `docs/AiProgrammingGuide.md` · [参] 参照库课件第 16 节与钉版树测试文件。
 >
-> **拍板记录**（2026-09-10，用户批准）：① `llm_calls` 补 `success`/`error_message` 两列（技 §9.2 已同步修订）② 本节演示口径 = `yokeos init` 就绪 + `ProviderSmokeIT` 真调拿到回复，完整 CLI 对话归 18 节 ③ 全局 provider 清单键名 `yokeos.providers` ④ 先跑通哪家按 `mvn dependency:tree` 核实结果定 ⑤ `tool_invocations` 本节仅建表，写入归 17 节。
+> **拍板记录**（2026-09-10，用户批准）：① `llm_calls` 补 `success`/`error_message` 两列（技 §9.2 已同步修订）② 本节演示口径 = `yokeos init` 就绪 + `ProviderSmokeIntegrationTest` 真调拿到回复，完整 CLI 对话归 18 节 ③ 全局 provider 清单键名 `yokeos.providers` ④ 先跑通哪家按 `mvn dependency:tree` 核实结果定 ⑤ `tool_invocations` 本节仅建表，写入归 17 节。
 
 技术栈：JDK 21 + Spring Boot 3.5.16 + Spring AI 1.1.8 + Spring AI Alibaba。**API 代差警示**：参照课程期实为 Boot 3.3.5 / Spring AI 1.0.0-M6，本文代码是示意——`ChatModel` 调用与「关闭自动执行」的确切写法以本地依赖 1.1.8 为准逐个核实（H3：核实不到不写）。
 
@@ -133,7 +133,7 @@ public Response chat(String sessionId, Profile profile, Prompt prompt) {
 
 - 前置已备（工程地基 350c914 已交付，本节不重做）：Maven 九模块骨架、统一响应体与全局异常、结构化日志、门禁全链路（Spotless + P3C + Checkstyle + SpotBugs/FSB + PMD + OWASP）、CI、pre-commit
 - 代码：`Profile`、`AgentLoader`、`ProfileRegistry` → yokeos-core；`ProviderService`（含 `chat(sessionId, Profile, Prompt)`）、`ToolSchemaAdapter`、`LlmCallAuditor` 接口、`ProviderNotFoundException`、`ProvidersProperties` → yokeos-provider；`LlmCall` 实体、`LlmCallRepository`、`JpaLlmCallAuditor`、`schema.sql`（`llm_calls` + `tool_invocations` 两表） → yokeos-storage；`yokeos init` → yokeos-cli
-- 测试：`AgentLoaderTest`、`ProviderServiceTest`、`ToolSchemaAdapterTest`、`LlmCallRepositoryTest`、`ProviderSmokeIT`（见第四部分）
+- 测试：`AgentLoaderTest`、`ProviderServiceTest`、`ToolSchemaAdapterTest`、`LlmCallRepositoryTest`、`ProviderSmokeIntegrationTest`（见第四部分）
 - 配置：`application.yaml` 全局 provider 清单（键名 `yokeos.providers`，plan 定稿）；`AGENT.md` frontmatter `provider` 段
 - 表：`llm_calls`（含 `success`/`error_message`）；`tool_invocations`（本节建表）
 
@@ -156,7 +156,7 @@ SDD 给目标，**Harness 给边界**。这一节的 harness 就是一套测试�
 | `ProviderServiceTest` | 双 provider 按名路由不串台；未知名抛 `ProviderNotFoundException`；成功/失败都落审计；自动执行关闭 |
 | `ToolSchemaAdapterTest` | `YokeTool` 的 schema 翻译成 Spring AI 格式后字段一一对齐；只翻译、产物里不含任何执行逻辑 |
 | `LlmCallRepositoryTest` | 手工建表脚本建出的 `llm_calls` 能存能读，`success`/`error_message` 两列真实存在 |
-| `ProviderSmokeIT` | 读环境变量真 key、真调一次、断言非空响应且 `llm_calls` 多一条 `success=true` |
+| `ProviderSmokeIntegrationTest` | 读环境变量真 key、真调一次、断言非空响应且 `llm_calls` 多一条 `success=true` |
 
 **最值钱的三个测试方法，写出来看。** 都在 `ProviderServiceTest` 里，mock 两个 `ChatModel` 就能测（示意；测试方法名用英文，语义对齐参照课件的中文测试名，`@DisplayName` 保留原文以便对号）：
 
@@ -202,7 +202,7 @@ void callWithToolSchema_disablesAutoExecution() {
 
 **`LlmCallRepositoryTest` 的一个讲究**：建表要走那份手工脚本（测试里执行 `schema.sql`），不要让 Hibernate 自动建——不然测试绿了、生产上跑真脚本时列名对不上，白测。
 
-**集成冒烟 `ProviderSmokeIT`**：一个方法，读环境变量里的真 key、真调一次、断言拿到非空响应且 `llm_calls` 多了一条 `success=true`。跑法：
+**集成冒烟 `ProviderSmokeIntegrationTest`**：一个方法，读环境变量里的真 key、真调一次、断言拿到非空响应且 `llm_calls` 多了一条 `success=true`。跑法：
 
 ```bash
 mvn test                                            # 日常：单测全绿才算实现完成
@@ -216,7 +216,7 @@ DEEPSEEK_API_KEY=xxx mvn test -Dgroups=integration   # 手动：冒烟验真连�
 harness 全绿之后，剩下这几条需要人工确认（自动化覆盖不到或不值得自动化的部分，进验收报告的「剩余人工项」）：
 
 - [ ] 用到的 provider，对应的 Spring AI（Alibaba）starter 依赖已确认在 1.1.8 BOM 里能下载、能解析——不是照着教程的名字就假设一定能用（`mvn dependency:tree` 看一眼，坑三；先跑哪家按核实结果定，拍板④）
-- [ ] 集成冒烟真跑过一次：配真 key，`ProviderSmokeIT` 通过，拿到过真实响应
+- [ ] 集成冒烟真跑过一次：配真 key，`ProviderSmokeIntegrationTest` 通过，拿到过真实响应
 - [ ] key 走环境变量：`grep -r "sk-"`（或你的 key 前缀）在代码和配置里搜不到明文
 - [ ] `yokeos init` 幂等抽查：二次运行不覆盖既有文件
 - [ ] 可演示成果核对（拍板②口径）：`yokeos init` 就绪 + 真 key 真调拿到 LLM 回复

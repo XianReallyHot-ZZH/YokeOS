@@ -194,6 +194,8 @@ yokeos provider list / tool list / session list
 | 陷阱 | 症状 | 修复 |
 |------|------|------|
 | Spring AI 自动执行 tool | Tool 被调两次 | 禁用自动执行，`ToolExecutor` 接管（宪法 2） |
+| Spring AI starter 的 eager 自动装配 | boot 上下文启动即强索 `spring.ai.openai.api-key`，显式构造被架空 | 用裸 `spring-ai-openai` 依赖 + 手工构造 `ChatModel`（第 16 节实证，宪法 2/3） |
+| Spring AI 1.1.x 无静态 toolDefinitions | 课件 M6 写法编译不过（代差） | 工具经 `ToolCallback` 载体（`call()` 抛异常钉死不执行）+ `internalToolExecutionEnabled(false)` |
 | Provider 靠类型扫描区分 | 多 Provider 路由错乱 | 显式 `Map<String, ChatModel>`（宪法 3） |
 | `AGENT.md` / 子指令放进 Tool 模块 | Agent 目录被当 Tool 注册报错 | 归 `ContextLoader`（宪法 8） |
 | 审计只写日志不落库 | 扩展期反解析返工 | 两表 day one 写入（宪法 7） |

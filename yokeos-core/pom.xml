@@ -15,6 +15,22 @@
     <description>核心抽象与契约：YokeTool、Session、Profile、AgentLoader、ContextLoader、ReActLoop、PromptBuilder、ToolExecutor、AgentService、AgentScheduler、AgentLifecycleService、ScheduledTaskStore。不依赖任何内部模块——契约由此下发，下游模块实现。</description>
 
     <dependencies>
+        <!-- frontmatter 解析（AgentLoader，宪法 8）与结构化日志 API；版本随 Boot parent。 -->
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <!-- SpotBugs 注解：record + 不可变副本场景的 EI_EXPOSE_REP 类型级误报就地标注 -->
+        <dependency>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-annotations</artifactId>
+            <version>${spotbugs.version}</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

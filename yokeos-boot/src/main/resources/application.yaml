@@ -5,6 +5,22 @@ spring:
     virtual:
       # 决策四 / 宪法 4：同步阻塞 + JDK 21 虚拟线程承载并发，不引入响应式栈。
       enabled: true
+  # 持久化接线（db/schema-001-audit.sql 头部预告的 16 节接线）：SQLite + JPA，
+  # 手工建表脚本幂等执行（CREATE TABLE IF NOT EXISTS），禁 Hibernate 自动迁移（宪法 7）。
+  datasource:
+    # 工作区内的 SQLite（yokeos init 先行创建 .yokeos/；测试经 yokeos.db.dir 指到 target/）
+    url: jdbc:sqlite:${yokeos.db.dir:.yokeos}/yokeos.db
+    driver-class-name: org.sqlite.JDBC
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.community.dialect.SQLiteDialect
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/schema-001-audit.sql
 
 server:
   port: 8080
@@ -21,3 +37,15 @@ management:
   metrics:
     tags:
       application: yokeos
+
+# 实例级 provider 清单（FR3 / 宪法 7）：全局层只管「连接」，AGENT.md frontmatter 管「调用参数」。
+# 凭证只允许 ${ENV_VAR} 占位——明文 key 在启动期即被拒（ProvidersProperties.validate）。
+# DeepSeek / Kimi 均为 OpenAI 兼容协议（research D1）；name 是显式映射键（宪法 3）。
+yokeos:
+  providers:
+    - name: deepseek
+      api-key: ${DEEPSEEK_API_KEY}
+      base-url: https://api.deepseek.com
+    - name: kimi
+      api-key: ${KIMI_API_KEY}
+      base-url: https://api.moonshot.cn/v1
