@@ -39,6 +39,16 @@
             <groupId>com.yokeos</groupId>
             <artifactId>yokeos-memory</artifactId>
         </dependency>
+        <!-- CLI 入口（Picocli 4.7.6，技术栈表）；init 纯文件操作不启 Spring（宪法 4）。 -->
+        <dependency>
+            <groupId>info.picocli</groupId>
+            <artifactId>picocli</artifactId>
+            <version>${picocli.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

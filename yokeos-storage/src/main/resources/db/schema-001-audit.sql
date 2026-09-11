@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS tool_invocations (
 
 CREATE INDEX IF NOT EXISTS idx_tool_invocations_session ON tool_invocations (session_id);
 
--- llm_calls：每次 LLM 调用记录（审计；token 用量 + 耗时）
+-- llm_calls：每次 LLM 调用记录（审计；成败 + token 用量 + 耗时 + 失败原因——与 tool_invocations 对称，
+-- 失败事故必须在库里有痕迹，技 §9.2 2026-09-10 拍板①补列）
 CREATE TABLE IF NOT EXISTS llm_calls (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id        VARCHAR(255) NOT NULL,
@@ -27,6 +28,8 @@ CREATE TABLE IF NOT EXISTS llm_calls (
     prompt_tokens     INTEGER,
     completion_tokens INTEGER,
     total_tokens      INTEGER,
+    success           BOOLEAN NOT NULL,
+    error_message     TEXT,
     duration_ms       INTEGER NOT NULL,
     created_at        TIMESTAMP NOT NULL
 );

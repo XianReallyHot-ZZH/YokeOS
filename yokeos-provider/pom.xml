@@ -19,6 +19,37 @@
             <groupId>com.yokeos</groupId>
             <artifactId>yokeos-core</artifactId>
         </dependency>
+        <!-- OpenAI 兼容协议 connector（DeepSeek / Kimi 经此接入，research D1）。刻意用裸
+             spring-ai-openai 而非 starter：starter 的 autoconfigure 会 eager 装配 OpenAI 系
+             Bean 并强索 api-key（宪法 2 禁 eager 自动装配——实现期实证）；ChatModel 一律显式构造。 -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-openai</artifactId>
+        </dependency>
+        <!-- @ConfigurationProperties 所需的 Boot 核心（无 starter，不做 eager 装配） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot</artifactId>
+        </dependency>
+        <!-- 冒烟 IT 用 ScriptUtils 执行手工建表脚本（表结构权威在 storage 模块，按相对路径读） -->
+        <!-- SpotBugs 注解：配置绑定 Bean 的 EI_EXPOSE_REP 类型级误报就地标注 -->
+        <dependency>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-annotations</artifactId>
+            <version>${spotbugs.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- 冒烟 IT 的审计落库用真 SQLite（与 storage 同款驱动，仅测试期） -->
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
