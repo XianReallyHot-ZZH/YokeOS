@@ -10,6 +10,9 @@ import com.yokeos.core.profile.Profile;
 import com.yokeos.core.profile.Profile.Identity;
 import com.yokeos.core.profile.Profile.ProviderConfig;
 import com.yokeos.core.profile.Profile.Settings;
+import com.yokeos.core.provider.ProviderRequest;
+import com.yokeos.core.provider.ProviderResponse;
+import com.yokeos.core.provider.ProviderService;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -25,10 +28,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
@@ -69,7 +69,8 @@ class ProviderSmokeIntegrationTest {
             .defaultOptions(OpenAiChatOptions.builder().model("deepseek-flash").build())
             .build();
     ProviderService service =
-        new ProviderService(Map.of("deepseek", deepseek), new ToolSchemaAdapter(), jdbcAuditor());
+        new SpringAiProviderService(
+            Map.of("deepseek", deepseek), new ToolSchemaAdapter(), jdbcAuditor());
     Profile profile =
         new Profile(
             "smoke-agent",
@@ -85,11 +86,10 @@ class ProviderSmokeIntegrationTest {
             List.of(),
             Settings.DEFAULT);
 
-    ChatResponse response =
-        service.chat("smoke-1", profile, new Prompt(new UserMessage("用一句话介绍你自己")));
+    ProviderResponse response =
+        service.chat("smoke-1", profile, new ProviderRequest("用一句话介绍你自己", List.of()));
 
-    assertNotNull(response.getResult(), "真调必须返回结果");
-    String text = response.getResult().getOutput().getText();
+    String text = response.text();
     assertNotNull(text, "回复文本非空");
     assertFalse(text.isBlank(), "回复文本非空");
 
