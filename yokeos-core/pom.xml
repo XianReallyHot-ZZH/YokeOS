@@ -20,6 +20,12 @@
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
         </dependency>
+        <!-- JsonNode 参数形态（YokeTool.execute / ToolExecutor 解析，第 17 节拍板②）；
+             版本走根 pom jackson-bom dependencyManagement，不落字面量（research D7，实施偏差）。 -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>

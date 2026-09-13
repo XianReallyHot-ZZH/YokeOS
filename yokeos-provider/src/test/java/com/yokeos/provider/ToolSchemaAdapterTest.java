@@ -53,6 +53,12 @@ class ToolSchemaAdapterTest {
       public String getInputSchema() {
         return SCHEMA;
       }
+
+      @Override
+      public com.yokeos.core.tool.ToolResult execute(
+          com.fasterxml.jackson.databind.JsonNode input) {
+        throw new UnsupportedOperationException("测试桩不执行（第 17 节起接口含 execute）");
+      }
     };
   }
 }

@@ -204,6 +204,9 @@ yokeos provider list / tool list / session list
 | ReAct 里用异步 | 复杂度激增 | 同步 + 虚拟线程（宪法 4） |
 | `MEMORY.md` 超长不截断 | 注入超 context window | 归档区 4000 字截断，核心区永不截断 |
 | Tool 模块拆成多个 | 依赖混乱 | 三合一（宪法 5） |
+| P3C「实现类以 Impl 结尾」拦契约实现类命名 | `SpringAiProviderService` implements core 接口被 PMD 阻断，但类名是教学文档拍板定死字面量 | 类级 `@SuppressWarnings("PMD.<Rule>")` 显式抑制 + javadoc 记理由（文档链一致性优先于风格规则，第 17 节实证） |
+| 对 Spring AI `@NonNull` 返回值防御判空 | SpotBugs `RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE`（`getResult()`/`getOutput()` 等带 JSR-305 注解） | 按 API 契约直取不判空；对接 1.1.x 返回值前先看注解（第 17 节实证） |
+| Windows GBK 控制台跑 spec-kit Python 脚本 | `setup_tasks.py` 等输出 ⚠ 字符触发 `UnicodeEncodeError` 退出非零 | 命令前缀 `PYTHONIOENCODING=utf-8`（另注意本机 localRepository 非默认 `~/.m2`，在 `D:\Developer\DeveloperInstall\maven-repo`） |
 
 ---
 
