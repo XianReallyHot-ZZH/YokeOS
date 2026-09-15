@@ -20,7 +20,9 @@ spring:
   sql:
     init:
       mode: always
-      schema-locations: classpath:db/schema-001-audit.sql
+      schema-locations:
+        - classpath:db/schema-001-audit.sql
+        - classpath:db/schema-002-sessions.sql
 
 server:
   port: 8080

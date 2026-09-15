@@ -81,16 +81,23 @@
                     <systemPropertyVariables>
                         <yokeos.db.dir>target</yokeos.db.dir>
                     </systemPropertyVariables>
+                    <!-- 第 18 节：YokeosBootApplication 组件扫描吸收 YokeosRuntime 后，providerMap
+                         启动即校验 ${ENV} 占位对应的环境变量（16 节 FR7）。测试给哑值——只验存在性，
+                         不真调模型（真 key 走 ReActSmokeIntegrationTest 的 assumeTrue 路径）。 -->
+                    <environmentVariables>
+                        <DEEPSEEK_API_KEY>sk-test-dummy-boot-load</DEEPSEEK_API_KEY>
+                        <KIMI_API_KEY>sk-test-dummy-boot-load</KIMI_API_KEY>
+                    </environmentVariables>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <!-- mainClass 指向真实用户入口。Picocli 入口落地（第 16/18 节）之前就是
-                         Spring Boot 应用本体；com.yokeos.cli.YokeOsCli 出现后切过去
-                         （skill 坑表：fat JAR mainClass 必须指 CLI 入口，否则 CLI 参数进不了 jar）。 -->
-                    <mainClass>com.yokeos.boot.YokeosBootApplication</mainClass>
+                    <!-- 第 18 节起 mainClass 切到 Picocli CLI 入口 YokeOsCli（CLI 参数直达子命令；
+                         YokeosBootApplication 保留供 26 节 serve。坑表：fat JAR mainClass 不指 CLI 入口，
+                         java -jar ... chat 的参数就进不了 Picocli）。 -->
+                    <mainClass>com.yokeos.cli.YokeOsCli</mainClass>
                 </configuration>
                 <executions>
                     <execution>

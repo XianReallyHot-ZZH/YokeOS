@@ -96,7 +96,8 @@ class AgentServiceTest {
     String reply = service.process(session, "查天气");
 
     assertEquals("最终答复", reply);
-    assertSame(session, sessionManager.get("s-1"), "累积完的历史已保存");
+    // 18 节接口补全：InMemory.get 随接口返回 Optional（断言语义不变——累积完的历史已保存）
+    assertSame(session, sessionManager.get("s-1").orElseThrow(), "累积完的历史已保存");
   }
 
   @Test
@@ -108,7 +109,8 @@ class AgentServiceTest {
 
     assertThrows(RuntimeException.class, () -> service.process(session, "hi"));
 
-    assertNull(sessionManager.get("s-1"), "异常路径不保存半截会话");
+    // 18 节接口补全：null 语义随接口形态变为 Optional.empty（断言语义不变——异常路径不保存半截会话）
+    assertTrue(sessionManager.get("s-1").isEmpty(), "异常路径不保存半截会话");
   }
 
   @Test

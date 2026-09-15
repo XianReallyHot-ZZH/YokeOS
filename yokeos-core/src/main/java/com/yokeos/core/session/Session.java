@@ -20,11 +20,23 @@ public final class Session {
   private final List<Message> messages = new ArrayList<>();
 
   /**
-   * @param sessionId 会话标识（18 节起由 channel+user+agent 三元组生成，本节由调用方给定）
+   * @param sessionId 会话标识（由 SessionManager.getOrCreate 按 channel+user+agent 三元组生成，拼接单点在
+   *     SessionIds——直接 new 的调用方仅限测试自造）
    */
   public Session(String sessionId, String profileName) {
     this.sessionId = sessionId;
     this.profileName = profileName;
+  }
+
+  /**
+   * 恢复构造器（18 节持久化回读）：从存储层按发生序重建历史，append 三兄弟照常可用—— 恢复后的对话在既有历史上追加，不覆盖不重排。
+   *
+   * @param restored 按发生序的全部历史消息（来自 messages_json 反序列化）
+   */
+  public Session(String sessionId, String profileName, List<Message> restored) {
+    this.sessionId = sessionId;
+    this.profileName = profileName;
+    messages.addAll(restored);
   }
 
   /** 会话标识（审计关联键，ReActLoop 每轮调用随 sessionId 传递）。 */

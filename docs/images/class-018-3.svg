@@ -1,0 +1,44 @@
+<svg viewBox="0 0 880 504" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+  <rect width="880" height="504" fill="#ffffff"/>
+  <!-- ════════ defs：marker（yk 前缀） ════════ -->
+  <defs>
+    <marker id="yks" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/></marker>
+    <marker id="ykam" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f59e0b"/></marker>
+    <marker id="ykbl" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#3b82f6"/></marker>
+    <marker id="ykgr" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#22c55e"/></marker>
+    <marker id="ykpu" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#a855f7"/></marker>
+  </defs>
+  <!-- ════════ 纵向链：命令 → ChatCommand → YokeosRuntime → CliChannel → AgentService ════════ -->
+  <rect x="270" y="24" width="340" height="56" rx="10" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+  <text x="440" y="46" fill="#4338ca" font-size="13.5" font-weight="bold" text-anchor="middle">yokeos chat --profile weather</text>
+  <text x="440" y="64" fill="#6366f1" font-size="10" text-anchor="middle">重命令（--message 单条模式可选，需 §5.12）</text>
+  <line x1="440" y1="80" x2="440" y2="104" stroke="#94a3b8" stroke-width="2" marker-end="url(#yks)"/>
+  <rect x="270" y="108" width="340" height="58" rx="10" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="440" y="130" fill="#1d4ed8" font-size="13.5" font-weight="bold" text-anchor="middle">ChatCommand</text>
+  <text x="440" y="150" fill="#334155" font-size="10" text-anchor="middle">SpringApplicationBuilder 启动上下文 → 取 CliChannel Bean</text>
+  <line x1="440" y1="166" x2="440" y2="186" stroke="#3b82f6" stroke-width="2" marker-end="url(#ykbl)"/>
+  <rect x="270" y="190" width="340" height="62" rx="10" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="440" y="212" fill="#1d4ed8" font-size="13.5" font-weight="bold" text-anchor="middle">YokeosRuntime 上下文</text>
+  <text x="440" y="232" fill="#334155" font-size="10" text-anchor="middle">@Bean 显式装配全链 + 显式 JPA 扫描（坑二）</text>
+  <line x1="440" y1="252" x2="440" y2="272" stroke="#3b82f6" stroke-width="2" marker-end="url(#ykbl)"/>
+  <!-- ════════ 主角：CliChannel（amber） ════════ -->
+  <rect x="230" y="276" width="420" height="80" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2.6"/>
+  <text x="440" y="300" fill="#b45309" font-size="14" font-weight="bold" text-anchor="middle">CliChannel —— 读 · 转交 · 打印循环</text>
+  <text x="440" y="320" fill="#92400e" font-size="10.5" text-anchor="middle">getOrCreate("cli", 用户, weather) → 逐行 agentService.process</text>
+  <text x="440" y="340" fill="#92400e" font-size="9.5" text-anchor="middle">/quit · EOF 退出 · 空行跳过 · /context 上下文 · /tools 调用记录</text>
+  <line x1="440" y1="356" x2="440" y2="380" stroke="#f59e0b" stroke-width="2" marker-end="url(#ykam)"/>
+  <rect x="230" y="384" width="420" height="58" rx="10" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="440" y="406" fill="#1d4ed8" font-size="13.5" font-weight="bold" text-anchor="middle">AgentService.process → ReAct 引擎</text>
+  <text x="440" y="426" fill="#334155" font-size="10" text-anchor="middle">llm_calls / tool_invocations 照写（16 / 17 节交付）</text>
+  <!-- ════════ 侧挂：会话层（purple，CliChannel 取会话） ════════ -->
+  <line x1="650" y1="316" x2="680" y2="316" stroke="#a855f7" stroke-width="2" marker-end="url(#ykpu)"/>
+  <rect x="684" y="276" width="180" height="110" rx="10" fill="#ede9fe" stroke="#a855f7" stroke-width="2"/>
+  <text x="774" y="298" fill="#6b21a8" font-size="11.5" font-weight="bold" text-anchor="middle">JpaSessionManager</text>
+  <text x="774" y="316" fill="#7c3aed" font-size="9.5" text-anchor="middle">session_id 全库唯一拼接点</text>
+  <text x="774" y="334" fill="#7c3aed" font-size="9" text-anchor="middle">cli : 用户 : weather</text>
+  <text x="774" y="352" fill="#7c3aed" font-size="9" text-anchor="middle">sessions 表 · messages_json</text>
+  <text x="774" y="370" fill="#7c3aed" font-size="9" text-anchor="middle">重启按三元组恢复历史</text>
+  <!-- ════════ 注脚 ════════ -->
+  <text x="440" y="466" fill="#475569" font-size="11" text-anchor="middle">三元组只报不拼：session_id 拼接全库唯一发生在 SessionManager 实现一处（坑一）</text>
+  <text x="440" y="486" fill="#94a3b8" font-size="10" text-anchor="middle">Profile 不存在点名报错不进循环；/tools 经 ToolInvocationReader 查 tool_invocations（审计表）</text>
+</svg>
