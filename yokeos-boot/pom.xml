@@ -82,11 +82,13 @@
                         <yokeos.db.dir>target</yokeos.db.dir>
                     </systemPropertyVariables>
                     <!-- 第 18 节：YokeosBootApplication 组件扫描吸收 YokeosRuntime 后，providerMap
-                         启动即校验 ${ENV} 占位对应的环境变量（16 节 FR7）。测试给哑值——只验存在性，
-                         不真调模型（真 key 走 ReActSmokeIntegrationTest 的 assumeTrue 路径）。 -->
+                         启动即校验 ${ENV} 占位对应的环境变量（16 节 FR7）。哑值只验存在性、不真调模型。
+                         第 19 节修正（19 节 E2E 暴露的 18 节缺陷）：surefire environmentVariables 会顶掉
+                         真实环境变量，硬编码哑值曾令 integration 冒烟全部拿到哑 key 而 401——改为 ${env.*}
+                         透传：真 key 在则透传真值，不在则 Maven 保留字面占位串（非空），离线存在性校验照过。 -->
                     <environmentVariables>
-                        <DEEPSEEK_API_KEY>sk-test-dummy-boot-load</DEEPSEEK_API_KEY>
-                        <KIMI_API_KEY>sk-test-dummy-boot-load</KIMI_API_KEY>
+                        <DEEPSEEK_API_KEY>${env.DEEPSEEK_API_KEY}</DEEPSEEK_API_KEY>
+                        <KIMI_API_KEY>${env.KIMI_API_KEY}</KIMI_API_KEY>
                     </environmentVariables>
                 </configuration>
             </plugin>

@@ -211,6 +211,8 @@ yokeos provider list / tool list / session list
 | SQLite 并发写立即 `SQLITE_BUSY` | 无池连接默认无 busy_timeout，并发 insert 直接失败而非等待——并发回归测试 flaky | 测试数据源 `SQLiteConfig.setBusyTimeout`；并发用例取「预置后并发命中」保确定性，撞键兜底分支留防御实现（18 节实证） |
 | 非交互 shell 读不到 `~/.zshrc` 里的 key；多 provider validate 连坐 | Bash 工具会话 `DEEPSEEK_API_KEY` 时有时无；boot yaml 列了 kimi 而本机无 `KIMI_API_KEY` 时启动即被 validate 拦（清单里 N 个 provider 要 N 个 env 全在，哪怕只用一个） | 真 key 冒烟显式 `source ~/.zshrc`；不用到的 provider 给哑值过存在性校验（validate 只查存在不查真伪，18 节实证） |
 | Checkstyle 测试方法名禁下划线与连续大写 | 参照钉版树 snake_case 测试名（如 `xxx_yyy_zzz`）照抄即被 `MethodName`（禁 `_`）与 `AbbreviationAsWordInName`（`IO`/`URL` 等连续大写）双拦，TDD 首跑即红 | 方法名 camelCase 化、避开连续大写缩写词，中文原语义进 `@DisplayName`（参照风格属「瑕疵不继承」，19 节实证） |
+| surefire `environmentVariables` 硬编码哑 key 顶掉真实环境变量 | 18 节给 boot 测试注入哑 `DEEPSEEK_API_KEY` 后，`@Tag("integration")` 真调用例全拿哑 key 而 401——env 覆盖对全模块测试生效，「真 key 走 assumeTrue」的假设不成立；离线全绿掩盖了它 | 哑值改 `${env.X}` 透传：真值在则透传、不在则 Maven 保留字面占位串（非空）保存在性校验（19 节 E2E 暴露并修复，17 节冒烟随之复活） |
+| AGENT.md 漏写 `tools:` 清单 → 模型零工具可用 | `PromptBuilder` 只带 `Profile.tools` **点名**的工具（点名不在候选集的静默略过）——frontmatter 不写 `tools:` 时模型看不到任何工具，只会口头答复；单测 mock 链路发现不了 | AGENT.md 声明用到的工具清单；端到端用例锚「模型真调到工具」而非只锚答复（19 节 E2E 实证） |
 
 ---
 

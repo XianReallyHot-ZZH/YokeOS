@@ -82,3 +82,14 @@
 
 - CLAUDE.md 常见陷阱表回填 1 条（Checkstyle 测试方法名）。
 - tasks.md 全 17 项勾结（T001~T017）。
+
+## 补强（合流后，2026-09-15）
+
+应用户要求补**真模型端到端用例** `yokeos-boot/src/test/java/com/yokeos/boot/NotifyEndToEndIntegrationTest.java`（`@Tag("integration")`，缺 key 自动跳过）：串起本节全部接缝且 **YokeOS 侧零 mock**——AGENT.md frontmatter（`notify.channels` 带 `${TEAM_WEBHOOK_URL}` 占位）→ AgentLoader 真派生 → `AgentService.process` set ProfileContext → 真 DeepSeek 决定调 notify → ToolExecutor → NotifyTools 渠道解析 → WebhookNotifyAdapter 真发 HTTP → 接收端收到（唯一替身：本地 HttpServer 扮演群机器人，自动化测试读不到真群）→ 双审计落 SQLite。真 key 实跑绿（9.6s，两轮循环），与 17 节冒烟的差异：Profile 不再代码构造而是从写下的 AGENT.md 真派生、notify 链与 ProfileContext 接缝首次入端到端。
+
+补强过程暴露并修复**两处真实缺陷**（端到端测试的价值直接实证）：
+
+1. **18 节引入的缺陷**：`yokeos-boot/pom.xml` surefire `environmentVariables` 硬编码哑 `DEEPSEEK_API_KEY`，顶掉真实环境变量——18 节合流起 `@Tag("integration")` 真调用例全部拿到哑 key 而 401，注释里「真 key 走 assumeTrue 路径」的假设不成立（离线全绿掩盖了它）。修复：哑值改 `${env.X}` 透传（真值在则透传；不在则 Maven 保留字面占位串非空，离线存在性校验照过——`env -u` 双路径验证）。17 节 `ReActSmokeIntegrationTest` 随修复复活（真 key 14.8s 绿）。
+2. **接缝知识入陷阱表**：`PromptBuilder` 只带 `Profile.tools` 点名的工具——AGENT.md 漏写 `tools:` 清单时模型零工具可用、只会口头答复（单测 mock 链路发现不了）。测试 AGENT.md 补 `tools: [notify]`。
+
+全量门禁复跑：`mvn clean verify` BUILD SUCCESS（139 测试，E2E 默认随 integration 组排除）。CLAUDE.md 陷阱表回填至 3 条新增（方法名 / surefire 哑 key / tools 清单）。
