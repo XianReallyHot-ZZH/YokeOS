@@ -210,6 +210,7 @@ yokeos provider list / tool list / session list
 | Picocli「组+子命令」语法做成平命令或靠 aliases | `yokeos provider list` 报 `Unmatched argument: 'list'`——aliases 只造别名不造子命令语法；单测只断注册不断调用路径，fat JAR 冒烟才现形（18 节实证） | 组命令挂嵌套 `@Command(name="list")` 子类；harness 断言子命令集 + 冒烟兜底跑真实命令路径 |
 | SQLite 并发写立即 `SQLITE_BUSY` | 无池连接默认无 busy_timeout，并发 insert 直接失败而非等待——并发回归测试 flaky | 测试数据源 `SQLiteConfig.setBusyTimeout`；并发用例取「预置后并发命中」保确定性，撞键兜底分支留防御实现（18 节实证） |
 | 非交互 shell 读不到 `~/.zshrc` 里的 key；多 provider validate 连坐 | Bash 工具会话 `DEEPSEEK_API_KEY` 时有时无；boot yaml 列了 kimi 而本机无 `KIMI_API_KEY` 时启动即被 validate 拦（清单里 N 个 provider 要 N 个 env 全在，哪怕只用一个） | 真 key 冒烟显式 `source ~/.zshrc`；不用到的 provider 给哑值过存在性校验（validate 只查存在不查真伪，18 节实证） |
+| Checkstyle 测试方法名禁下划线与连续大写 | 参照钉版树 snake_case 测试名（如 `xxx_yyy_zzz`）照抄即被 `MethodName`（禁 `_`）与 `AbbreviationAsWordInName`（`IO`/`URL` 等连续大写）双拦，TDD 首跑即红 | 方法名 camelCase 化、避开连续大写缩写词，中文原语义进 `@DisplayName`（参照风格属「瑕疵不继承」，19 节实证） |
 
 ---
 

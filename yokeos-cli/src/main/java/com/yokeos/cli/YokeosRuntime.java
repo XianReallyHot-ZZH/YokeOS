@@ -25,6 +25,8 @@ import com.yokeos.storage.LlmCallRepository;
 import com.yokeos.storage.SessionRepository;
 import com.yokeos.storage.ToolInvocationRepository;
 import com.yokeos.tool.HttpGetTool;
+import com.yokeos.tool.NotifyTools;
+import com.yokeos.tool.notify.WebhookNotifyAdapter;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.LinkedHashMap;
@@ -144,10 +146,12 @@ public class YokeosRuntime {
     return new ContextLoader(workspace());
   }
 
-  /** 17 节工具集：http_get（20 节 ToolRegistry 就位后换 Map 来源，本 Bean 是唯一替换点）。 */
+  /** 17/19 节工具集：http_get + notify（20 节 ToolRegistry 就位后换 Map 来源，本 Bean 是唯一替换点）。 */
   @Bean
   Map<String, YokeTool> tools() {
-    return Map.of("http_get", new HttpGetTool());
+    return Map.of(
+        "http_get", new HttpGetTool(),
+        "notify", new NotifyTools(Map.of("webhook", new WebhookNotifyAdapter())));
   }
 
   @Bean

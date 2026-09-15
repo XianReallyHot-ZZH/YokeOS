@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -196,6 +199,81 @@ class AgentLoaderTest {
     assertTrue(found.isPresent());
     assertEquals("kimi", found.get().providerName());
     assertEquals(1, registry.all().size());
+  }
+
+  @Test
+  @DisplayName("notify渠道省略type_缺省webhook")
+  void notifyTypeOmittedDefaultsToWebhook() throws IOException {
+    writeAgent(
+        "ops",
+        """
+        ---
+        name: ops
+        provider:
+          name: kimi
+          model: kimi-latest
+        notify:
+          channels:
+            - name: ops-hook
+              config:
+                url: https://hooks.example.com/y
+        ---
+        正文
+        """);
+
+    var profiles = loader.loadAll(workspace, known, var -> null);
+
+    assertEquals(1, profiles.size());
+    assertEquals(1, profiles.get(0).notifyChannels().size(), "省略 type 不剔除渠道");
+    assertEquals("webhook", profiles.get(0).notifyChannels().get(0).type(), "缺省补 webhook（拍板②）");
+  }
+
+  @Test
+  @DisplayName("notify渠道type不支持_剔除该条记错误日志不阻断")
+  void unsupportedNotifyTypeDroppedWithLog() throws IOException {
+    Logger loaderLog = (Logger) org.slf4j.LoggerFactory.getLogger(AgentLoader.class);
+    ListAppender<ILoggingEvent> appender = new ListAppender<>();
+    appender.start();
+    loaderLog.addAppender(appender);
+    try {
+      writeAgent(
+          "ops",
+          """
+          ---
+          name: ops
+          provider:
+            name: kimi
+            model: kimi-latest
+          notify:
+            channels:
+              - name: legacy-mail
+                type: email
+                config:
+                  to: ops@example.com
+              - name: ops-hook
+                type: webhook
+                config:
+                  url: https://hooks.example.com/z
+          ---
+          正文
+          """);
+
+      var profiles = loader.loadAll(workspace, known, var -> null);
+
+      assertEquals(1, profiles.size(), "不阻断启动——Agent 照常派生（拍板②）");
+      assertEquals(1, profiles.get(0).notifyChannels().size(), "仅剔除 email 那一条");
+      assertEquals("ops-hook", profiles.get(0).notifyChannels().get(0).name(), "其余渠道照常");
+    } finally {
+      loaderLog.detachAppender(appender);
+    }
+    assertTrue(
+        appender.list.stream()
+            .anyMatch(
+                e ->
+                    e.getThrowableProxy() != null
+                        && e.getThrowableProxy().getMessage().contains("legacy-mail")
+                        && e.getThrowableProxy().getMessage().contains("email")),
+        "错误日志点名被剔除的渠道名与类型（ListAppender 首次引入，research D4）");
   }
 
   private void writeAgent(String dirName, String markdown) throws IOException {

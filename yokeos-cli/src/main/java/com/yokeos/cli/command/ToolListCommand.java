@@ -22,6 +22,7 @@ public final class ToolListCommand implements Runnable {
   /** 逻辑方法（测试直调）：工具清单文本。 */
   static String listTools() {
     return "http_get          发 HTTP GET 取回正文（17 节内置）\n"
+        + "notify            把消息推送到配置的通知渠道（19 节内置）\n"
         + "（20 节 ToolRegistry 就位后本命令改查注册表：read_file / write_file / shell / … 将逐节接入）";
   }
 

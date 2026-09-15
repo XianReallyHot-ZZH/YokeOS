@@ -31,6 +31,9 @@ public final class AgentLoader {
   /** frontmatter 字符串值里的 ${ENV_VAR} 占位（技 §8.8）：派生时解析；解析不到的保留原样。 */
   private static final Pattern ENV_PLACEHOLDER = Pattern.compile("\\$\\{([^}]+)}");
 
+  /** 第一阶段支持的 notify 渠道类型（技 §6.8：通用 webhook 一档；扩展阶段加档扩此集合）。 */
+  private static final Set<String> SUPPORTED_NOTIFY_TYPES = Set.of("webhook");
+
   /** 扫描 workspace/agents/ 各子目录，派生全部合法 Profile。 */
   public List<Profile> loadAll(Path workspace, Set<String> knownProviderNames) {
     return loadAll(workspace, knownProviderNames, System::getenv);
@@ -166,9 +169,7 @@ public final class AgentLoader {
         strList(fm.get("skills")),
         strList(fm.get("mcp_servers")),
         channels(fm.get("channels")),
-        channels(notify.get("channels")).stream()
-            .map(c -> new Profile.NotifyChannelConfig(c.name(), "webhook", c.config()))
-            .toList(),
+        notifyChannels(notify.get("channels")),
         schedules(fm.get("schedules")),
         strList(fm.get("bootstrap")),
         parsedSettings);
@@ -182,6 +183,33 @@ public final class AgentLoader {
         Map<String, String> config = new LinkedHashMap<>();
         mapOf(m.get("config")).forEach((k, v) -> config.put(k, String.valueOf(v)));
         result.add(new Profile.ChannelConfig(strOrNull(m.get("name")), config));
+      }
+    }
+    return result;
+  }
+
+  /**
+   * notify.channels 派生（拍板②，技 §8.2「各字段各自补校验」在此兑现）：type 三态——显式支持值照收 / 缺省补 webhook /
+   * 不支持值记错误日志剔除该条。剔除而非跳过整个 Agent：notify 是可选能力，运行时调用会因无可用渠道明确报错闭环（FR3）。
+   */
+  private static List<Profile.NotifyChannelConfig> notifyChannels(Object raw) {
+    List<Profile.NotifyChannelConfig> result = new ArrayList<>();
+    if (raw instanceof List<?> list) {
+      for (Object item : list) {
+        Map<String, Object> m = mapOf(item);
+        String declaredType = strOrNull(m.get("type"));
+        String type = (declaredType == null || declaredType.isBlank()) ? "webhook" : declaredType;
+        String name = strOrNull(m.get("name"));
+        if (!SUPPORTED_NOTIFY_TYPES.contains(type)) {
+          // 消息编译期常量，渠道名与类型进异常消息（CRLF 门禁同款纪律）
+          log.error(
+              "剔除第一阶段不支持的通知渠道（渠道名与类型见异常消息）",
+              new IllegalArgumentException("notify channel name=" + name + ", type=" + type));
+          continue;
+        }
+        Map<String, String> config = new LinkedHashMap<>();
+        mapOf(m.get("config")).forEach((k, v) -> config.put(k, String.valueOf(v)));
+        result.add(new Profile.NotifyChannelConfig(name, type, config));
       }
     }
     return result;

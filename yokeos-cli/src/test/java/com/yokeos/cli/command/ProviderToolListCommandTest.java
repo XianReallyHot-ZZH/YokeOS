@@ -43,11 +43,12 @@ class ProviderToolListCommandTest {
   }
 
   @Test
-  @DisplayName("tool清单_含http_get与20节注明")
+  @DisplayName("tool清单_含http_get_notify与20节注明")
   void toolList_containsHttpGetAndNote() {
     String output = ToolListCommand.listTools();
 
     assertTrue(output.contains("http_get"), "只列当前真实就绪的");
+    assertTrue(output.contains("notify"), "19 节起 notify 就绪（语义扩充，非削弱）");
     assertTrue(output.contains("20 节"), "注明 ToolRegistry 接线位");
   }
 }
