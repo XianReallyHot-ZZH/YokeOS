@@ -160,10 +160,14 @@ public final class ProfileCommand implements Runnable {
   /** create 子命令。 */
   @Command(
       name = "create",
-      description = "创建新 Agent（最小 AGENT.md 模板，幂等不覆盖）",
+      description =
+          "创建新 Agent：在 .yokeos/agents/<name>/ 写最小 AGENT.md 模板"
+              + "（provider 缺省取全局层 yokeos.providers 第一个；已存在报错不覆盖）",
       mixinStandardHelpOptions = true)
   static final class Create implements java.util.concurrent.Callable<Integer> {
-    @CommandLine.Parameters(paramLabel = "<name>", description = "Agent 名（= 目录名）")
+    @CommandLine.Parameters(
+        paramLabel = "<name>",
+        description = "Agent 名（= .yokeos/agents/ 下将创建的目录名，chat --profile 用它指定）")
     String name;
 
     @Override

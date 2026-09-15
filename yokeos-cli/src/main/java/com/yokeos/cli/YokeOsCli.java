@@ -18,7 +18,10 @@ import picocli.CommandLine.Command;
  */
 @Command(
     name = "yokeos",
-    description = "YokeOS 命令行入口——跟 Agent 对话、把服务跑起来、查配置和状态",
+    description =
+        "YokeOS 命令行入口——跟 Agent 对话、把服务跑起来、查配置和状态%n"
+            + "快速上手：yokeos init 初始化工作区 → yokeos profile create <name> 建 Agent"
+            + " → yokeos chat 对话；任一命令加 --help 看详细用法",
     mixinStandardHelpOptions = true,
     version = "0.1.0-SNAPSHOT",
     subcommands = {

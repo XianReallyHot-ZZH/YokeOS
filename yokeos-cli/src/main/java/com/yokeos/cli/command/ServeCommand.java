@@ -15,7 +15,7 @@ import picocli.CommandLine.Option;
     mixinStandardHelpOptions = true)
 public final class ServeCommand implements java.util.concurrent.Callable<Integer> {
 
-  @Option(names = "--port", defaultValue = "8080", description = "监听端口")
+  @Option(names = "--port", defaultValue = "8080", description = "监听端口（默认 8080）")
   int port;
 
   @Override

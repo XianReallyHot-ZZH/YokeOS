@@ -21,10 +21,14 @@ import picocli.CommandLine.Option;
     mixinStandardHelpOptions = true)
 public final class ChatCommand implements java.util.concurrent.Callable<Integer> {
 
-  @Option(names = "--profile", defaultValue = "default", description = "使用的 Agent（Profile 名）")
+  @Option(
+      names = "--profile",
+      defaultValue = "default",
+      description =
+          "使用的 Agent 名，即 .yokeos/agents/ 下的目录名" + "（可用 yokeos profile list 查看全部，默认 default）")
   String profileName;
 
-  @Option(names = "--message", paramLabel = "<text>", description = "发单条消息后退出（不进交互）")
+  @Option(names = "--message", paramLabel = "<text>", description = "发单条消息后退出（不进交互）；不传此参数则进入交互模式")
   String message;
 
   @Override
