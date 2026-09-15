@@ -92,6 +92,12 @@ public class SpringAiProviderService implements com.yokeos.core.provider.Provide
         DefaultToolCallingChatOptions.builder()
             .toolCallbacks(adapter.toSpringAiTools(availableTools))
             .internalToolExecutionEnabled(false);
+    // model 随 Profile 逐请求传递（技 §3.3「Profile 层管调用参数」——第 18 节装配面落地时补上，
+    // 16/17 节冒烟靠 ChatModel 默认值兜底的缺口；builder.model 经 1.1.8 javap 实证）。
+    String model = profile.provider() == null ? null : profile.provider().model();
+    if (model != null && !model.isBlank()) {
+      builder.model(model);
+    }
     Double temperature = profile.provider() == null ? null : profile.provider().temperature();
     if (temperature != null) {
       builder.temperature(temperature);

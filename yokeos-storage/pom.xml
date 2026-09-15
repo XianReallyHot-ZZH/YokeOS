@@ -33,6 +33,12 @@
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-community-dialects</artifactId>
         </dependency>
+        <!-- 第 18 节（research D7）：JpaSessionManager 序列化 messages_json 直接使用，补显式
+             （版本不写——根 pom jackson-bom 接管，002 D7 同款）；17 节 core 已显式、此处随动。 -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

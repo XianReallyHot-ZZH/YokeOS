@@ -8,7 +8,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
 
-/** 聚合后的上下文必须带着全部模块装载成功，并跑在地基配置上。 */
+/**
+ * 聚合后的上下文必须带着全部模块装载成功，并跑在地基配置上。
+ *
+ * <p>第 18 节起本测试顺带验证「双入口一套配置」：YokeosBootApplication 组件扫描吸收 YokeosRuntime 的显式装配（providerMap 启动即
+ * 校验占位环境变量——surefire 配哑值，断言语义不变：上下文能起）。
+ */
 @SpringBootTest
 class YokeosBootApplicationLoadTest {
 
