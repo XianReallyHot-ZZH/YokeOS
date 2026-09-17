@@ -58,6 +58,22 @@ class InitCommandTest {
     assertEquals("init", new CommandLine(command).getCommandName());
   }
 
+  @Test
+  @DisplayName("init补建mcp_servers_yaml注释模板且幂等不覆盖")
+  void initCreatesMcpServersYamlTemplateIdempotently() throws IOException {
+    Path workspace = root.resolve(".yokeos");
+    command.initWorkspace(workspace);
+    Path yaml = workspace.resolve("mcp_servers.yaml");
+    assertTrue(Files.isRegularFile(yaml), "工作区结构既列 mcp_servers.yaml（CLAUDE.md）");
+    String content = Files.readString(yaml);
+    assertTrue(content.contains("servers:"), "模板含 servers 列表占位");
+    assertTrue(content.contains("stdio"), "模板注明第一阶段唯一 transport");
+
+    Files.writeString(yaml, "servers: []\n");
+    command.initWorkspace(workspace);
+    assertEquals("servers: []\n", Files.readString(yaml), "已存在一律不覆盖（幂等）");
+  }
+
   private static List<Path> snapshotPaths(Path workspace) throws IOException {
     try (var stream = Files.walk(workspace)) {
       return stream.sorted().toList();

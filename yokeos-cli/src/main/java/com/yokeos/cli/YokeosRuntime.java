@@ -24,8 +24,13 @@ import com.yokeos.storage.JpaToolInvocationReader;
 import com.yokeos.storage.LlmCallRepository;
 import com.yokeos.storage.SessionRepository;
 import com.yokeos.storage.ToolInvocationRepository;
-import com.yokeos.tool.HttpGetTool;
 import com.yokeos.tool.NotifyTools;
+import com.yokeos.tool.ToolRegistry;
+import com.yokeos.tool.builtin.FileTools;
+import com.yokeos.tool.builtin.HttpTools;
+import com.yokeos.tool.builtin.ShellTools;
+import com.yokeos.tool.mcp.McpClientService;
+import com.yokeos.tool.mcp.McpConfigLoader;
 import com.yokeos.tool.notify.WebhookNotifyAdapter;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -132,12 +137,17 @@ public class YokeosRuntime {
     return new SpringAiProviderService(providerMap, new ToolSchemaAdapter(), auditor);
   }
 
-  /** 启动扫描 .yokeos/agents/ 派生 Profile 注册（宪法 8；坏文件记错误日志不阻断——16 节行为）。 */
+  /**
+   * 启动扫描 .yokeos/agents/ 派生 Profile 注册（宪法 8；坏文件记错误日志不阻断——16 节行为）。 tools 点名传注册面 keySet 做存在性 WARN（20
+   * 节拍板⑥，analyze F1：注入现成 tools() Bean）。
+   */
   @Bean
-  ProfileRegistry profileRegistry(Map<String, ChatModel> providerMap) {
+  ProfileRegistry profileRegistry(Map<String, ChatModel> providerMap, Map<String, YokeTool> tools) {
     AgentLoader agentLoader = new AgentLoader();
     ProfileRegistry registry = new ProfileRegistry();
-    agentLoader.loadAll(workspace(), providerMap.keySet()).forEach(registry::register);
+    agentLoader
+        .loadAll(workspace(), providerMap.keySet(), tools.keySet())
+        .forEach(registry::register);
     return registry;
   }
 
@@ -146,12 +156,21 @@ public class YokeosRuntime {
     return new ContextLoader(workspace());
   }
 
-  /** 17/19 节工具集：http_get + notify（20 节 ToolRegistry 就位后换 Map 来源，本 Bean 是唯一替换点）。 */
+  /**
+   * 20 节 ToolRegistry 统一注册面（17 节预告的替换兑现）：内置三组注解注册 + notify 直接注册 + MCP server 工具接入（.yokeos/
+   * mcp_servers.yaml，失联只 WARN 不拖垮启动）， {@code registry.asMap()} 喂
+   * PromptBuilder/ToolExecutor（两消费方构造签名不动）。
+   */
   @Bean
   Map<String, YokeTool> tools() {
-    return Map.of(
-        "http_get", new HttpGetTool(),
-        "notify", new NotifyTools(Map.of("webhook", new WebhookNotifyAdapter())));
+    ToolRegistry registry = new ToolRegistry();
+    registry.registerAnnotated(new FileTools());
+    registry.registerAnnotated(new ShellTools());
+    registry.registerAnnotated(new HttpTools());
+    registry.register(new NotifyTools(Map.of("webhook", new WebhookNotifyAdapter())));
+    new McpClientService(new McpConfigLoader(workspace().resolve("mcp_servers.yaml")))
+        .connectAll(registry);
+    return registry.asMap();
   }
 
   @Bean

@@ -34,14 +34,32 @@ public final class AgentLoader {
   /** 第一阶段支持的 notify 渠道类型（技 §6.8：通用 webhook 一档；扩展阶段加档扩此集合）。 */
   private static final Set<String> SUPPORTED_NOTIFY_TYPES = Set.of("webhook");
 
-  /** 扫描 workspace/agents/ 各子目录，派生全部合法 Profile。 */
+  /** 扫描 workspace/agents/ 各子目录，派生全部合法 Profile（不校验 tools 点名——兼容既有调用）。 */
   public List<Profile> loadAll(Path workspace, Set<String> knownProviderNames) {
-    return loadAll(workspace, knownProviderNames, System::getenv);
+    return loadAll(workspace, knownProviderNames, Set.of(), System::getenv);
+  }
+
+  /**
+   * 带 tools 点名校验的扫描（第 20 节拍板⑥）：点名了但注册面没有的工具名记 WARN 不阻断——「静默略过」变「有痕略过」， 漏写 tools 清单这类配置错误在启动日志看得见（19
+   * 节 E2E 实证坑的正解）。
+   */
+  public List<Profile> loadAll(
+      Path workspace, Set<String> knownProviderNames, Set<String> knownToolNames) {
+    return loadAll(workspace, knownProviderNames, knownToolNames, System::getenv);
   }
 
   /** env 注入形态便于单测；生产入口走 {@link #loadAll(Path, Set)}。 */
   public List<Profile> loadAll(
       Path workspace, Set<String> knownProviderNames, Function<String, String> env) {
+    return loadAll(workspace, knownProviderNames, Set.of(), env);
+  }
+
+  /** 全参形态（knownToolNames 空集 = 不校验）。 */
+  public List<Profile> loadAll(
+      Path workspace,
+      Set<String> knownProviderNames,
+      Set<String> knownToolNames,
+      Function<String, String> env) {
     Path agents = workspace.resolve("agents");
     if (!Files.isDirectory(agents)) {
       return List.of();
@@ -50,11 +68,34 @@ public final class AgentLoader {
     try (var dirs = Files.list(agents)) {
       dirs.filter(Files::isDirectory)
           .sorted()
-          .forEach(dir -> deriveQuietly(dir, knownProviderNames, env).ifPresent(loaded::add));
+          .forEach(
+              dir ->
+                  deriveQuietly(dir, knownProviderNames, env)
+                      .map(
+                          profile -> {
+                            warnUnknownTools(profile, knownToolNames);
+                            return profile;
+                          })
+                      .ifPresent(loaded::add));
     } catch (IOException e) {
       log.error("扫描 agents 目录失败（路径见堆栈上下文）", e);
     }
     return List.copyOf(loaded);
+  }
+
+  /** tools 点名存在性校验（WARN 不阻断；校验面由调用方传入——core 不依赖 tool 模块，research D9）。 */
+  private static void warnUnknownTools(Profile profile, Set<String> knownToolNames) {
+    if (knownToolNames.isEmpty()) {
+      return; // 未传校验面 = 不校验
+    }
+    for (String name : profile.tools()) {
+      if (!knownToolNames.contains(name)) {
+        // 消息编译期常量，Agent 名与工具名进异常消息（CRLF 门禁——与 notify 渠道剔除同款形态）
+        log.warn(
+            "Agent 的 tools 清单点名了注册面没有的工具（过滤时将被略过，名字见异常消息）",
+            new IllegalArgumentException("agent=" + profile.name() + ", tool=" + name));
+      }
+    }
   }
 
   /** 派生单个 Agent 目录；校验失败抛 IllegalArgumentException（消息含细节）。 */

@@ -28,7 +28,7 @@ public final class WebhookNotifyAdapter implements NotifyChannelAdapter {
   /** 线程安全（Jackson 官方口径），静态复用免每次重建（ToolExecutor 同款）。 */
   private static final ObjectMapper JSON = new ObjectMapper();
 
-  /** 成功状态码区间 [200, 300)（HttpGetTool 同款口径）。 */
+  /** 成功状态码区间 [200, 300)（http_get 工具同款口径）。 */
   private static final int HTTP_OK_MIN = 200;
 
   private static final int HTTP_OK_EXCLUSIVE = 300;
@@ -38,7 +38,7 @@ public final class WebhookNotifyAdapter implements NotifyChannelAdapter {
 
   private final HttpClient httpClient;
 
-  /** 默认构造：连接超时 10 秒的共享 HttpClient（HttpGetTool 同款口径）。 */
+  /** 默认构造：连接超时 10 秒的共享 HttpClient（http_get 工具同款口径）。 */
   public WebhookNotifyAdapter() {
     this(HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build());
   }

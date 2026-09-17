@@ -212,7 +212,12 @@ yokeos provider list / tool list / session list
 | 非交互 shell 读不到 `~/.zshrc` 里的 key；多 provider validate 连坐 | Bash 工具会话 `DEEPSEEK_API_KEY` 时有时无；boot yaml 列了 kimi 而本机无 `KIMI_API_KEY` 时启动即被 validate 拦（清单里 N 个 provider 要 N 个 env 全在，哪怕只用一个） | 真 key 冒烟显式 `source ~/.zshrc`；不用到的 provider 给哑值过存在性校验（validate 只查存在不查真伪，18 节实证） |
 | Checkstyle 测试方法名禁下划线与连续大写 | 参照钉版树 snake_case 测试名（如 `xxx_yyy_zzz`）照抄即被 `MethodName`（禁 `_`）与 `AbbreviationAsWordInName`（`IO`/`URL` 等连续大写）双拦，TDD 首跑即红 | 方法名 camelCase 化、避开连续大写缩写词，中文原语义进 `@DisplayName`（参照风格属「瑕疵不继承」，19 节实证） |
 | surefire `environmentVariables` 硬编码哑 key 顶掉真实环境变量 | 18 节给 boot 测试注入哑 `DEEPSEEK_API_KEY` 后，`@Tag("integration")` 真调用例全拿哑 key 而 401——env 覆盖对全模块测试生效，「真 key 走 assumeTrue」的假设不成立；离线全绿掩盖了它 | 哑值改 `${env.X}` 透传：真值在则透传、不在则 Maven 保留字面占位串（非空）保存在性校验（19 节 E2E 暴露并修复，17 节冒烟随之复活） |
-| AGENT.md 漏写 `tools:` 清单 → 模型零工具可用 | `PromptBuilder` 只带 `Profile.tools` **点名**的工具（点名不在候选集的静默略过）——frontmatter 不写 `tools:` 时模型看不到任何工具，只会口头答复；单测 mock 链路发现不了 | AGENT.md 声明用到的工具清单；端到端用例锚「模型真调到工具」而非只锚答复（19 节 E2E 实证） |
+| AGENT.md 漏写 `tools:` 清单 → 模型零工具可用 | `PromptBuilder` 只带 `Profile.tools` **点名**的工具（点名不在候选集的静默略过）——frontmatter 不写 `tools:` 时模型看不到任何工具，只会口头答复；单测 mock 链路发现不了 | AGENT.md 声明用到的工具清单；端到端用例锚「模型真调到工具」而非只锚答复（19 节 E2E 实证）；20 节补 AgentLoader 启动 WARN 把静默变有痕 |
+| Spring AI 1.1.8 `MethodToolCallback.call()` 把 String 返回值 JSON 字面量化、方法异常包 `ToolExecutionException` | `@Tool` 工具回显带引号（`"yoke"`）、`assertThrows` 工具自身异常类型失败（实际抛的是包装类）；引号与包装会污染对话历史与审计 | 包装层（`AnnotatedToolAdapter`）统一剥壳：JSON 字符串字面量还原、`ToolExecutionException` 取 cause 上抛——工具层契约保持干净（20 节实证，引号与壳在 adapter 收口） |
+| MCP Java SDK 1.1.1 与课件 0.x 全面代差 | `McpSchema.Tool` 三参构造不存在（七参 record）、`CallToolResult` 无双参构造、`StdioClientTransport` 必须显式传 `McpJsonMapper`（否则编译错）；BOM 也不管此坐标版本 | 测试用 `Tool.builder()`；构造补全四参；transport 传 `JacksonMcpJsonMapper(JsonMapper.builder().build())`（jackson3 传递件唯一消费点）；根 pom 显式钉 `mcp:1.1.1`——全部写前 javap（20 节实证） |
+| Checkstyle（google_checks）把 javadoc **行首** `@Tool`/`@Param` 认作 block tag | `JavadocTagContinuationIndentation` 对后续行连锁报错（缩进级别错），误以为格式问题反复 spotless 无效 | javadoc 内 @ 词不置行首：内嵌句中或 `{@code @Tool}` 包裹（20 节实证） |
+| SpotBugs CRLF 门禁连**参数化**日志都拦 | `log.warn("…: {} {}", a, b)`（哪怕值已 sanitize）被 `CRLF_INJECTION_LOGS` 拦截——静态分析只认 API 形态不看值 | 唯一通过形态 = 编译期常量消息 + 动态值进异常堆栈（`log.warn("常量", new IllegalArgumentException("name=" + …))`，19/20 节同款；原 `sanitize()` 函数随之无必要） |
+| npx 冷缓存起 MCP server 超过 initialize 超时 | 首跑 `npx -y @modelcontextprotocol/server-everything` 下载耗时 > SDK 默认 initializationTimeout 20s → `connectAll` WARN 跳过（集成测试 assumeTrue 跳过不失败），二跑缓存热即正常 | CI/新机先预热一次 npx（或接受首跑 skip）；集成冒烟跑法注明「冷缓存 skip 属正常」（20 节实证） |
 
 ---
 

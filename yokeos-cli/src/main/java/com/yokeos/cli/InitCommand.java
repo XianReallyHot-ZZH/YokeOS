@@ -33,6 +33,21 @@ public final class InitCommand implements Callable<Integer> {
   /** Bootstrap 最小占位模板（clarify Q2）；LinkedHashMap 保稳定写入顺序。 */
   static final Map<String, String> BOOTSTRAP_TEMPLATES = buildBootstrapTemplates();
 
+  /** MCP server 配置模板（20 节 FR-011）：注释说明 + 空 servers 占位，幂等不覆盖。 */
+  static final String MCP_SERVERS_TEMPLATE =
+      """
+      # MCP server 配置（.yokeos/mcp_servers.yaml）——YokeOS 启动时逐个连接并注册其工具。
+      # 第一阶段 transport 仅支持 stdio；env 值支持 ${ENV_VAR} 占位（凭证不落明文）。
+      # 示例：
+      # servers:
+      #   - name: github-mcp
+      #     transport: stdio
+      #     command: npx -y server-github
+      #     env:
+      #       GITHUB_TOKEN: ${GITHUB_TOKEN}
+      servers: []
+      """;
+
   @Override
   public Integer call() {
     try {
@@ -59,7 +74,11 @@ public final class InitCommand implements Callable<Integer> {
         Files.writeString(file, entry.getValue());
       }
     }
-    log.info("工作区就绪：.yokeos/（六目录 + 三 Bootstrap；已存在未覆盖）");
+    Path mcpServers = workspaceRoot.resolve("mcp_servers.yaml");
+    if (Files.notExists(mcpServers)) {
+      Files.writeString(mcpServers, MCP_SERVERS_TEMPLATE);
+    }
+    log.info("工作区就绪：.yokeos/（六目录 + 三 Bootstrap + mcp_servers.yaml；已存在未覆盖）");
   }
 
   private static Map<String, String> buildBootstrapTemplates() {

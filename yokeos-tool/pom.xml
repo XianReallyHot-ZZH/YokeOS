@@ -19,6 +19,28 @@
             <groupId>com.yokeos</groupId>
             <artifactId>yokeos-core</artifactId>
         </dependency>
+        <!-- @Tool schema 生成管道 + ToolCallback 载体（宪法 2 允许的第二件事；第 20 节起消费） -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-model</artifactId>
+        </dependency>
+        <!-- MCP Java SDK（stdio 同步客户端 McpSyncClient，合宪法 4；版本根 pom 显式钉） -->
+        <dependency>
+            <groupId>io.modelcontextprotocol.sdk</groupId>
+            <artifactId>mcp</artifactId>
+        </dependency>
+        <!-- mcp_servers.yaml 解析（技 §6.4；Boot 管版本） -->
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+        </dependency>
+        <!-- SpotBugs 注解：ShellTools COMMAND_INJECTION 类告警的就地抑制（yokeos-core 同款 provided） -->
+        <dependency>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-annotations</artifactId>
+            <version>${spotbugs.version}</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

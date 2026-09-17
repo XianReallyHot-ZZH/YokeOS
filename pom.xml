@@ -27,6 +27,9 @@
         <spring-ai.version>1.1.8</spring-ai.version>
         <picocli.version>4.7.6</picocli.version>
         <sqlite-jdbc.version>3.53.2.1</sqlite-jdbc.version>
+        <!-- MCP Java SDK：spring-ai-bom 1.1.8 不管此坐标（specs/005 research D1 依赖树实证），
+             显式钉版——聚合件传递 mcp-core + mcp-json-jackson3（独立包名，与仓内 Jackson 2 零冲突）。 -->
+        <mcp-sdk.version>1.1.1</mcp-sdk.version>
 
         <!-- 地基实际消费的基础设施 -->
         <springdoc.version>2.6.0</springdoc.version>
@@ -151,6 +154,13 @@
                 <version>${spring-ai.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <!-- MCP Java SDK（第 20 节起消费）：BOM 不管此坐标，显式钉版（specs/005 research D1） -->
+            <dependency>
+                <groupId>io.modelcontextprotocol.sdk</groupId>
+                <artifactId>mcp</artifactId>
+                <version>${mcp-sdk.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
