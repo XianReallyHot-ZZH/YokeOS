@@ -24,8 +24,9 @@ import com.yokeos.storage.JpaLlmCallAuditor;
 import com.yokeos.storage.JpaToolInvocationAuditor;
 import com.yokeos.storage.LlmCallRepository;
 import com.yokeos.storage.ToolInvocationRepository;
-import com.yokeos.tool.HttpGetTool;
 import com.yokeos.tool.NotifyTools;
+import com.yokeos.tool.ToolRegistry;
+import com.yokeos.tool.builtin.HttpTools;
 import com.yokeos.tool.notify.WebhookNotifyAdapter;
 import jakarta.persistence.EntityManagerFactory;
 import java.io.IOException;
@@ -159,11 +160,15 @@ class NotifyEndToEndIntegrationTest {
     assertEquals("webhook", profile.notifyChannels().get(0).type());
     assertEquals(receiverUrl, profile.notifyChannels().get(0).config().get("url"), "占位必须解析成接收端地址");
 
-    // 全真实装配（与 YokeosRuntime 同形态：http_get + notify 两工具、双审计走 SQLite）
+    // 全真实装配（与 YokeosRuntime 同形态：注册面取 http_get + notify 直接注册、双审计走 SQLite）
+    ToolRegistry toolRegistry = new ToolRegistry();
+    toolRegistry.registerAnnotated(new HttpTools());
     Map<String, YokeTool> tools =
         Map.of(
-            "http_get", new HttpGetTool(),
-            "notify", new NotifyTools(Map.of("webhook", new WebhookNotifyAdapter())));
+            "http_get",
+            toolRegistry.get("http_get").orElseThrow(),
+            "notify",
+            new NotifyTools(Map.of("webhook", new WebhookNotifyAdapter())));
     OpenAiApi api =
         OpenAiApi.builder().baseUrl("https://api.deepseek.com").apiKey(DEEPSEEK_KEY).build();
     ChatModel deepseek =

@@ -23,7 +23,8 @@ import com.yokeos.storage.JpaLlmCallAuditor;
 import com.yokeos.storage.JpaToolInvocationAuditor;
 import com.yokeos.storage.LlmCallRepository;
 import com.yokeos.storage.ToolInvocationRepository;
-import com.yokeos.tool.HttpGetTool;
+import com.yokeos.tool.ToolRegistry;
+import com.yokeos.tool.builtin.HttpTools;
 import jakarta.persistence.EntityManagerFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -97,7 +98,7 @@ class ReActSmokeIntegrationTest {
   void multiStepLoopWithRealHttpTool() throws Exception {
     writeWorkspaceWithWeatherAgent();
     Profile profile = weatherAgentProfile();
-    YokeTool httpGet = new HttpGetTool();
+    YokeTool httpGet = registryHttpGet();
     Map<String, YokeTool> tools = Map.of("http_get", httpGet);
 
     JpaToolInvocationAuditor toolAuditor = new JpaToolInvocationAuditor(toolInvocationRepository);
@@ -166,6 +167,13 @@ class ReActSmokeIntegrationTest {
             + "回答天气问题时，必须先调用 http_get 访问 open-meteo 接口"
             + "（如 https://api.open-meteo.com/v1/forecast?latitude=39.9&longitude=116.4"
             + "&current=temperature_2m,wind_speed_10m）获取实时天气，再基于结果给出穿衣建议。\n");
+  }
+
+  /** 经注册面取 http_get（20 节 HttpTools 注解管道——17 节单类形态已退役）。 */
+  private static YokeTool registryHttpGet() {
+    ToolRegistry registry = new ToolRegistry();
+    registry.registerAnnotated(new HttpTools());
+    return registry.get("http_get").orElseThrow();
   }
 
   private static Profile weatherAgentProfile() {

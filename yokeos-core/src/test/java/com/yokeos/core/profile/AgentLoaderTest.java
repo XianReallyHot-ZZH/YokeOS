@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
@@ -274,6 +275,49 @@ class AgentLoaderTest {
                         && e.getThrowableProxy().getMessage().contains("legacy-mail")
                         && e.getThrowableProxy().getMessage().contains("email")),
         "错误日志点名被剔除的渠道名与类型（ListAppender 首次引入，research D4）");
+  }
+
+  @Test
+  @DisplayName("tools点名未注册工具_派生照常并WARN点名")
+  void unknownToolNameWarnsWithoutBlocking() throws IOException {
+    Logger loaderLog = (Logger) org.slf4j.LoggerFactory.getLogger(AgentLoader.class);
+    ListAppender<ILoggingEvent> appender = new ListAppender<>();
+    appender.start();
+    loaderLog.addAppender(appender);
+    try {
+      writeAgent(
+          "ops",
+          """
+          ---
+          name: ops
+          provider:
+            name: kimi
+            model: kimi-latest
+          tools:
+            - read_file
+            - foo_tool
+          ---
+          正文
+          """);
+
+      var profiles = loader.loadAll(workspace, known, Set.of("read_file"), var -> null);
+
+      assertEquals(1, profiles.size(), "不阻断——Agent 照常派生（拍板⑥：静默略过变有痕）");
+      assertEquals(
+          List.of("read_file", "foo_tool"),
+          profiles.get(0).tools(),
+          "Profile.tools 原样承载（点名过滤在 PromptBuilder，17 节既有）");
+    } finally {
+      loaderLog.detachAppender(appender);
+    }
+    assertTrue(
+        appender.list.stream()
+            .anyMatch(
+                e ->
+                    e.getLevel() == Level.WARN
+                        && e.getThrowableProxy() != null
+                        && e.getThrowableProxy().getMessage().contains("foo_tool")),
+        "WARN 点名未注册工具（19 节「静默略过」坑的正解：启动日志看得见）");
   }
 
   private void writeAgent(String dirName, String markdown) throws IOException {

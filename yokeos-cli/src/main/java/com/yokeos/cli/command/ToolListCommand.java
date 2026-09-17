@@ -1,11 +1,19 @@
 package com.yokeos.cli.command;
 
+import com.yokeos.tool.NotifyTools;
+import com.yokeos.tool.ToolRegistry;
+import com.yokeos.tool.builtin.FileTools;
+import com.yokeos.tool.builtin.HttpTools;
+import com.yokeos.tool.builtin.ShellTools;
+import com.yokeos.tool.notify.WebhookNotifyAdapter;
+import java.util.Map;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
 /**
- * {@code yokeos tool list}（轻命令，零 Spring）：列出当前真实就绪的内置工具并注明扩展位—— 20 节 ToolRegistry
- * 就位后改查注册表（本命令是唯一诚实口径：只列已交付的，不列规划中的）。命令形态为「组 + list 子命令」（需 §5.13）。
+ * {@code yokeos tool list}（轻命令，零 Spring）：查真实静态注册面输出工具清单——名与描述来自真实工具实例（18 节「唯一诚实口径」
+ * 延续：只列已交付的，不列规划中的；新工具自动出现，无手写双源）。构造与 YokeosRuntime.tools() 的静态部分同构（注释互指）；MCP 动态工具随重命令启动注册、此处不列。
+ * 命令形态为「组 + list 子命令」（需 §5.13）。
  */
 @Command(
     name = "tool",
@@ -19,11 +27,24 @@ public final class ToolListCommand implements Runnable {
     CommandLine.usage(this, System.out); // 无子命令打印用法
   }
 
-  /** 逻辑方法（测试直调）：工具清单文本。 */
+  /** 逻辑方法（测试直调）：工具清单文本——静态注册面（内置三组 + notify）逐件取名与描述。 */
   static String listTools() {
-    return "http_get          发 HTTP GET 取回正文（17 节内置）\n"
-        + "notify            把消息推送到配置的通知渠道（19 节内置）\n"
-        + "（20 节 ToolRegistry 就位后本命令改查注册表：read_file / write_file / shell / … 将逐节接入）";
+    ToolRegistry registry = new ToolRegistry();
+    registry.registerAnnotated(new FileTools());
+    registry.registerAnnotated(new ShellTools());
+    registry.registerAnnotated(new HttpTools());
+    registry.register(new NotifyTools(Map.of("webhook", new WebhookNotifyAdapter()))); // 构造零网络副作用
+    StringBuilder sb = new StringBuilder();
+    registry
+        .all()
+        .forEach(
+            tool ->
+                sb.append(tool.getName())
+                    .append("  —  ")
+                    .append(tool.getDescription())
+                    .append('\n'));
+    sb.append("（MCP server 的工具随 chat/serve 启动注册，此处不列）");
+    return sb.toString();
   }
 
   /** list 子命令：输出工具清单。 */
