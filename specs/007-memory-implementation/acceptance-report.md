@@ -63,9 +63,9 @@ YokeOS / Core / Provider / Storage / Tool / Memory / CLI Channel / Web / CLI / B
 
 **当场跑完**：真模型 E2E `ToolSystemEndToEndIntegrationTest`（22 节接线后真 key 全链路，1/1 绿，22.4s 真调用——`source ~/.zshrc` 后跑，18 节坑纪律）。
 
-**剩余人工项**（2 条，需用户真实交互，非阻塞）：
+**剩余人工项**（合流后补强：跨 Session 真模型链路已由 `MemoryEndToEndIntegrationTest` 自动化承载——两段真会话串联全部交付物，实测 1/1 绿；验收报告外的用户体感项）：
 
-- [ ] 跨对话记住偏好的用户体感演示（quickstart 场景三）：`yokeos chat` 会话一让 Agent 调 save_memory，新会话问相关问题验证答复体现偏好——自动化已锚同链路（PromptBuilder 现读注入 + markdown 落盘），此项是可演示成果的体感确认
+- [x] 跨对话记住偏好的真模型链路（quickstart 场景三的自动化形态：会话一真调 save_memory 落盘 + 会话二全新 Session 答复体现偏好——断言设计保证答复证据唯一来自记忆注入）
 - [ ] markdown↔sqlite 两档切换体感（quickstart 场景二）；mem0 档真实例可选（需自托管 server，缺位不阻塞验收——O5 口径）
 
 ## 二、分批说明（留后续节）
