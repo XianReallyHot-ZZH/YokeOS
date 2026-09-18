@@ -51,7 +51,7 @@ CLI（18）是第一个可用入口；29~30 把"一个目录 = 一个 Agent"与�
 
 节序只表达依赖顺序，**不用 P1/P2/P3 之类的优先级标记**——排后的节不是可以不做的节。第 26 节 Web Service 排在 Memory/Tool 之后是因为它依赖前序全部能力就绪，恰恰它是 YokeOS 区别于偏个人定位项目的关键能力。
 
-具体到仓库形态：每个代码节一个 spec 目录（`specs/016-provider/` … `specs/030-agent-management/`），内含 spec / plan / tasks 三件套与当节验收报告；评审节与串联节的目录只放评审文档或验收报告。
+具体到仓库形态：每个代码节一个 spec 目录，按 spec 序号编排、逐节递增（如 `specs/001-provider-abstraction/` 起，序号独立于课节号），内含 spec / plan / tasks 三件套与当节验收报告；评审节与串联节的目录只放评审文档或验收报告，同样进 specs/ 序号序列。
 
 ### 1.4 Spec Kit 匹配度评估
 
