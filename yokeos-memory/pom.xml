@@ -23,6 +23,25 @@
             <groupId>com.yokeos</groupId>
             <artifactId>yokeos-storage</artifactId>
         </dependency>
+        <!-- 第 22 节（specs/007）：MemoryTools 经 ToolRegistry.registerAnnotated 注册——依赖注册面与
+             AnnotatedToolAdapter 管道（specs/006 裁决二：依赖方向 memory → tool 单向无环，不触宪法 5）。 -->
+        <dependency>
+            <groupId>com.yokeos</groupId>
+            <artifactId>yokeos-tool</artifactId>
+        </dependency>
+        <!-- 第 22 节 mem0 档（specs/007）：RestClient 同步 HTTP 客户端（宪法 4 合规）。既有坐标的模块级新增，
+             版本走 Boot BOM——非新外部坐标（软门禁⑥记实施偏差：research D2 已 javap 核实 API）。 -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+        <!-- SpotBugs 抑制注解（core 同款 provided：仅编译期可见） -->
+        <dependency>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-annotations</artifactId>
+            <version>${spotbugs.version}</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

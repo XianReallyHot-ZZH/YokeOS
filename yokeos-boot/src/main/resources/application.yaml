@@ -23,6 +23,7 @@ spring:
       schema-locations:
         - classpath:db/schema-001-audit.sql
         - classpath:db/schema-002-sessions.sql
+        - classpath:db/schema-003-memory.sql
 
 server:
   port: 8080
@@ -51,3 +52,12 @@ yokeos:
     - name: kimi
       api-key: ${KIMI_API_KEY}
       base-url: https://api.moonshot.cn/v1
+  # 22 节（specs/007）：记忆后端选档与阈值。mem0 段占位不走 Boot 绑定解析（research D6，
+  # 经 MemoryProperties 原文读取）——切到 mem0 档使用时才校验，缺环境变量不阻断启动。
+  memory:
+    backend: markdown            # markdown（缺省，单机档）| sqlite（结构化档）| mem0（自托管集成档）
+    archive-max-chars: 4000      # markdown 档归档区字符阈值（技 §5.1；核心区永不截断）
+    archive-max-rows: 100        # sqlite 档归档区保留行数（LIMIT）
+    mem0:
+      base-url: ${MEM0_BASE_URL}
+      api-key: ${MEM0_API_KEY}

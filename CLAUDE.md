@@ -218,6 +218,8 @@ yokeos provider list / tool list / session list
 | Checkstyle（google_checks）把 javadoc **行首** `@Tool`/`@Param` 认作 block tag | `JavadocTagContinuationIndentation` 对后续行连锁报错（缩进级别错），误以为格式问题反复 spotless 无效 | javadoc 内 @ 词不置行首：内嵌句中或 `{@code @Tool}` 包裹（20 节实证） |
 | SpotBugs CRLF 门禁连**参数化**日志都拦 | `log.warn("…: {} {}", a, b)`（哪怕值已 sanitize）被 `CRLF_INJECTION_LOGS` 拦截——静态分析只认 API 形态不看值 | 唯一通过形态 = 编译期常量消息 + 动态值进异常堆栈（`log.warn("常量", new IllegalArgumentException("name=" + …))`，19/20 节同款；原 `sanitize()` 函数随之无必要） |
 | npx 冷缓存起 MCP server 超过 initialize 超时 | 首跑 `npx -y @modelcontextprotocol/server-everything` 下载耗时 > SDK 默认 initializationTimeout 20s → `connectAll` WARN 跳过（集成测试 assumeTrue 跳过不失败），二跑缓存热即正常 | CI/新机先预热一次 npx（或接受首跑 skip）；集成冒烟跑法注明「冷缓存 skip 属正常」（20 节实证） |
+| Mockito 逐环 stub builder 式深链（`restClient.post().uri().body().retrieve()`） | 某一环 stub 未命中即返回 null，后续 `.retrieve()` 直接 NPE——排查方向误导为生产代码 | mock 链式接口用 `mock(X.class, Mockito.RETURNS_SELF)` 让 uri/body 自动回环，只显式 stub 链尾（retrieve/toEntity）两处（22 节实证） |
+| `@ConfigurationProperties` 绑定提前解析 yaml 里的 `${ENV}` 占位 | 含占位的可选配置段（如 `yokeos.memory.mem0.base-url: ${MEM0_BASE_URL}`）一绑定时就解析，env 缺失启动即失败——「缺省空不阻断启动、使用时才报错」的设计被架空 | 可选段的配置走 classpath yaml 原文读取（SnakeYAML，占位原样保留、切档使用时解析）——16 节 provider 清单同款策略的泛化（22 节实证，research D6） |
 
 ---
 
