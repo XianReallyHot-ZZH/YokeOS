@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.yokeos.core.context.ContextLoader;
+import com.yokeos.core.memory.MemoryService;
 import com.yokeos.core.profile.Profile;
 import com.yokeos.core.profile.Profile.Identity;
 import com.yokeos.core.profile.Profile.ProviderConfig;
@@ -27,11 +28,12 @@ import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mockito;
 
 /**
- * PromptBuilder 组装 harness（docs/class/017-react-loop.md 第四部分）：固定顺序、日期时间行（Clock 注入
- * 断言——不赌真实时间）、轮界截断（坑二：超 N 轮截、恰好 N 轮不截、工具结果跟住提问轮）、availableTools 只带 Profile 点名工具。截断用例经 Profile
- * Settings 把 maxHistoryTurns 压到 2。
+ * PromptBuilder 组装 harness（docs/class/017-react-loop.md 第四部分 + 022 第 22 节接线）：固定顺序、日期时间行（Clock 注入
+ * 断言——不赌真实时间）、轮界截断（坑二：超 N 轮截、恰好 N 轮不截、工具结果跟住提问轮）、availableTools 只带 Profile 点名工具； 22 节新增——[2]
+ * 长期记忆位接线（注入位置、历史不重复、每次组装现调）。截断用例经 Profile Settings 把 maxHistoryTurns 压到 2。
  */
 class PromptBuilderTest {
 
@@ -43,6 +45,9 @@ class PromptBuilderTest {
 
   /** 截断用例的 profile：maxHistoryTurns=2。 */
   private static final Settings TWO_TURNS = new Settings(10, 2);
+
+  /** 最近一次 builderWith 造的 mock 门面（verify 用）。 */
+  private MemoryService memory;
 
   @TempDir Path workspace;
 
@@ -144,9 +149,64 @@ class PromptBuilderTest {
     assertTrue(text.contains("第2轮提问"), "边界正确：最近 2 轮完整保留");
   }
 
+  @Test
+  @DisplayName("长期记忆注入在系统提示与对话历史之间")
+  void memoryInjectedBetweenSystemAndHistory() throws IOException {
+    PromptBuilder builder = builderWith(Map.of(), "## 核心记忆\n- [2026-09-18] 用户偏好中文交流");
+    Session session = new Session("s-1", "ops-agent");
+    session.appendUser("今天天气如何");
+
+    String text = builder.build(session, profileTools(List.of(), Settings.DEFAULT)).promptText();
+
+    int system = text.indexOf("你是运维小欧的人格底座");
+    assertTrue(system >= 0, "system prompt 在场");
+    int datetime = text.indexOf(EXPECTED_DATETIME);
+    assertTrue(datetime > system, "日期时间行在 system prompt 之后");
+    int memory = text.indexOf("用户偏好中文交流");
+    assertTrue(memory > datetime, "长期记忆在日期时间行之后（技 §4.2 [2] 位，17 节恒空位兑现）");
+    int history = text.indexOf("今天天气如何");
+    assertTrue(history > memory, "对话历史在记忆位之后——system → 时间行 → 记忆 → 历史的固定顺序");
+  }
+
+  @Test
+  @DisplayName("会话历史只由历史段承载_不重复注入")
+  void historyNotDuplicatedWhenMemoryInjected() throws IOException {
+    PromptBuilder builder = builderWith(Map.of(), "## 核心记忆\n- [2026-09-18] 一条核心记忆");
+    Session session = new Session("s-1", "ops-agent");
+    session.appendUser("只出现一次的提问");
+
+    String text = builder.build(session, profileTools(List.of(), Settings.DEFAULT)).promptText();
+
+    int occurrences = text.split("只出现一次的提问", -1).length - 1;
+    assertEquals(1, occurrences, "坑七回归：记忆注入后历史恰好出现一次（buildContext 只出长期记忆）");
+  }
+
+  @Test
+  @DisplayName("每次组装都现读长期记忆")
+  void memoryReadFreshOnEveryBuild() throws IOException {
+    PromptBuilder builder = builderWith(Map.of(), "记忆内容");
+    Session session = new Session("s-1", "ops-agent");
+    session.appendUser("问1");
+    Session second = new Session("s-2", "ops-agent");
+    second.appendUser("问2");
+
+    builder.build(session, profileTools(List.of(), Settings.DEFAULT));
+    builder.build(second, profileTools(List.of(), Settings.DEFAULT));
+
+    Mockito.verify(memory, Mockito.times(2)).buildContext(Mockito.any());
+  }
+
   private PromptBuilder builderWith(Map<String, YokeTool> tools) throws IOException {
+    return builderWith(tools, "");
+  }
+
+  /** 22 节构造器扩展：memory 槽内容由 mock 门面供给（缺省空串 = 既有用例的恒空记忆位）。 */
+  private PromptBuilder builderWith(Map<String, YokeTool> tools, String memoryContext)
+      throws IOException {
     writeMinimalWorkspace();
-    return new PromptBuilder(new ContextLoader(workspace), tools, FIXED_CLOCK);
+    memory = Mockito.mock(MemoryService.class);
+    Mockito.when(memory.buildContext(Mockito.any())).thenReturn(memoryContext);
+    return new PromptBuilder(new ContextLoader(workspace), tools, FIXED_CLOCK, memory);
   }
 
   /** 最小工作区：Bootstrap 三件 + 一个 AGENT.md。 */

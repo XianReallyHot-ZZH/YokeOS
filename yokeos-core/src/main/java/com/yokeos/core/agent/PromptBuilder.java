@@ -1,6 +1,7 @@
 package com.yokeos.core.agent;
 
 import com.yokeos.core.context.ContextLoader;
+import com.yokeos.core.memory.MemoryService;
 import com.yokeos.core.profile.Profile;
 import com.yokeos.core.provider.ProviderRequest;
 import com.yokeos.core.session.Message;
@@ -39,13 +40,22 @@ public final class PromptBuilder {
 
   private final Clock clock;
 
+  private final MemoryService memoryService;
+
   /**
    * @param clock 默认系统时钟；测试注入固定时钟（日期时间行可测）。
+   * @param memoryService 22 节接线：[2] 长期记忆位——每次组装现调 buildContext（不缓存），会话历史仍由本类 [3]
+   *     段承载、两者各拼各的（坑七：门面只出长期记忆）。
    */
-  public PromptBuilder(ContextLoader contextLoader, Map<String, YokeTool> knownTools, Clock clock) {
+  public PromptBuilder(
+      ContextLoader contextLoader,
+      Map<String, YokeTool> knownTools,
+      Clock clock,
+      MemoryService memoryService) {
     this.contextLoader = contextLoader;
     this.knownTools = Map.copyOf(knownTools);
     this.clock = clock;
+    this.memoryService = memoryService;
   }
 
   /** 组装一次调用请求：拼好的单段文本 + Profile 点名的可用工具。 */
@@ -55,7 +65,11 @@ public final class PromptBuilder {
     sb.append(DATETIME_PREFIX)
         .append(LocalDateTime.now(clock).format(DATETIME_FORMAT))
         .append('\n');
-    // [2] 长期记忆位：22 节 MemoryService 接入（构造器届时扩展），本节恒空跳过。
+    // [2] 长期记忆位（22 节兑现 17 节预留）：每次组装现调——写入后下一轮立即可见（契约一）。
+    String memoryContext = memoryService.buildContext(session);
+    if (!memoryContext.isBlank()) {
+      sb.append(memoryContext).append('\n');
+    }
     for (Message message :
         truncateByTurn(session.messages(), profile.settings().maxHistoryTurns())) {
       appendMessage(sb, message);

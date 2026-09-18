@@ -68,13 +68,17 @@ class YokeosRuntimeAssemblyTest {
       assertTrue(ctx.getBean(CliChannel.class) != null, "交互通道就位");
       assertTrue(ctx.getBean("llmCallAuditor") != null, "LLM 审计就位");
       assertTrue(ctx.getBean("toolInvocationAuditor") != null, "工具审计就位");
-      // 20 节注册面：内置六件 + notify ≥7（MCP 动态面随 mcp_servers.yaml 配置，此断言只锚静态面）
+      // 20 节注册面：内置六件 + notify；22 节补记忆两件 ≥9（MCP 动态面随 mcp_servers.yaml 配置，此断言只锚静态面）
       @SuppressWarnings("unchecked")
       Map<String, Object> tools = ctx.getBean("tools", Map.class);
       assertTrue(
-          tools.size() >= 7,
-          "ToolRegistry 注册面至少七件（read_file/write_file/list_dir/shell/http_get/http_post/notify），实际: "
+          tools.size() >= 9,
+          "ToolRegistry 注册面至少九件（read_file/write_file/list_dir/shell/http_get/http_post/notify"
+              + " + save_memory/recall_memory），实际: "
               + tools.keySet());
+      assertTrue(
+          tools.containsKey("save_memory") && tools.containsKey("recall_memory"),
+          "22 节记忆两件进注册面（与其他内置 Tool 一视同仁）");
     }
   }
 

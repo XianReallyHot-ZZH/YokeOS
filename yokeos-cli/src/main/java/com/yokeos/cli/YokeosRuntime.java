@@ -9,11 +9,19 @@ import com.yokeos.core.agent.ToolExecutor;
 import com.yokeos.core.audit.LlmCallAuditor;
 import com.yokeos.core.audit.ToolInvocationAuditor;
 import com.yokeos.core.context.ContextLoader;
+import com.yokeos.core.memory.MemoryService;
 import com.yokeos.core.profile.AgentLoader;
 import com.yokeos.core.profile.ProfileRegistry;
 import com.yokeos.core.provider.ProviderService;
 import com.yokeos.core.session.SessionManager;
 import com.yokeos.core.tool.YokeTool;
+import com.yokeos.memory.LongTermMemoryStore;
+import com.yokeos.memory.MarkdownMemoryStore;
+import com.yokeos.memory.Mem0MemoryStore;
+import com.yokeos.memory.MemoryProperties;
+import com.yokeos.memory.MemoryServiceImpl;
+import com.yokeos.memory.SqliteMemoryStore;
+import com.yokeos.memory.builtin.MemoryTools;
 import com.yokeos.provider.ProvidersProperties;
 import com.yokeos.provider.SpringAiProviderService;
 import com.yokeos.provider.ToolSchemaAdapter;
@@ -22,6 +30,7 @@ import com.yokeos.storage.JpaSessionManager;
 import com.yokeos.storage.JpaToolInvocationAuditor;
 import com.yokeos.storage.JpaToolInvocationReader;
 import com.yokeos.storage.LlmCallRepository;
+import com.yokeos.storage.MemoryEntryRepository;
 import com.yokeos.storage.SessionRepository;
 import com.yokeos.storage.ToolInvocationRepository;
 import com.yokeos.tool.NotifyTools;
@@ -158,24 +167,53 @@ public class YokeosRuntime {
 
   /**
    * 20 节 ToolRegistry 统一注册面（17 节预告的替换兑现）：内置三组注解注册 + notify 直接注册 + MCP server 工具接入（.yokeos/
-   * mcp_servers.yaml，失联只 WARN 不拖垮启动）， {@code registry.asMap()} 喂
-   * PromptBuilder/ToolExecutor（两消费方构造签名不动）。
+   * mcp_servers.yaml，失联只 WARN 不拖垮启动）， 22 节补记忆两件（save_memory / recall_memory，specs/006 裁决二—— 随能力三落位
+   * memory 模块、注册进注册面一视同仁）， {@code registry.asMap()} 喂 PromptBuilder/ToolExecutor（两消费方构造签名不动）。
    */
   @Bean
-  Map<String, YokeTool> tools() {
+  Map<String, YokeTool> tools(MemoryEntryRepository memoryEntryRepository) {
     ToolRegistry registry = new ToolRegistry();
     registry.registerAnnotated(new FileTools());
     registry.registerAnnotated(new ShellTools());
     registry.registerAnnotated(new HttpTools());
+    registry.registerAnnotated(new MemoryTools(memoryService(memoryEntryRepository)));
     registry.register(new NotifyTools(Map.of("webhook", new WebhookNotifyAdapter())));
     new McpClientService(new McpConfigLoader(workspace().resolve("mcp_servers.yaml")))
         .connectAll(registry);
     return registry.asMap();
   }
 
+  /**
+   * 22 节记忆门面（US3 选档版）：按 {@code yokeos.memory.backend} 三选一构造后端注入同一 {@link MemoryServiceImpl}——
+   * markdown（缺省，{@code .yokeos/memory/}）/ sqlite（memory_entries 表）/ mem0（自托管 REST）。换档只改配置行，
+   * PromptBuilder 与 MemoryTools 不动（接口墙的价值兑现）。配置经 classpath yaml 原文读取（MemoryProperties——占位不提前解析， 16
+   * 节 provider 同款策略）；未知名启动即点名报错，不静默回退。
+   */
   @Bean
-  PromptBuilder promptBuilder(ContextLoader contextLoader, Map<String, YokeTool> tools) {
-    return new PromptBuilder(contextLoader, tools, Clock.systemDefaultZone());
+  MemoryService memoryService(MemoryEntryRepository memoryEntryRepository) {
+    MemoryProperties properties =
+        MemoryProperties.load(YokeosRuntime.class.getResourceAsStream("/application.yaml"));
+    String backend = properties.backend();
+    LongTermMemoryStore store;
+    if (MemoryProperties.BACKEND_MARKDOWN.equals(backend)) {
+      store = new MarkdownMemoryStore(workspace().resolve("memory"), properties.archiveMaxChars());
+    } else if (MemoryProperties.BACKEND_SQLITE.equals(backend)) {
+      store = new SqliteMemoryStore(memoryEntryRepository, properties.archiveMaxRows());
+    } else if (MemoryProperties.BACKEND_MEM0.equals(backend)) {
+      store =
+          new Mem0MemoryStore(
+              properties.mem0().getOrDefault("base-url", ""),
+              properties.mem0().getOrDefault("api-key", ""));
+    } else {
+      throw new IllegalStateException("未知的记忆后端: " + backend + "（应为 markdown / sqlite / mem0）");
+    }
+    return new MemoryServiceImpl(store);
+  }
+
+  @Bean
+  PromptBuilder promptBuilder(
+      ContextLoader contextLoader, Map<String, YokeTool> tools, MemoryService memoryService) {
+    return new PromptBuilder(contextLoader, tools, Clock.systemDefaultZone(), memoryService);
   }
 
   @Bean

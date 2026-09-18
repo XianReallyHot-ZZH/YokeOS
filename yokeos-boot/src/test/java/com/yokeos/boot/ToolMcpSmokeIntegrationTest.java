@@ -9,11 +9,14 @@ import com.yokeos.core.agent.PromptBuilder;
 import com.yokeos.core.agent.ReActLoop;
 import com.yokeos.core.agent.ToolExecutor;
 import com.yokeos.core.context.ContextLoader;
+import com.yokeos.core.memory.MemoryService;
 import com.yokeos.core.profile.Profile;
 import com.yokeos.core.profile.ProfileRegistry;
 import com.yokeos.core.session.InMemorySessionManager;
 import com.yokeos.core.session.Session;
 import com.yokeos.core.tool.YokeTool;
+import com.yokeos.memory.InMemoryMemoryStore;
+import com.yokeos.memory.MemoryServiceImpl;
 import com.yokeos.provider.SpringAiProviderService;
 import com.yokeos.provider.ToolSchemaAdapter;
 import com.yokeos.storage.JpaLlmCallAuditor;
@@ -143,7 +146,8 @@ class ToolMcpSmokeIntegrationTest {
     ToolExecutor executor =
         new ToolExecutor(tools, new JpaToolInvocationAuditor(toolInvocationRepository), 200L);
     PromptBuilder promptBuilder =
-        new PromptBuilder(new ContextLoader(workspace), tools, Clock.systemDefaultZone());
+        new PromptBuilder(
+            new ContextLoader(workspace), tools, Clock.systemDefaultZone(), memoryService());
     ProfileRegistry profileRegistry = new ProfileRegistry();
     Profile profile = mcpAgentProfile();
     profileRegistry.register(profile);
@@ -261,5 +265,10 @@ class ToolMcpSmokeIntegrationTest {
         EntityManagerFactory entityManagerFactory, DataSource dataSource) {
       return new JpaTransactionManager(entityManagerFactory);
     }
+  }
+
+  /** 22 节构造器扩展：这些测试不测记忆，注入进程内轻量档（零文件副作用）。 */
+  private static MemoryService memoryService() {
+    return new MemoryServiceImpl(new InMemoryMemoryStore());
   }
 }
