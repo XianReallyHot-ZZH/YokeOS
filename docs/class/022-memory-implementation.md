@@ -20,6 +20,8 @@
 - **墙之下可插拔**（评审 D4）——长期记忆抽成 `LongTermMemoryStore` 后端接口，三档实现对应三级演进：Markdown 是默认单机档，SQLite 是记忆量变大后的结构化升级档（仍零外部依赖），Mem0 是「真需要自动抽取/语义检索」的自托管外部集成档。**换档只改 `yokeos.memory.backend` 一行配置**，`PromptBuilder`、`MemoryTools`、`ReActLoop`、全部测试一个字不动——这句话本节当场兑现，兑现的证据就是那套对三档统一跑的契约测试。
 - **写入靠 Agent 主动调 `save_memory`**（评审 D11 偏离依据①）——三档后端都遵守：不做自动抽取，写入时机和分区（scope）由 ReAct 循环里的模型显式决定。
 
+![MemoryService 统一门面：上层只认一个接口——PromptBuilder 读、MemoryTools 写，会话归 SessionManager、长期归三档后端](../images/docs-memory-service.svg)
+
 放到既有体系里看：会话记忆（短期）= Session，18 节已随 CLI 落地（SQLite 真相源 + `max_history_turns` 截断），本节**不新增**任何会话存储概念（评审 D10）；长期记忆（长期）才是本节的新增物。`PromptBuilder` 里那个「[2] 长期记忆位：22 节 MemoryService 接入（构造器届时扩展），本节恒空跳过」的预留注释，本节接线。
 
 Agent 从此凑齐三大能力：会想（ReAct，17 节）、会动手（Tool，20 节）、记得住（Memory，本节）。Demo 二「日报内容体现用户说过的偏好」这一环，靠的就是本节的 `save_memory` 写入、下次组装 Prompt 自动带上。
@@ -48,6 +50,8 @@ Agent 从此凑齐三大能力：会想（ReAct，17 节）、会动手（Tool�
 - **契约四：`recall` 是关键词检索，别做复杂。** md 档行匹配（`String.contains`）、sqlite 档 `LIKE`、Mem0 档用它自带的 search——不上正则、不分词、更不上向量（评审 O4 的边界：不得升级成语义检索）。
 
 这套契约的存在方式不是注释，是**测试**：一套契约测试对三档实现参数化统一跑，谁破谁红——「接口不变、实现随便换」由此有了自动化保障。
+
+![不缓存换来记完立刻生效：save_memory 落盘 → 下一轮组装 buildContext 现读，中间零刷新零等待](../images/class-022-3.svg)
 
 **第四，`buildContext` 的边界要分辨清楚（本节最容易写错的新坑）。** 技 §4.2 的 Prompt 四段里，[2] 写「Memory 注入（会话历史加长期记忆，由 MemoryService 提供）」、[3] 又写「对话历史（按 maxHistoryTurns 截断）」——两段表述有重叠。**实际分工**：`MemoryService.buildContext` 只出**长期记忆**（核心区全量 + 归档区截断后），会话历史仍由 `PromptBuilder` 既有 [3] 段（17 节交付的 `truncateByTurn`）独立负责——门面视角「两层都在 Prompt 里」，实现上各拼各的。若 `buildContext` 真把会话历史也拼上，`PromptBuilder` 再拼一次截断历史，**对话历史就被注入两遍**（坑七，见第四部分回归点）。
 
@@ -91,6 +95,8 @@ private static final String ARCHIVE_HEADER = "## 归档记忆";
 ```
 
 `append` 往目标分区追加一行 `- [yyyy-MM-dd] 内容`（写回文件，同样不缓存）；`load` 每次 `Files.readString` 现读（契约一），核心区段完整返回，归档区段超 `archive-max-chars`（默认 4000）从尾部保留最近内容——**裁剪函数只接收归档区文本**，物理上碰不到核心区（契约二）；`recallByKeyword` 只读归档区段做行匹配（契约四）。文件不存在时视作空记忆（首次运行），不报错。
+
+![MEMORY.md 两分区：核心区永不截断每轮全量注入，归档区超阈值截断、recallByKeyword 只搜这一区](../images/docs-memory-structure.svg)
 
 **第四步：`memory_entries` 建表 + `SqliteMemoryStore`。** 建表脚本 `yokeos-storage/src/main/resources/db/schema-003-memory.sql`（列定义逐字来自技 §9.2，风格照 schema-002），boot 的 `sql.init.schema-locations` 追加一行：
 

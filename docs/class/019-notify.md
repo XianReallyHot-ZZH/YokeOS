@@ -16,6 +16,8 @@
 
 前 18 节的所有链路都是「人推」：CLI 里你问一句，Agent 答一句，同步返回——回复方式是原路带回，不需要额外的推送机制。但「每日天气」「每日科技日报」这类场景不一样：25 节的定时触发到点自动跑，**没有人在另一端等着看响应**，Agent 跑完一整套 ReAct 循环，结果只能烂在 Session 里没人看到。Agent 必须自己决定把结果送到哪、怎么送——送到人能看到的地方，就是企业 IM 群。[需 §5.8][技 §6.8]
 
+![入站与出站对称：消息怎么进来走 ChannelAdapter，结果怎么出去走 NotifyChannelAdapter——两个方向各走各的 Adapter 插件](../images/class-019-1.svg)
+
 **如果没有这个模块会怎样**：每个业务方定义 Agent 时都要在正文里手写「调 `http_post` 打这个 webhook URL」，或者自己找一个企业微信/飞书的 MCP server 配上——每个 Agent 各写一份，重复且不统一。`NotifyTools` 要把「往外推一条消息」这件最常见的事统一掉。这也是 Memory（21/22 节）、Sandbox（23/24 节）会反复用到的「接口先行」设计习惯的第一次亮相。
 
 ![NotifyTools 设计：接口先行，第一阶段只实现 WebhookNotifyAdapter，扩展阶段新增专用渠道 Adapter](../images/docs-notify.svg)
@@ -38,6 +40,8 @@
 **第四，推到哪是配置，不是对话内容。** webhook 地址是运行时配置，LLM 调用时大多数时候只传 `content` 就够——地址不进 system prompt、不进 tool schema、不进日志。这跟 Sandbox 域名白名单「配置在配置文件、不暴露在接口签名里」是同一个考虑：**webhook URL 本身就是凭证**（拿到 URL 谁都能往群里发消息），必须走 `${ENV_VAR}` 占位（宪法 7）。
 
 **第五（本仓特有），渠道带 name 字段，`channel` 参数按 name 匹配。** 本仓 `Profile.NotifyChannelConfig` 是 `name`/`type`/`config` 三字段（16 节已定，技 §8.2）：同一个 Agent 完全可以配两个 webhook 渠道——`ops-group` 和 `dev-group`，都推群、群不同。按 type 匹配对这种配置无能为力（两条都是 `webhook`），按 name 匹配才无歧义（拍板①）。
+
+![notify 的 channel 参数按 name 匹配：同一 type 配多条渠道（两个群）无歧义，缺省取第一条，点名不存在报错不回退](../images/class-019-2.svg)
 
 **四个坑——直接决定代码长什么样：**
 

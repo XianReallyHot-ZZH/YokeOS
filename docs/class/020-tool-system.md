@@ -30,7 +30,11 @@ YokeOS 的 Tool 分两类：
 - **内置 Tool**：九个分五组（需 §5.7）——`FileTools`（`read_file`/`write_file`/`list_dir`）、`ShellTools`（`shell`）、`HttpTools`（`http_get`/`http_post`）六件本节交付；`notify` 19 节已交付，本节入册注册；`save_memory`/`recall_memory` 归 22 节 Memory 模块（届时经同管道注册）。九件覆盖「读写文件、跑命令、调 API、记事、往外推通知」的最短链路。
 - **扩展 Tool**：业务方接进来的能力，三档门槛从低到高（技 §6.3~6.5）——**方式一零代码**（AGENT.md 目录 + 复用社区 MCP server，主推）、**方式二轻代码**（自写 MCP server 配进 `mcp_servers.yaml`）、**方式三重代码**（`@Tool` Java Bean 进程内直调）。选择原则一句话：**能用一不用二，能用二不用三。**
 
+![扩展 Tool 三档：零代码 AGENT.md 目录+MCP 主推、轻代码自写 MCP server、重代码 @Tool Java Bean——门槛低到高，能用一不用二](../images/docs-plugin-tool-tiers.svg)
+
 本节的两个主角恰好是这套体系的两个「汇合点」：**ToolRegistry** 把三种来源的工具统一成 `YokeTool`（ReAct 循环由此对来源无感知）；**MCP Client** 把外部 MCP server 的工具经协议转换接进同一个注册表。方式一本节就能跑通一半——AGENT.md 的 `mcp_servers` 字段（16 节已建）配上本节的 MCP 管道，社区 server 的工具就到了模型手里；Skill 正文注入与目录语义的完整闭环归 29 节。
+
+![三种来源汇成一张注册表：内置 @Tool、业务 @Tool、MCP 工具都统一成 YokeTool 进 ToolRegistry——ReAct 循环对来源无感知，重名注册拒绝](../images/class-020-1.svg)
 
 ## 二、动手前先想清楚几件事
 

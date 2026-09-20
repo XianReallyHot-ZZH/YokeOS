@@ -1,0 +1,39 @@
+<svg viewBox="0 0 820 384" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+  <rect width="820" height="384" fill="#ffffff"/>
+  <defs>
+    <marker id="yks" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/></marker>
+  </defs>
+
+  <!-- ════════ 入站道：外部 → ChannelAdapter → Agent ════════ -->
+  <rect x="60" y="36" width="190" height="56" rx="10" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+  <text x="155" y="58" fill="#15803d" font-size="12.5" font-weight="bold" text-anchor="middle">外部：用户 / 业务系统</text>
+  <text x="155" y="76" fill="#166534" font-size="10" text-anchor="middle">人推 / 钟推的触发方</text>
+
+  <rect x="330" y="36" width="190" height="56" rx="10" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+  <text x="425" y="58" fill="#4338ca" font-size="12.5" font-weight="bold" text-anchor="middle">入站 · ChannelAdapter</text>
+  <text x="425" y="76" fill="#6366f1" font-size="10" text-anchor="middle">CLI · REST API · Channel</text>
+
+  <line x1="250" y1="64" x2="324" y2="64" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#yks)"/>
+  <line x1="425" y1="92" x2="425" y2="122" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#yks)"/>
+
+  <!-- ════════ Agent（本章主角居中） ════════ -->
+  <rect x="310" y="128" width="220" height="70" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2.6"/>
+  <text x="420" y="154" fill="#b45309" font-size="14" font-weight="bold" text-anchor="middle">Agent（ReAct 循环）</text>
+  <text x="420" y="174" fill="#92400e" font-size="10" text-anchor="middle">想清楚要做什么，要不要主动往外说</text>
+
+  <!-- ════════ 出站道：Agent → NotifyChannelAdapter → 外部 ════════ -->
+  <line x1="420" y1="198" x2="420" y2="244" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#yks)"/>
+
+  <rect x="300" y="250" width="240" height="56" rx="10" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+  <text x="420" y="272" fill="#4338ca" font-size="12.5" font-weight="bold" text-anchor="middle">出站 · NotifyChannelAdapter</text>
+  <text x="420" y="290" fill="#6366f1" font-size="10" text-anchor="middle">接口先行 · Webhook 一档起步</text>
+
+  <line x1="540" y1="278" x2="574" y2="278" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#yks)"/>
+
+  <rect x="570" y="250" width="190" height="56" rx="10" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+  <text x="665" y="272" fill="#15803d" font-size="12.5" font-weight="bold" text-anchor="middle">外部：企业 IM 群</text>
+  <text x="665" y="290" fill="#166534" font-size="10" text-anchor="middle">企业微信 · 飞书 · 钉钉群机器人</text>
+
+  <!-- ════════ 结论行 ════════ -->
+  <text x="410" y="358" fill="#64748b" font-size="12" text-anchor="middle">入站负责「怎么进来」，出站负责「怎么出去」——两个方向各走 Adapter 插件，缺一个都不对称</text>
+</svg>
