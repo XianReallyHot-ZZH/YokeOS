@@ -1,0 +1,45 @@
+<svg viewBox="0 0 820 292" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+  <rect width="820" height="292" fill="#ffffff"/>
+  <defs>
+    <marker id="ykam" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f59e0b"/></marker>
+    <marker id="ykpu" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#a855f7"/></marker>
+    <marker id="yks" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/></marker>
+  </defs>
+
+  <!-- ════════ 三个阶段（同基线，信号门驱动升级） ════════ -->
+  <rect x="40" y="80" width="180" height="76" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2.6"/>
+  <text x="130" y="106" fill="#b45309" font-size="13" font-weight="bold" text-anchor="middle">WhitelistSandbox</text>
+  <text x="130" y="126" fill="#92400e" font-size="9.5" text-anchor="middle">应用层三重白名单</text>
+  <text x="130" y="144" fill="#92400e" font-size="9.5" text-anchor="middle">第一阶段 · 本节定稿</text>
+
+  <rect x="320" y="80" width="180" height="76" rx="10" fill="#ede9fe" stroke="#a855f7" stroke-width="2"/>
+  <text x="410" y="106" fill="#6b21a8" font-size="13" font-weight="bold" text-anchor="middle">容器隔离</text>
+  <text x="410" y="126" fill="#7c3aed" font-size="9.5" text-anchor="middle">namespace+cgroups+seccomp</text>
+  <text x="410" y="144" fill="#7c3aed" font-size="9.5" text-anchor="middle">扩展阶段一</text>
+
+  <rect x="600" y="80" width="180" height="76" rx="10" fill="#ede9fe" stroke="#a855f7" stroke-width="2"/>
+  <text x="690" y="106" fill="#6b21a8" font-size="13" font-weight="bold" text-anchor="middle">microVM</text>
+  <text x="690" y="126" fill="#7c3aed" font-size="9.5" text-anchor="middle">Firecracker · Kata · gVisor</text>
+  <text x="690" y="144" fill="#7c3aed" font-size="9.5" text-anchor="middle">扩展阶段二</text>
+
+  <!-- 升级箭头（色随源框角色） -->
+  <line x1="220" y1="118" x2="314" y2="118" stroke="#f59e0b" stroke-width="2" marker-end="url(#ykam)"/>
+  <line x1="500" y1="118" x2="594" y2="118" stroke="#a855f7" stroke-width="2" marker-end="url(#ykpu)"/>
+
+  <!-- 信号门槛 chip（落在强度轴上的门） -->
+  <rect x="197" y="170" width="146" height="24" rx="6" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.4"/>
+  <text x="270" y="186" fill="#475569" font-size="9.5" text-anchor="middle">信号一 · 相对不可信 / 多租户</text>
+  <line x1="270" y1="194" x2="270" y2="214" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="5,3"/>
+
+  <rect x="452" y="170" width="196" height="24" rx="6" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.4"/>
+  <text x="550" y="186" fill="#475569" font-size="9.5" text-anchor="middle">信号二 · 完全不可信 / 规模化多租户</text>
+  <line x1="550" y1="194" x2="550" y2="214" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="5,3"/>
+
+  <!-- 底部隔离强度轴 -->
+  <line x1="40" y1="216" x2="786" y2="216" stroke="#94a3b8" stroke-width="2" marker-end="url(#yks)"/>
+  <text x="44" y="231" fill="#94a3b8" font-size="9.5">隔离强度</text>
+
+  <!-- ════════ 结论行 ════════ -->
+  <text x="410" y="244" fill="#475569" font-size="12" text-anchor="middle">没有信号不上重档——用真实的信任等级驱动隔离强度，不是越强越好</text>
+  <text x="410" y="266" fill="#94a3b8" font-size="11" text-anchor="middle">YokeOS 第一阶段 = 企业自配可信 Agent，防误操作与注入，不对标跑陌生代码的云解释器</text>
+</svg>
