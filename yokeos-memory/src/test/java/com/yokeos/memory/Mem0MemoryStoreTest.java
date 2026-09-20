@@ -8,6 +8,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.yokeos.core.memory.MemoryScope;
+import com.yokeos.tool.sandbox.SandboxProperties;
+import com.yokeos.tool.sandbox.SandboxViolationException;
+import com.yokeos.tool.sandbox.WhitelistSandbox;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
@@ -32,11 +35,17 @@ class Mem0MemoryStoreTest {
 
   private final RestClient.ResponseSpec responseSpec = mock(RestClient.ResponseSpec.class);
 
+  private static final String MEM0_BASE = "https://mem0.example.com";
+
   private Mem0MemoryStore store() {
     when(restClient.post()).thenReturn(postSpec);
     when(postSpec.retrieve()).thenReturn(responseSpec);
     when(responseSpec.toEntity(String.class)).thenReturn(ResponseEntity.ok("{\"results\":[]}"));
-    return new Mem0MemoryStore(restClient);
+    return new Mem0MemoryStore(restClient, MEM0_BASE, whitelisting("mem0.example.com"));
+  }
+
+  private static WhitelistSandbox whitelisting(String domain) {
+    return new WhitelistSandbox(new SandboxProperties(List.of(), List.of(), List.of(domain)));
   }
 
   @Test
@@ -91,12 +100,34 @@ class Mem0MemoryStoreTest {
   @Test
   @DisplayName("mem0配置缺失在使用时清晰报错")
   void missingBaseUrlFailsWithExplicitMessage() {
+    WhitelistSandbox denyAll =
+        new WhitelistSandbox(new SandboxProperties(List.of(), List.of(), List.of()));
+
     IllegalStateException error =
         assertThrows(
             IllegalStateException.class,
-            () -> new Mem0MemoryStore("${MEM0_BASE_URL_TEST_ABSENT}", "key"));
+            () -> new Mem0MemoryStore("${MEM0_BASE_URL_TEST_ABSENT}", "key", denyAll));
 
     assertTrue(error.getMessage().contains("MEM0_BASE_URL_TEST_ABSENT"), "报错点名变量名");
     assertTrue(error.getMessage().contains("yokeos.memory.mem0"), "报错给出配置键");
+  }
+
+  @Test
+  @DisplayName("白名单外主机_三种Mem0操作零出站")
+  void hostOutsideWhitelistNeverSendsAnything() {
+    // 坑五回归（24 节，research D8）：真 deny-all WhitelistSandbox——append/load/recallByKeyword 三方法
+    // 全部先过闸再出站，拒绝后 REST 零调用（get 与 post 都 never）
+    Mem0MemoryStore guarded =
+        new Mem0MemoryStore(
+            restClient,
+            MEM0_BASE,
+            new WhitelistSandbox(new SandboxProperties(List.of(), List.of(), List.of())));
+
+    assertThrows(SandboxViolationException.class, () -> guarded.append("内容", MemoryScope.CORE));
+    assertThrows(SandboxViolationException.class, guarded::load);
+    assertThrows(SandboxViolationException.class, () -> guarded.recallByKeyword("关键词"));
+
+    verify(restClient, org.mockito.Mockito.never()).post();
+    verify(restClient, org.mockito.Mockito.never()).get();
   }
 }

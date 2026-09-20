@@ -61,3 +61,16 @@ yokeos:
     mem0:
       base-url: ${MEM0_BASE_URL}
       api-key: ${MEM0_API_KEY}
+  # 24 节（specs/009）：Sandbox 三重白名单——空白名单 = deny-all（什么都不允许），不是「不校验」。
+  # 改白名单走配置变更重启生效，无运行时管理入口（管理端点列扩展阶段，技 §7.3 显式偏差）。
+  sandbox:
+    shell:
+      allowed-commands: []       # 空 = 拒绝一切命令（诚实缺省：不存在有原则的默认命令集）
+    http:
+      allowed-domains: []        # 空 = 拒绝一切出站域名；Provider 调 LLM 不在管辖（api.deepseek.com 无需在单）。
+                                 # 切 mem0 档须把 mem0 host 加入本清单（否则记忆后端被自家拦，坑六/D9）
+    # file.allowed-paths 缺省 = 当前工作区根（随 yokeos.root 解析，坑七：工作区随启动目录动态、静态写不了）。
+    # 要覆盖时取消注释——覆盖后须自行包含工作区，否则 save_memory / 产出物写入被自家沙箱拦截（坑六）：
+    # file:
+    #   allowed-paths:
+    #     - .yokeos

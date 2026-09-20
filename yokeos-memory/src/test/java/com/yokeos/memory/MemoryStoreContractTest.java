@@ -43,7 +43,16 @@ class MemoryStoreContractTest {
     return Stream.of(
         Arguments.of(
             "markdown",
-            (Supplier<LongTermMemoryStore>) () -> new MarkdownMemoryStore(tempRoot, 4000)),
+            (Supplier<LongTermMemoryStore>)
+                () ->
+                    new MarkdownMemoryStore(
+                        tempRoot,
+                        4000,
+                        new com.yokeos.tool.sandbox.WhitelistSandbox(
+                            new com.yokeos.tool.sandbox.SandboxProperties(
+                                java.util.List.of(tempRoot.toString()),
+                                java.util.List.of(),
+                                java.util.List.of())))),
         Arguments.of(
             "sqlite", (Supplier<LongTermMemoryStore>) () -> new SqliteMemoryStore(fakeRepo())),
         Arguments.of("mem0(替身)", (Supplier<LongTermMemoryStore>) InMemoryMemoryStore::new));

@@ -7,6 +7,9 @@ import com.yokeos.core.tool.ToolResult;
 import com.yokeos.core.tool.YokeTool;
 import com.yokeos.tool.notify.NotifyChannelAdapter;
 import com.yokeos.tool.notify.NotifyTarget;
+import com.yokeos.tool.sandbox.ActionType;
+import com.yokeos.tool.sandbox.Sandbox;
+import com.yokeos.tool.sandbox.SandboxAction;
 import java.util.List;
 import java.util.Map;
 
@@ -25,11 +28,15 @@ public final class NotifyTools implements YokeTool {
   /** type → 实现（webhook 一档）；多档并存按渠道条目的 type 路由（拍板⑤，扩展阶段加档不改构造器）。 */
   private final Map<String, NotifyChannelAdapter> adapters;
 
+  private final Sandbox sandbox;
+
   /**
    * @param adapters type → 渠道实现映射（第一阶段只装 webhook 一档，拍板⑤）。
+   * @param sandbox 域名白名单校验（HTTP_REQUEST，24 节接线——与 http_post 共享同一份白名单，[需 §5.8]）。
    */
-  public NotifyTools(Map<String, NotifyChannelAdapter> adapters) {
+  public NotifyTools(Map<String, NotifyChannelAdapter> adapters, Sandbox sandbox) {
     this.adapters = Map.copyOf(adapters);
+    this.sandbox = sandbox;
   }
 
   @Override
@@ -82,8 +89,12 @@ public final class NotifyTools implements YokeTool {
       return ToolResult.error(
           "渠道类型 " + resolved.type() + " 没有对应的通知实现（已装配: " + adapters.keySet() + "）", false);
     }
-    // 沙箱检查位（24 节接线）：Sandbox.enforce(new SandboxAction(HTTP_REQUEST, url)) 与 http_post 共享同一份
-    // http.allowed_domains；enforce 必须先于 send，不过则异常上抛走既有失败审计（宪法 7）。本节 Sandbox 未就位，仅留位不实现。
+    // 24 节接线：webhook URL 过域名白名单（与 http_post 共享同一份白名单，[需 §5.8]）；enforce 先于 send，
+    // 不过则异常上抛走既有失败审计（宪法 7）。URL 缺失时跳过校验——adapter 自己会报缺 url（校验有目标才有意义）。
+    String webhookUrl = resolved.config().get("url");
+    if (webhookUrl != null && !webhookUrl.isBlank()) {
+      sandbox.enforce(new SandboxAction(ActionType.HTTP_REQUEST, webhookUrl));
+    }
     adapter.send(new NotifyTarget(resolved.type(), resolved.config()), contentNode.asText());
     // 发送异常（HTTP 层）不 catch：上抛由 ToolExecutor 转 ToolResult.error 落 tool_invocations（success=false）
     return ToolResult.ok("已推送");

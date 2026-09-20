@@ -14,6 +14,7 @@ import com.yokeos.core.tool.ToolResult;
 import com.yokeos.core.tool.YokeTool;
 import com.yokeos.storage.LlmCallRepository;
 import com.yokeos.storage.ToolInvocationRepository;
+import com.yokeos.tool.ToolRegistry;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -274,7 +275,10 @@ class CliFullFlowTest {
     }
   }
 
-  /** 真模型覆盖：只换 providerMap 为真 DeepSeek ChatModel（tools 用 YokeosRuntime 默认的真 http_get）。 */
+  /**
+   * 真模型覆盖：providerMap 换真 DeepSeek ChatModel，tools 换真 HttpTools + 测试自备白名单（24 节起工具过沙箱——classpath 无
+   * yaml 时域名白名单为空 = deny-all，open-meteo 会被自家拦；本测试要验「真 http_get 成功」，白名单由测试配置给，工具类仍是真件）。
+   */
   @Configuration
   static class RealModelConfig {
 
@@ -289,6 +293,20 @@ class CliFullFlowTest {
       return Map.of(
           "deepseek",
           org.springframework.ai.openai.OpenAiChatModel.builder().openAiApi(api).build());
+    }
+
+    @Bean
+    @Primary
+    Map<String, YokeTool> realTools() {
+      ToolRegistry registry = new ToolRegistry();
+      registry.registerAnnotated(
+          new com.yokeos.tool.builtin.HttpTools(
+              new com.yokeos.tool.sandbox.WhitelistSandbox(
+                  new com.yokeos.tool.sandbox.SandboxProperties(
+                      java.util.List.of(),
+                      java.util.List.of(),
+                      java.util.List.of("api.open-meteo.com")))));
+      return registry.asMap();
     }
   }
 

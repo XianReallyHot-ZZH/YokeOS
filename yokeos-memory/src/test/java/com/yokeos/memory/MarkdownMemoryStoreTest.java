@@ -2,9 +2,17 @@ package com.yokeos.memory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 
 import com.yokeos.core.memory.MemoryScope;
+import com.yokeos.tool.sandbox.Sandbox;
+import com.yokeos.tool.sandbox.SandboxProperties;
+import com.yokeos.tool.sandbox.SandboxViolationException;
+import com.yokeos.tool.sandbox.WhitelistSandbox;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,21 +22,50 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 /**
- * 默认档（markdown）专属行为（教学文档第四部分）：两分区 header 解析、字符串截断边界、日期 header、空文件态。 四条跨档契约的统一验证归
- * MemoryStoreContractTest；本类锚 markdown 档的文件形态细节。
+ * 默认档（markdown）专属行为（教学文档第四部分）+ 24 节 Sandbox 拦截回归：两分区 header 解析、字符串截断边界、日期 header、空文件态、
+ * 白名单拒绝时记忆文件零发生。 四条跨档契约的统一验证归 MemoryStoreContractTest；本类锚 markdown 档的文件形态细节。
  *
- * <p>坑三锚法（教学文档第四部分）：写入后 {@code @TempDir} 内 USER.md 不存在也不被创建——Memory 写路径碰不到用户初始设定。
+ * <p>坑三锚法（教学文档第四部分）：写入后 {@code @TempDir} 内 USER.md 不存在也不被创建——Memory 写路径碰不到用户初始设定。既有用例的沙箱传
+ * 「白名单含 @TempDir」的真 WhitelistSandbox（坑六：白名单含工作区，save_memory 不被自家拦）。
  */
 class MarkdownMemoryStoreTest {
 
   @TempDir Path tempDir;
 
   private MarkdownMemoryStore store() {
-    return new MarkdownMemoryStore(tempDir, 4000);
+    return new MarkdownMemoryStore(tempDir, 4000, whitelisting(tempDir));
+  }
+
+  private static WhitelistSandbox whitelisting(Path allowed) {
+    return new WhitelistSandbox(
+        new SandboxProperties(List.of(allowed.toString()), List.of(), List.of()));
   }
 
   private String fileContent() throws IOException {
     return Files.readString(tempDir.resolve("MEMORY.md"));
+  }
+
+  @Test
+  @DisplayName("白名单拒绝时_记忆文件零发生")
+  void sandboxRejectionBlocksMemoryWrite() {
+    // 坑五回归（24 节）：mock 全拒 Sandbox——append 抛 SandboxViolationException 且 MEMORY.md 根本没被创建
+    Sandbox denying = mock(Sandbox.class);
+    doThrow(new SandboxViolationException("路径不在白名单内")).when(denying).enforce(any());
+    MarkdownMemoryStore guarded = new MarkdownMemoryStore(tempDir, 4000, denying);
+
+    assertThrows(SandboxViolationException.class, () -> guarded.append("内容", MemoryScope.CORE));
+
+    assertFalse(Files.exists(tempDir.resolve("MEMORY.md")), "校验不过，记忆文件根本不该被创建");
+  }
+
+  @Test
+  @DisplayName("白名单含工作区_记忆写入正常放行")
+  void whitelistedWorkspaceAllowsMemoryWrite() throws IOException {
+    // 坑六回归（24 节）：白名单含记忆目录（对应生产缺省含 .yokeos/ 工作区）——save_memory 不被自家沙箱拦截
+    store().append("一条偏好", MemoryScope.CORE);
+
+    assertTrue(Files.exists(tempDir.resolve("MEMORY.md")), "写入正常落盘");
+    assertTrue(fileContent().contains("一条偏好"));
   }
 
   @Test
@@ -64,7 +101,7 @@ class MarkdownMemoryStoreTest {
   @Test
   @DisplayName("截断只裁归档区_核心区一字不能少")
   void truncationKeepsCoreIntact() {
-    MarkdownMemoryStore store = new MarkdownMemoryStore(tempDir, 50);
+    MarkdownMemoryStore store = new MarkdownMemoryStore(tempDir, 50, whitelisting(tempDir));
     store.append("用户叫小王，偏好用 Java", MemoryScope.CORE);
     store.append("核心第二句也完整保留", MemoryScope.CORE);
     for (int i = 0; i < 30; i++) {
@@ -83,7 +120,8 @@ class MarkdownMemoryStoreTest {
   @DisplayName("归档区恰好等于阈值时不裁")
   void archiveAtExactThresholdNotTruncated() {
     String exactContent = "a".repeat(50);
-    MarkdownMemoryStore store = new MarkdownMemoryStore(tempDir, exactContent.length());
+    MarkdownMemoryStore store =
+        new MarkdownMemoryStore(tempDir, exactContent.length(), whitelisting(tempDir));
     store.append(exactContent, MemoryScope.ARCHIVAL);
 
     String loaded = store.load();

@@ -29,6 +29,8 @@ import com.yokeos.tool.builtin.HttpTools;
 import com.yokeos.tool.mcp.McpClientService;
 import com.yokeos.tool.mcp.McpConfigLoader;
 import com.yokeos.tool.notify.WebhookNotifyAdapter;
+import com.yokeos.tool.sandbox.SandboxProperties;
+import com.yokeos.tool.sandbox.WhitelistSandbox;
 import jakarta.persistence.EntityManagerFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -115,10 +117,15 @@ class ToolMcpSmokeIntegrationTest {
   void realMcpServerToolsReachModelAndAudit() throws Exception {
     writeWorkspaceWithMcpAgent();
 
-    // 注册面：内置 http_get + notify + 真 MCP server（npx everything 的 echo 等工具）
+    // 注册面：内置 http_get + notify + 真 MCP server（npx everything 的 echo 等工具；24 节起内置件过白名单）
+    WhitelistSandbox sandbox =
+        e2eSandbox(
+            java.util.List.of(workspace.toAbsolutePath().toString()),
+            java.util.List.of(),
+            java.util.List.of("api.open-meteo.com"));
     ToolRegistry registry = new ToolRegistry();
-    registry.registerAnnotated(new HttpTools());
-    registry.register(new NotifyTools(Map.of("webhook", new WebhookNotifyAdapter())));
+    registry.registerAnnotated(new HttpTools(sandbox));
+    registry.register(new NotifyTools(Map.of("webhook", new WebhookNotifyAdapter()), sandbox));
     new McpClientService(new McpConfigLoader(workspace.resolve("mcp_servers.yaml")))
         .connectAll(registry);
     int mcpToolCount =
@@ -270,5 +277,13 @@ class ToolMcpSmokeIntegrationTest {
   /** 22 节构造器扩展：这些测试不测记忆，注入进程内轻量档（零文件副作用）。 */
   private static MemoryService memoryService() {
     return new MemoryServiceImpl(new InMemoryMemoryStore());
+  }
+
+  /** 24 节：本测试装配用的白名单沙箱（与 YokeosRuntime.sandbox() 同款构造，条目按测试目标给）。 */
+  private static WhitelistSandbox e2eSandbox(
+      java.util.List<String> paths,
+      java.util.List<String> commands,
+      java.util.List<String> domains) {
+    return new WhitelistSandbox(new SandboxProperties(paths, commands, domains));
   }
 }

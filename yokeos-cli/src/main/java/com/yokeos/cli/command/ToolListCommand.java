@@ -27,13 +27,21 @@ public final class ToolListCommand implements Runnable {
     CommandLine.usage(this, System.out); // 无子命令打印用法
   }
 
-  /** 逻辑方法（测试直调）：工具清单文本——静态注册面（内置三组 + notify）逐件取名与描述。 */
+  /**
+   * 逻辑方法（测试直调）：工具清单文本——静态注册面（内置三组 + notify）逐件取名与描述。本命令不启 Spring 上下文（18 节分 类：直接文件操作），沙箱传空白名单
+   * deny-all 实例——只列不执行，永不触发校验（24 节构造器增参）。
+   */
   static String listTools() {
+    com.yokeos.tool.sandbox.WhitelistSandbox denyAll =
+        new com.yokeos.tool.sandbox.WhitelistSandbox(
+            new com.yokeos.tool.sandbox.SandboxProperties(
+                java.util.List.of(), java.util.List.of(), java.util.List.of()));
     ToolRegistry registry = new ToolRegistry();
-    registry.registerAnnotated(new FileTools());
-    registry.registerAnnotated(new ShellTools());
-    registry.registerAnnotated(new HttpTools());
-    registry.register(new NotifyTools(Map.of("webhook", new WebhookNotifyAdapter()))); // 构造零网络副作用
+    registry.registerAnnotated(new FileTools(denyAll));
+    registry.registerAnnotated(new ShellTools(denyAll));
+    registry.registerAnnotated(new HttpTools(denyAll));
+    registry.register(
+        new NotifyTools(Map.of("webhook", new WebhookNotifyAdapter()), denyAll)); // 构造零网络副作用
     StringBuilder sb = new StringBuilder();
     registry
         .all()

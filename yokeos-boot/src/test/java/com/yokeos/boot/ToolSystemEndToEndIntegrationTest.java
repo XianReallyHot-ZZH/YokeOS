@@ -33,6 +33,8 @@ import com.yokeos.tool.builtin.ShellTools;
 import com.yokeos.tool.mcp.McpClientService;
 import com.yokeos.tool.mcp.McpConfigLoader;
 import com.yokeos.tool.notify.WebhookNotifyAdapter;
+import com.yokeos.tool.sandbox.SandboxProperties;
+import com.yokeos.tool.sandbox.WhitelistSandbox;
 import jakarta.persistence.EntityManagerFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -171,12 +173,18 @@ class ToolSystemEndToEndIntegrationTest {
             + "读回用 read_file、统计行数用 shell（参数是 argv 数组，例如 [\"wc\",\"-l\",\"<文件>\"]）。"
             + "每步拿到工具结果后继续下一步，全部完成后汇总各步结果作答。\n");
 
-    // ── 步骤 2：注册面组装（YokeosRuntime.tools() 同配方——三来源汇合，来源无感知）
+    // ── 步骤 2：注册面组装（YokeosRuntime.tools() 同配方——三来源汇合，来源无感知；24 节起内置件过白名单）
+    WhitelistSandbox sandbox =
+        e2eSandbox(
+            java.util.List.of(workspace.toAbsolutePath().toString()),
+            java.util.List.of("wc", "echo", "ls", "cat"),
+            java.util.List.of("api.open-meteo.com"));
     ToolRegistry registry = new ToolRegistry();
-    registry.registerAnnotated(new FileTools()); // 注解管道（拍板②）
-    registry.registerAnnotated(new ShellTools());
-    registry.registerAnnotated(new HttpTools());
-    registry.register(new NotifyTools(Map.of("webhook", new WebhookNotifyAdapter()))); // 直接实现
+    registry.registerAnnotated(new FileTools(sandbox)); // 注解管道（拍板②）
+    registry.registerAnnotated(new ShellTools(sandbox));
+    registry.registerAnnotated(new HttpTools(sandbox));
+    registry.register(
+        new NotifyTools(Map.of("webhook", new WebhookNotifyAdapter()), sandbox)); // 直接实现
     new McpClientService(new McpConfigLoader(workspace.resolve("mcp_servers.yaml")))
         .connectAll(registry); // MCP 来源（真子进程 + 双层容错）
     // 注册面下界断言：七内置 + echo 必须在册（MCP 工具数随 everything server 版本变化，不断言精确值——实测 13 件）
@@ -277,6 +285,87 @@ class ToolSystemEndToEndIntegrationTest {
     assertFalse(llmCallRepository.findAll().isEmpty(), "llm_calls 必须有本次会话的调用记录");
   }
 
+  @Test
+  @DisplayName("真链路越权动作_拦截留痕一条")
+  void realModelUnauthorizedActionInterceptedAndAudited() throws Exception {
+    // 24 节 D6 端到端（教学文档第四部分 harness 表末行）：真模型强引导调 http_get，域名白名单不含目标域——
+    // 拒绝发生在请求发出之前（坑五），恰落一条 tool_invocations（success=false + 拒绝消息，坑二），模型下一轮可见
+    new InitCommand().initWorkspace(workspace);
+    Files.createDirectories(workspace.resolve("agents").resolve("web-agent"));
+    Files.writeString(
+        workspace.resolve("agents").resolve("web-agent").resolve("AGENT.md"),
+        "---\n"
+            + "name: web-agent\n"
+            + "identity:\n"
+            + "  agent_name: 网页助手\n"
+            + "  prompt: 你是网页抓取演示助手，必须先用 http_get 完成抓取再作答，不得凭空作答。\n"
+            + "provider:\n"
+            + "  name: deepseek\n"
+            + "  model: deepseek-flash\n"
+            + "tools:\n"
+            + "  - http_get\n"
+            + "---\n"
+            + "用户要求抓取网页时，必须先调用 http_get 访问用户给的 URL，拿到结果后总结作答。\n");
+
+    // 域名白名单只含 open-meteo——example.com 在白名单外（deny 语义由白名单说了算）
+    WhitelistSandbox sandbox =
+        e2eSandbox(
+            java.util.List.of(workspace.toAbsolutePath().toString()),
+            java.util.List.of(),
+            java.util.List.of("api.open-meteo.com"));
+    ToolRegistry registry = new ToolRegistry();
+    registry.registerAnnotated(new HttpTools(sandbox));
+    Map<String, YokeTool> tools = registry.asMap();
+    List<Profile> profiles =
+        new com.yokeos.core.profile.AgentLoader()
+            .loadAll(workspace, Set.of("deepseek"), tools.keySet());
+    assertEquals(1, profiles.size(), "web-agent 必须派生成功");
+
+    OpenAiApi api =
+        OpenAiApi.builder().baseUrl("https://api.deepseek.com").apiKey(DEEPSEEK_KEY).build();
+    ChatModel deepseek =
+        OpenAiChatModel.builder()
+            .openAiApi(api)
+            .defaultOptions(OpenAiChatOptions.builder().model("deepseek-flash").build())
+            .build();
+    SpringAiProviderService provider =
+        new SpringAiProviderService(
+            Map.of("deepseek", deepseek),
+            new ToolSchemaAdapter(),
+            new JpaLlmCallAuditor(llmCallRepository));
+    ToolExecutor executor =
+        new ToolExecutor(tools, new JpaToolInvocationAuditor(toolInvocationRepository), 200L);
+    PromptBuilder promptBuilder =
+        new PromptBuilder(
+            new ContextLoader(workspace), tools, Clock.systemDefaultZone(), memoryService());
+    ProfileRegistry profileRegistry = new ProfileRegistry();
+    profileRegistry.register(profiles.get(0));
+    AgentService agentService =
+        new AgentService(
+            profileRegistry,
+            new ReActLoop(promptBuilder, provider, executor),
+            new InMemorySessionManager());
+
+    Session session = new Session("e2e-sandbox-24", "web-agent");
+    String reply = agentService.process(session, "请用 http_get 抓取 https://example.com/ 的页面内容并总结。");
+
+    // 拒绝对模型可见：循环未炸、最终答复仍在（模型看到失败原因后作答）
+    assertNotNull(reply);
+    assertFalse(reply.isBlank(), "拒绝不炸循环——模型基于失败结果继续作答");
+
+    // 恰一条 http_get 拒绝审计：success=false + error_message 是沙箱拒绝消息（不可重试，一次即止）
+    var rows = toolInvocationRepository.findBySessionId("e2e-sandbox-24");
+    var denials =
+        rows.stream()
+            .filter(r -> "http_get".equals(r.getToolName()) && !Boolean.TRUE.equals(r.getSuccess()))
+            .toList();
+    assertFalse(denials.isEmpty(), "http_get 的拒绝必须留痕（实际审计行: " + rows.size() + " 条）");
+    assertTrue(
+        denials.stream()
+            .allMatch(r -> r.getErrorMessage() != null && r.getErrorMessage().contains("域名不在白名单内")),
+        "error_message 是沙箱拒绝消息且对模型可读");
+  }
+
   private static String schemaBackedSqlite() {
     try {
       Path db = Files.createTempFile("yokeos-e2e-tool-20", ".db");
@@ -326,5 +415,13 @@ class ToolSystemEndToEndIntegrationTest {
   /** 22 节构造器扩展：这些测试不测记忆，注入进程内轻量档（零文件副作用）。 */
   private static MemoryService memoryService() {
     return new MemoryServiceImpl(new InMemoryMemoryStore());
+  }
+
+  /** 24 节：本测试装配用的白名单沙箱（与 YokeosRuntime.sandbox() 同款构造，条目按测试目标给）。 */
+  private static WhitelistSandbox e2eSandbox(
+      java.util.List<String> paths,
+      java.util.List<String> commands,
+      java.util.List<String> domains) {
+    return new WhitelistSandbox(new SandboxProperties(paths, commands, domains));
   }
 }

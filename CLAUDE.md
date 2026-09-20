@@ -220,6 +220,9 @@ yokeos provider list / tool list / session list
 | npx 冷缓存起 MCP server 超过 initialize 超时 | 首跑 `npx -y @modelcontextprotocol/server-everything` 下载耗时 > SDK 默认 initializationTimeout 20s → `connectAll` WARN 跳过（集成测试 assumeTrue 跳过不失败），二跑缓存热即正常 | CI/新机先预热一次 npx（或接受首跑 skip）；集成冒烟跑法注明「冷缓存 skip 属正常」（20 节实证） |
 | Mockito 逐环 stub builder 式深链（`restClient.post().uri().body().retrieve()`） | 某一环 stub 未命中即返回 null，后续 `.retrieve()` 直接 NPE——排查方向误导为生产代码 | mock 链式接口用 `mock(X.class, Mockito.RETURNS_SELF)` 让 uri/body 自动回环，只显式 stub 链尾（retrieve/toEntity）两处（22 节实证） |
 | `@ConfigurationProperties` 绑定提前解析 yaml 里的 `${ENV}` 占位 | 含占位的可选配置段（如 `yokeos.memory.mem0.base-url: ${MEM0_BASE_URL}`）一绑定时就解析，env 缺失启动即失败——「缺省空不阻断启动、使用时才报错」的设计被架空 | 可选段的配置走 classpath yaml 原文读取（SnakeYAML，占位原样保留、切档使用时解析）——16 节 provider 清单同款策略的泛化（22 节实证，research D6） |
+| Spotless 与 Checkstyle 对 switch 块内首条注释的缩进要求互斥 | google-java-format 要 8 空格、Checkstyle `CommentsIndentation` 要 4/6——来回 `spotless:apply` 与 checkstyle 轮番红 | 唯一双过形态 = 注释放到 switch **语句之前**，不进块内（24 节实证） |
+| P3C `SwitchStatementRule` 对 Java 14+ 箭头 switch 的 default 识别不了 | default 分支实际在位仍报「switch块缺少default」（PMD 6.55 的 AST 不认箭头形态） | `@SuppressWarnings("PMD.SwitchStatementRule")` + javadoc 记工具代差理由（17 节 Impl 命名抑制同款先例，24 节实证） |
+| 起 YokeosRuntime 真上下文的 E2E 测试被 deny-all 缺省拦自家 | 加沙箱后清点「构造调用点」不够——`CliFullFlowTest` 这类不经构造语句、直接起真装配上下文的测试，其 http_get 在 classpath 无 yaml 时撞上空域名白名单（deny-all 缺省）而红 | 这类测试用 `@Primary` 覆盖 tools Bean 自备白名单（与 boot 集成测试同款），生产缺省语义不动；改造面清点要 grep「构造调用」+「真上下文测试」两维（24 节实证） |
 
 ---
 

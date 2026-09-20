@@ -3,6 +3,9 @@ package com.yokeos.memory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yokeos.core.memory.MemoryScope;
+import com.yokeos.tool.sandbox.ActionType;
+import com.yokeos.tool.sandbox.Sandbox;
+import com.yokeos.tool.sandbox.SandboxAction;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -52,13 +55,19 @@ public class Mem0MemoryStore implements LongTermMemoryStore {
 
   private final RestClient restClient;
 
+  private final Sandbox sandbox;
+
+  /** 出站 host 的 enforce 目标（base-url 解析后形态——host 级校验，端点 path 不影响判定，research D8）。 */
+  private final String baseUrl;
+
   /**
    * 生产构造：占位运行时解析，缺失清晰报错（不静默、不阻断启动——校验发生在构造本档时）。
    *
    * @param baseUrl {@code yokeos.memory.mem0.base-url} 原文（通常为 {@code ${MEM0_BASE_URL}} 占位）
    * @param apiKey {@code yokeos.memory.mem0.api-key} 原文
+   * @param sandbox 域名白名单校验（HTTP_REQUEST，24 节接线——三出站方法统一过闸，research D8）
    */
-  public Mem0MemoryStore(String baseUrl, String apiKey) {
+  public Mem0MemoryStore(String baseUrl, String apiKey, Sandbox sandbox) {
     String resolvedBase = resolvePlaceholder("yokeos.memory.mem0.base-url", baseUrl);
     String resolvedKey = resolvePlaceholder("yokeos.memory.mem0.api-key", apiKey);
     this.restClient =
@@ -66,17 +75,22 @@ public class Mem0MemoryStore implements LongTermMemoryStore {
             .baseUrl(resolvedBase)
             .defaultHeader("Authorization", "Bearer " + resolvedKey)
             .build();
+    this.sandbox = sandbox;
+    this.baseUrl = resolvedBase;
   }
 
   /** 测试构造：直接注入 mock 的 RestClient（mock 定契约，教学文档拍板④）。 */
-  Mem0MemoryStore(RestClient restClient) {
+  Mem0MemoryStore(RestClient restClient, String baseUrl, Sandbox sandbox) {
     this.restClient = restClient;
+    this.sandbox = sandbox;
+    this.baseUrl = baseUrl;
   }
 
   @Override
   public void append(String content, MemoryScope scope) {
-    // Sandbox 检查位：24 节接 sandbox.enforce(new SandboxAction(HTTP_REQUEST, baseUrl +
-    // MEMORIES_ENDPOINT))
+    // 24 节接线：mem0 出站请求过域名白名单——append/load/recallByKeyword 三方法统一（research D8：
+    // 出站 HTTP 不分触发者一律过闸；白名单不含 mem0 host 时切档即被拦，D9 配置自洽的 mem0 半边）
+    sandbox.enforce(new SandboxAction(ActionType.HTTP_REQUEST, baseUrl));
     Map<String, Object> payload = new LinkedHashMap<>();
     payload.put("messages", List.of(Map.of("role", "user", "content", content)));
     payload.put("user_id", USER_ID);
@@ -86,6 +100,7 @@ public class Mem0MemoryStore implements LongTermMemoryStore {
 
   @Override
   public String load() {
+    sandbox.enforce(new SandboxAction(ActionType.HTTP_REQUEST, baseUrl));
     JsonNode core = fetchByScope(MemoryScope.CORE);
     JsonNode archive = fetchByScope(MemoryScope.ARCHIVAL);
     return CORE_HEADER + "\n" + render(core) + "\n" + ARCHIVE_HEADER + "\n" + render(archive);
@@ -93,6 +108,7 @@ public class Mem0MemoryStore implements LongTermMemoryStore {
 
   @Override
   public List<String> recallByKeyword(String keyword) {
+    sandbox.enforce(new SandboxAction(ActionType.HTTP_REQUEST, baseUrl));
     Map<String, Object> payload = new LinkedHashMap<>();
     payload.put("query", keyword); // Mem0 search 语义检索（契约四的加强版，D4 允许项）
     payload.put("user_id", USER_ID);
