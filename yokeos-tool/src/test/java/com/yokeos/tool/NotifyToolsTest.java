@@ -2,6 +2,7 @@ package com.yokeos.tool;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -18,6 +19,9 @@ import com.yokeos.core.agent.ProfileContext;
 import com.yokeos.core.profile.Profile;
 import com.yokeos.core.tool.ToolResult;
 import com.yokeos.tool.notify.NotifyChannelAdapter;
+import com.yokeos.tool.sandbox.SandboxProperties;
+import com.yokeos.tool.sandbox.SandboxViolationException;
+import com.yokeos.tool.sandbox.WhitelistSandbox;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
@@ -26,11 +30,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /**
- * 教学文档《第19节》验收 harness：NotifyTools——本节可测集全量（渠道解析七态）。
+ * 第 19 节验收 harness + 第 24 节 Sandbox 拦截回归：NotifyTools——渠道解析七态 + 域名白名单外的推送根本没发出。
  *
- * <p>InOrder 白名单顺序回归（「发送前必须先过白名单校验」：enforce 先于 send）待 24 节 Sandbox 就位后补入本类——
- * 教学文档「分批说明」明文（参照课件「实现顺序说明」同款）。 ProfileContext 是 ThreadLocal：每用例显式 set（或刻意不 set）、@AfterEach 必
- * clear——坑四纪律，漏 clear 下一个用例读到脏 Profile。
+ * <p>既有用例的沙箱域名白名单含 {@code *.example.com}（渠道 URL 的域，真 {@link WhitelistSandbox}——教学文档拍板②）。
+ * ProfileContext 是 ThreadLocal：每用例显式 set（或刻意不 set）、@AfterEach 必 clear——坑四纪律，漏 clear 下一个用例读到脏
+ * Profile。
  */
 class NotifyToolsTest {
 
@@ -42,7 +46,11 @@ class NotifyToolsTest {
   @BeforeEach
   void setUp() {
     adapter = mock(NotifyChannelAdapter.class);
-    notifyTools = new NotifyTools(Map.of("webhook", adapter));
+    notifyTools =
+        new NotifyTools(
+            Map.of("webhook", adapter),
+            new WhitelistSandbox(
+                new SandboxProperties(List.of(), List.of(), List.of("*.example.com"))));
   }
 
   @AfterEach
@@ -147,6 +155,25 @@ class NotifyToolsTest {
 
     assertFalse(result.success());
     assertTrue(result.errorMessage().contains("content"), "点名缺必填参数");
+  }
+
+  @Test
+  @DisplayName("域名白名单外的推送_根本没发出")
+  void domainOutsideWhitelistNeverSent() {
+    // 坑五回归（24 节）：真 deny-all WhitelistSandbox——enforce 先于 send，webhook 推送零发生
+    NotifyChannelAdapter localAdapter = mock(NotifyChannelAdapter.class);
+    NotifyTools guarded =
+        new NotifyTools(
+            Map.of("webhook", localAdapter),
+            new WhitelistSandbox(new SandboxProperties(List.of(), List.of(), List.of())));
+    ProfileContext.set(twoChannelProfile());
+
+    SandboxViolationException ex =
+        assertThrows(SandboxViolationException.class, () -> guarded.execute(input("hello", null)));
+
+    assertTrue(ex.getMessage().contains("hooks.example.com"), "拒绝消息只显 host: " + ex.getMessage());
+    assertFalse(ex.getMessage().contains("https://"), "URL 即凭证不得回显（19 节坑二）");
+    verify(localAdapter, never()).send(any(), anyString());
   }
 
   @Test

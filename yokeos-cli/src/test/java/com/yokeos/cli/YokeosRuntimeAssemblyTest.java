@@ -1,14 +1,22 @@
 package com.yokeos.cli;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.yokeos.channel.cli.CliChannel;
 import com.yokeos.core.agent.AgentService;
+import com.yokeos.core.memory.MemoryService;
 import com.yokeos.core.session.SessionManager;
 import com.yokeos.storage.JpaSessionManager;
+import com.yokeos.tool.sandbox.ActionType;
+import com.yokeos.tool.sandbox.Sandbox;
+import com.yokeos.tool.sandbox.SandboxAction;
+import com.yokeos.tool.sandbox.SandboxViolationException;
+import com.yokeos.tool.sandbox.WhitelistSandbox;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -79,6 +87,32 @@ class YokeosRuntimeAssemblyTest {
       assertTrue(
           tools.containsKey("save_memory") && tools.containsKey("recall_memory"),
           "22 节记忆两件进注册面（与其他内置 Tool 一视同仁）");
+    }
+  }
+
+  @Test
+  @DisplayName("缺省路径白名单_随工作区根动态解析")
+  void defaultPathWhitelistFollowsWorkspaceRoot() {
+    // 坑六/坑七回归（24 节）：本上下文 classpath 无 application.yaml → 三组白名单全空（file 组空）→
+    // 代码补 yokeos.root 解析值（指向 @TempDir）——save_memory 经真实 Bean 落盘不被自家拦，区外路径仍拒
+    try (ConfigurableApplicationContext ctx = bootContext()) {
+      Sandbox sandbox = ctx.getBean(Sandbox.class);
+      assertInstanceOf(WhitelistSandbox.class, sandbox, "24 节沙箱 Bean 就位");
+
+      ctx.getBean(MemoryService.class).remember("装配测试记忆", com.yokeos.core.memory.MemoryScope.CORE);
+      assertTrue(
+          Files.exists(workspace.resolve("memory/MEMORY.md")),
+          "缺省白名单含工作区——save_memory 经真实 Bean 落盘（坑六）");
+
+      assertDoesNotThrow(
+          () ->
+              sandbox.enforce(
+                  new SandboxAction(
+                      ActionType.FILE_WRITE, workspace.resolve("output/report.md").toString())));
+      assertThrows(
+          SandboxViolationException.class,
+          () -> sandbox.enforce(new SandboxAction(ActionType.FILE_READ, "/etc/passwd")),
+          "区外路径仍拒（deny 语义不因缺省放行而松动）");
     }
   }
 

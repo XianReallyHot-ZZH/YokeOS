@@ -3,15 +3,24 @@ package com.yokeos.tool.builtin;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import com.yokeos.core.tool.YokeTool;
 import com.yokeos.tool.ToolRegistry;
+import com.yokeos.tool.sandbox.SandboxProperties;
+import com.yokeos.tool.sandbox.SandboxViolationException;
+import com.yokeos.tool.sandbox.WhitelistSandbox;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,11 +28,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /**
- * 课件《第 20 节》验收 harness：HttpToolsTest——GET/POST 正常 + 4xx/5xx 报失败 + 截断防护。
+ * 第 20 节 harness + 第 24 节 Sandbox 拦截回归：GET/POST 正常 + 4xx/5xx 报失败 + 截断防护 + 白名单外域名请求根本不发出。
  *
- * <p>JDK HttpServer 假服务（port 0 自动分配，19 节先例）——单测层不碰真实网络。
- *
- * <p>待补（24 节 Sandbox 就位后）：域名白名单拦截用例（白名单外 URL 请求根本不发出）与 InOrder 顺序回归。
+ * <p>JDK HttpServer 假服务（port 0 自动分配，19 节先例）——单测层不碰真实网络。既有用例的沙箱域名白名单含 localhost （真 {@link
+ * WhitelistSandbox}，不是放行一切的假货——教学文档拍板②）。
  */
 class HttpToolsTest {
 
@@ -64,9 +72,13 @@ class HttpToolsTest {
     server.start();
 
     ToolRegistry registry = new ToolRegistry();
-    registry.registerAnnotated(new HttpTools());
+    registry.registerAnnotated(new HttpTools(whitelisting("localhost")));
     httpGet = registry.get("http_get").orElseThrow();
     httpPost = registry.get("http_post").orElseThrow();
+  }
+
+  private static WhitelistSandbox whitelisting(String... domains) {
+    return new WhitelistSandbox(new SandboxProperties(List.of(), List.of(), List.of(domains)));
   }
 
   @AfterEach
@@ -141,6 +153,30 @@ class HttpToolsTest {
 
     assertTrue(content.length() < 9000, "超长响应必须截断");
     assertTrue(content.contains("截断"), "截断必须注明");
+  }
+
+  @Test
+  @DisplayName("白名单外域名_请求根本没发出")
+  void domainOutsideWhitelistNeverSent() throws Exception {
+    // 坑五回归：真 deny-all WhitelistSandbox + mock HttpClient——enforce 先于 URI 构造与请求发出，send 零调用
+    HttpClient httpClient = mock(HttpClient.class);
+    ToolRegistry registry = new ToolRegistry();
+    registry.registerAnnotated(
+        new HttpTools(
+            new WhitelistSandbox(new SandboxProperties(List.of(), List.of(), List.of())),
+            httpClient));
+    YokeTool guardedGet = registry.get("http_get").orElseThrow();
+    YokeTool guardedPost = registry.get("http_post").orElseThrow();
+
+    assertThrows(
+        SandboxViolationException.class,
+        () -> guardedGet.execute(JSON.readTree("{\"url\":\"" + url("/ok") + "\"}")));
+    assertThrows(
+        SandboxViolationException.class,
+        () ->
+            guardedPost.execute(JSON.readTree("{\"url\":\"" + url("/echo") + "\",\"body\":\"\"}")));
+
+    verify(httpClient, never()).send(any(), any());
   }
 
   private static String quote(String raw) {

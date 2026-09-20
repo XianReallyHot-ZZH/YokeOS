@@ -1,5 +1,8 @@
 package com.yokeos.tool.builtin;
 
+import com.yokeos.tool.sandbox.ActionType;
+import com.yokeos.tool.sandbox.Sandbox;
+import com.yokeos.tool.sandbox.SandboxAction;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -26,24 +29,28 @@ public class HttpTools {
 
   private static final int HTTP_OK_EXCLUSIVE = 300;
 
+  private final Sandbox sandbox;
+
   private final HttpClient httpClient;
 
-  /** 默认构造：连接超时 10 秒的共享 HttpClient（17 节口径）。 */
-  public HttpTools() {
-    this.httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+  /** 常规构造：域名白名单校验 + 连接超时 10 秒的共享 HttpClient（17 节口径）。 */
+  public HttpTools(Sandbox sandbox) {
+    this(sandbox, HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build());
   }
 
   /**
+   * @param sandbox 域名白名单校验（HTTP_REQUEST，24 节接线——先 enforce 后请求）
    * @param httpClient 测试注入定制实例（超时策略差异等）。
    */
-  HttpTools(HttpClient httpClient) {
+  HttpTools(Sandbox sandbox, HttpClient httpClient) {
+    this.sandbox = sandbox;
     this.httpClient = httpClient;
   }
 
   /** 发起一次 HTTP GET 请求，返回响应正文文本。 */
   @Tool(name = "http_get", description = "发起一次 HTTP GET 请求，返回响应正文文本")
   public String httpGet(@ToolParam(description = "目标 URL") String url) {
-    // Sandbox 检查位：24 节接 sandbox.enforce(new SandboxAction(HTTP_REQUEST, url))——域名白名单不过则请求根本不发出
+    sandbox.enforce(new SandboxAction(ActionType.HTTP_REQUEST, url)); // 24 节接线：不过则请求根本不发出
     HttpRequest request =
         HttpRequest.newBuilder(URI.create(requireUrl(url)))
             .GET()
@@ -58,7 +65,7 @@ public class HttpTools {
   public String httpPost(
       @ToolParam(description = "目标 URL") String url,
       @ToolParam(description = "JSON 请求体字符串") String body) {
-    // Sandbox 检查位：24 节接 sandbox.enforce(new SandboxAction(HTTP_REQUEST, url))
+    sandbox.enforce(new SandboxAction(ActionType.HTTP_REQUEST, url));
     HttpRequest request =
         HttpRequest.newBuilder(URI.create(requireUrl(url)))
             .POST(HttpRequest.BodyPublishers.ofString(body == null ? "" : body))

@@ -41,6 +41,9 @@ import com.yokeos.tool.builtin.ShellTools;
 import com.yokeos.tool.mcp.McpClientService;
 import com.yokeos.tool.mcp.McpConfigLoader;
 import com.yokeos.tool.notify.WebhookNotifyAdapter;
+import com.yokeos.tool.sandbox.Sandbox;
+import com.yokeos.tool.sandbox.SandboxProperties;
+import com.yokeos.tool.sandbox.WhitelistSandbox;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.LinkedHashMap;
@@ -166,18 +169,37 @@ public class YokeosRuntime {
   }
 
   /**
+   * 24 节沙箱（specs/008 D5，宪法 3 同精神——显式构造不进组件扫描）：classpath yaml 原文读三组白名单（22 节 MemoryProperties
+   * 同款）；file 组为空时代码补当前工作区根（{@code yokeos.root} 解析值——坑七：工作区随启动目录动态， 静态 yaml 写不了；单一事实源，集成测试把工作区指到
+   * TempDir 时白名单自动跟上）。shell/http 组缺省空 = deny-all（配置 注释载明），覆盖 file 组时须自行包含工作区（配置自洽责任随覆盖转移，坑六）。
+   */
+  @Bean
+  Sandbox sandbox() {
+    SandboxProperties properties =
+        SandboxProperties.load(YokeosRuntime.class.getResourceAsStream("/application.yaml"));
+    java.util.List<String> paths =
+        properties.allowedPaths().isEmpty()
+            ? java.util.List.of(workspace().toString())
+            : properties.allowedPaths();
+    return new WhitelistSandbox(
+        new SandboxProperties(paths, properties.allowedCommands(), properties.allowedDomains()));
+  }
+
+  /**
    * 20 节 ToolRegistry 统一注册面（17 节预告的替换兑现）：内置三组注解注册 + notify 直接注册 + MCP server 工具接入（.yokeos/
    * mcp_servers.yaml，失联只 WARN 不拖垮启动）， 22 节补记忆两件（save_memory / recall_memory，specs/006 裁决二—— 随能力三落位
-   * memory 模块、注册进注册面一视同仁）， {@code registry.asMap()} 喂 PromptBuilder/ToolExecutor（两消费方构造签名不动）。
+   * memory 模块、注册进注册面一视同仁）， 24 节四件经构造注入过沙箱（specs/008 D7：enforce 落点在动作发生处）， {@code registry.asMap()}
+   * 喂 PromptBuilder/ToolExecutor（两消费方构造签名不动）。
    */
   @Bean
   Map<String, YokeTool> tools(MemoryEntryRepository memoryEntryRepository) {
+    Sandbox sandbox = sandbox();
     ToolRegistry registry = new ToolRegistry();
-    registry.registerAnnotated(new FileTools());
-    registry.registerAnnotated(new ShellTools());
-    registry.registerAnnotated(new HttpTools());
+    registry.registerAnnotated(new FileTools(sandbox));
+    registry.registerAnnotated(new ShellTools(sandbox));
+    registry.registerAnnotated(new HttpTools(sandbox));
     registry.registerAnnotated(new MemoryTools(memoryService(memoryEntryRepository)));
-    registry.register(new NotifyTools(Map.of("webhook", new WebhookNotifyAdapter())));
+    registry.register(new NotifyTools(Map.of("webhook", new WebhookNotifyAdapter()), sandbox));
     new McpClientService(new McpConfigLoader(workspace().resolve("mcp_servers.yaml")))
         .connectAll(registry);
     return registry.asMap();
@@ -196,14 +218,17 @@ public class YokeosRuntime {
     String backend = properties.backend();
     LongTermMemoryStore store;
     if (MemoryProperties.BACKEND_MARKDOWN.equals(backend)) {
-      store = new MarkdownMemoryStore(workspace().resolve("memory"), properties.archiveMaxChars());
+      store =
+          new MarkdownMemoryStore(
+              workspace().resolve("memory"), properties.archiveMaxChars(), sandbox());
     } else if (MemoryProperties.BACKEND_SQLITE.equals(backend)) {
       store = new SqliteMemoryStore(memoryEntryRepository, properties.archiveMaxRows());
     } else if (MemoryProperties.BACKEND_MEM0.equals(backend)) {
       store =
           new Mem0MemoryStore(
               properties.mem0().getOrDefault("base-url", ""),
-              properties.mem0().getOrDefault("api-key", ""));
+              properties.mem0().getOrDefault("api-key", ""),
+              sandbox()); // 域名白名单须含 mem0 host（D9 配置自洽的 mem0 半边）
     } else {
       throw new IllegalStateException("未知的记忆后端: " + backend + "（应为 markdown / sqlite / mem0）");
     }

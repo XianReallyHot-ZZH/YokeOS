@@ -75,7 +75,8 @@ public final class ToolExecutor {
     if (tool == null) {
       return ToolResult.error("未注册的工具: " + call.name(), false);
     }
-    // Sandbox 白名单校验位：24 节在此接线（Sandbox.enforce 失败走 ToolResult.error + 审计留痕）。
+    // Sandbox 违规收口位（24 节定稿，张力一裁决）：enforce 落点在各工具动作发生处（specs/008 D7），本位不做第二次
+    // 校验——SandboxViolationException 等工具异常在下方 catch 转不可重试失败结果 + 审计留痕（拒绝恰一条、不重试）。
     JsonNode input;
     try {
       input = JSON.readTree(call.argumentsJson());

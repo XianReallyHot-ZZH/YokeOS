@@ -28,6 +28,8 @@ import com.yokeos.storage.LlmCallRepository;
 import com.yokeos.storage.ToolInvocationRepository;
 import com.yokeos.tool.ToolRegistry;
 import com.yokeos.tool.builtin.HttpTools;
+import com.yokeos.tool.sandbox.SandboxProperties;
+import com.yokeos.tool.sandbox.WhitelistSandbox;
 import jakarta.persistence.EntityManagerFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -173,11 +175,24 @@ class ReActSmokeIntegrationTest {
             + "&current=temperature_2m,wind_speed_10m）获取实时天气，再基于结果给出穿衣建议。\n");
   }
 
-  /** 经注册面取 http_get（20 节 HttpTools 注解管道——17 节单类形态已退役）。 */
+  /** 经注册面取 http_get（20 节 HttpTools 注解管道——17 节单类形态已退役；24 节起过域名白名单）。 */
   private static YokeTool registryHttpGet() {
     ToolRegistry registry = new ToolRegistry();
-    registry.registerAnnotated(new HttpTools());
+    registry.registerAnnotated(
+        new HttpTools(
+            e2eSandbox(
+                java.util.List.of(),
+                java.util.List.of(),
+                java.util.List.of("api.open-meteo.com"))));
     return registry.get("http_get").orElseThrow();
+  }
+
+  /** 24 节：本测试装配用的白名单沙箱（与 YokeosRuntime.sandbox() 同款构造，条目按测试目标给）。 */
+  private static WhitelistSandbox e2eSandbox(
+      java.util.List<String> paths,
+      java.util.List<String> commands,
+      java.util.List<String> domains) {
+    return new WhitelistSandbox(new SandboxProperties(paths, commands, domains));
   }
 
   private static Profile weatherAgentProfile() {

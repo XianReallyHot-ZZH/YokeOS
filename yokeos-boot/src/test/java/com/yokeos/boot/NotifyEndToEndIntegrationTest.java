@@ -31,6 +31,8 @@ import com.yokeos.tool.NotifyTools;
 import com.yokeos.tool.ToolRegistry;
 import com.yokeos.tool.builtin.HttpTools;
 import com.yokeos.tool.notify.WebhookNotifyAdapter;
+import com.yokeos.tool.sandbox.SandboxProperties;
+import com.yokeos.tool.sandbox.WhitelistSandbox;
 import jakarta.persistence.EntityManagerFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -163,15 +165,21 @@ class NotifyEndToEndIntegrationTest {
     assertEquals("webhook", profile.notifyChannels().get(0).type());
     assertEquals(receiverUrl, profile.notifyChannels().get(0).config().get("url"), "占位必须解析成接收端地址");
 
-    // 全真实装配（与 YokeosRuntime 同形态：注册面取 http_get + notify 直接注册、双审计走 SQLite）
+    // 全真实装配（与 YokeosRuntime 同形态：注册面取 http_get + notify 直接注册、双审计走 SQLite；
+    // 24 节起过域名白名单——webhook 接收端在 localhost、天气源在 open-meteo）
+    WhitelistSandbox sandbox =
+        e2eSandbox(
+            java.util.List.of(workspace.toAbsolutePath().toString()),
+            java.util.List.of(),
+            java.util.List.of("localhost", "127.0.0.1", "api.open-meteo.com"));
     ToolRegistry toolRegistry = new ToolRegistry();
-    toolRegistry.registerAnnotated(new HttpTools());
+    toolRegistry.registerAnnotated(new HttpTools(sandbox));
     Map<String, YokeTool> tools =
         Map.of(
             "http_get",
             toolRegistry.get("http_get").orElseThrow(),
             "notify",
-            new NotifyTools(Map.of("webhook", new WebhookNotifyAdapter())));
+            new NotifyTools(Map.of("webhook", new WebhookNotifyAdapter()), sandbox));
     OpenAiApi api =
         OpenAiApi.builder().baseUrl("https://api.deepseek.com").apiKey(DEEPSEEK_KEY).build();
     ChatModel deepseek =
@@ -302,5 +310,13 @@ class NotifyEndToEndIntegrationTest {
   /** 22 节构造器扩展：这些测试不测记忆，注入进程内轻量档（零文件副作用）。 */
   private static MemoryService memoryService() {
     return new MemoryServiceImpl(new InMemoryMemoryStore());
+  }
+
+  /** 24 节：本测试装配用的白名单沙箱（与 YokeosRuntime.sandbox() 同款构造，条目按测试目标给）。 */
+  private static WhitelistSandbox e2eSandbox(
+      java.util.List<String> paths,
+      java.util.List<String> commands,
+      java.util.List<String> domains) {
+    return new WhitelistSandbox(new SandboxProperties(paths, commands, domains));
   }
 }

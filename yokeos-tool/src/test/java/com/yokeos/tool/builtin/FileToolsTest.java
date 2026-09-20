@@ -1,27 +1,35 @@
 package com.yokeos.tool.builtin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yokeos.core.tool.YokeTool;
 import com.yokeos.tool.ToolRegistry;
+import com.yokeos.tool.sandbox.Sandbox;
+import com.yokeos.tool.sandbox.SandboxProperties;
+import com.yokeos.tool.sandbox.SandboxViolationException;
+import com.yokeos.tool.sandbox.WhitelistSandbox;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 /**
- * 课件《第 20 节》验收 harness：FileToolsTest——正常能跑通 + 报错点名 + 截断防护。
+ * 第 20 节 harness + 第 24 节 Sandbox 拦截回归：正常能跑通 + 报错点名 + 截断防护 + 白名单拒绝时文件动作零发生。
  *
  * <p>经 registerAnnotated 注解管道注册后按 {@link YokeTool} 契约测（顺带覆盖 schema 生成路径）；工具层异常直接上抛（「转 ToolResult
- * 落审计」是 ToolExecutor 的既有职责，17 节已测）。
- *
- * <p>待补（24 节 Sandbox 就位后）：白名单拦截用例（Sandbox 拒绝时文件动作零发生）与 InOrder「校验先于 IO」顺序回归。
+ * 落审计」是 ToolExecutor 的既有职责，17 节已测）。既有用例的沙箱传「白名单含 @TempDir」的真 {@link
+ * WhitelistSandbox}——不是放行一切的假货（教学文档拍板②）。
  */
 class FileToolsTest {
 
@@ -36,10 +44,15 @@ class FileToolsTest {
   @BeforeEach
   void setUp() {
     ToolRegistry registry = new ToolRegistry();
-    registry.registerAnnotated(new FileTools());
+    registry.registerAnnotated(new FileTools(whitelisting(dir)));
     readFile = registry.get("read_file").orElseThrow();
     writeFile = registry.get("write_file").orElseThrow();
     listDir = registry.get("list_dir").orElseThrow();
+  }
+
+  private static WhitelistSandbox whitelisting(Path allowed) {
+    return new WhitelistSandbox(
+        new SandboxProperties(List.of(allowed.toString()), List.of(), List.of()));
   }
 
   @Test
@@ -96,5 +109,43 @@ class FileToolsTest {
     assertTrue(content.length() < 9000, "超长内容必须截断");
     assertTrue(content.contains("截断"), "截断必须注明");
     assertTrue(content.contains("9000"), "注明总长");
+  }
+
+  @Test
+  @DisplayName("白名单拒绝时_文件动作零发生")
+  void sandboxRejectionBlocksAllFileActions() throws IOException {
+    // 坑五回归：mock 全拒 Sandbox——三个文件方法全抛 SandboxViolationException，且目标文件根本没被创建
+    Sandbox denying = mock(Sandbox.class);
+    doThrow(new SandboxViolationException("路径不在白名单内")).when(denying).enforce(any());
+    ToolRegistry registry = new ToolRegistry();
+    registry.registerAnnotated(new FileTools(denying));
+    YokeTool guardedRead = registry.get("read_file").orElseThrow();
+    YokeTool guardedWrite = registry.get("write_file").orElseThrow();
+    YokeTool guardedList = registry.get("list_dir").orElseThrow();
+    Path target = dir.resolve("guarded.txt");
+
+    assertThrows(
+        SandboxViolationException.class,
+        () -> guardedRead.execute(JSON.readTree("{\"path\":\"" + target + "\"}")));
+    assertThrows(
+        SandboxViolationException.class,
+        () ->
+            guardedWrite.execute(JSON.readTree("{\"path\":\"" + target + "\",\"content\":\"x\"}")));
+    assertThrows(
+        SandboxViolationException.class,
+        () -> guardedList.execute(JSON.readTree("{\"path\":\"" + dir + "\"}")));
+    assertFalse(Files.exists(target), "校验不过，文件根本不该被创建");
+  }
+
+  @Test
+  @DisplayName("白名单外真实路径_读取被拒_点名路径")
+  void realWhitelistRejectsOutsidePath() {
+    // 真 WhitelistSandbox（白名单只含 @TempDir）读白名单外路径——异常消息含目标路径，模型下一轮可见失败原因
+    SandboxViolationException ex =
+        assertThrows(
+            SandboxViolationException.class,
+            () -> readFile.execute(JSON.readTree("{\"path\":\"/etc/hosts\"}")));
+
+    assertTrue(ex.getMessage().contains("/etc/hosts"), "拒绝消息必须点名目标路径");
   }
 }

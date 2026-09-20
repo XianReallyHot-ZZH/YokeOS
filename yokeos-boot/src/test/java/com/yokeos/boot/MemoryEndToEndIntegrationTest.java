@@ -25,6 +25,8 @@ import com.yokeos.storage.JpaToolInvocationAuditor;
 import com.yokeos.storage.LlmCallRepository;
 import com.yokeos.storage.ToolInvocationRepository;
 import com.yokeos.tool.ToolRegistry;
+import com.yokeos.tool.sandbox.SandboxProperties;
+import com.yokeos.tool.sandbox.WhitelistSandbox;
 import jakarta.persistence.EntityManagerFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -223,7 +225,15 @@ class MemoryEndToEndIntegrationTest {
 
   /** 真 markdown 默认档（真文件落盘——本测试就是来验它的；InMemory 替身是其他 E2E 的便利形态）。 */
   private MemoryServiceImpl markdownMemoryService() {
-    return new MemoryServiceImpl(new MarkdownMemoryStore(workspace.resolve("memory"), 4000));
+    return new MemoryServiceImpl(
+        new MarkdownMemoryStore(
+            workspace.resolve("memory"),
+            4000,
+            new WhitelistSandbox(
+                new SandboxProperties(
+                    java.util.List.of(workspace.toAbsolutePath().toString()),
+                    java.util.List.of(),
+                    java.util.List.of())))); // 24 节：白名单含工作区，save_memory 不被自家拦（坑六）
   }
 
   private static String schemaBackedSqlite() {

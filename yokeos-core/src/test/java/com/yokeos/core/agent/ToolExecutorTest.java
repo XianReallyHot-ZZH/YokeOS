@@ -23,8 +23,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /**
- * ToolExecutor harness（docs/class/017-react-loop.md 第四部分）：成败双路审计（先落账再还结果）、异常不吞不炸 循环、未注册名/坏 JSON
- * 留痕不抛、可重试指数退避（总尝试 3，退避基值注入 0 不赌真实时钟）、审计最终态一条。
+ * ToolExecutor harness（docs/class/017-react-loop.md 第四部分 + 24 节收口回归）：成败双路审计（先落账再还结果）、异常不吞不炸
+ * 循环、未注册名/坏 JSON 留痕不抛、可重试指数退避（总尝试 3，退避基值注入 0 不赌真实时钟）、审计最终态一条、沙箱拒绝不可重试且审计恰一条。
  */
 class ToolExecutorTest {
 
@@ -90,6 +90,30 @@ class ToolExecutorTest {
     assertTrue(result.errorMessage().contains("boom inside tool"), "失败原因带根因");
     verify(auditor)
         .record(eq("s-1"), eq("http_get"), any(), any(), eq(false), contains("boom"), anyLong());
+  }
+
+  @Test
+  @DisplayName("沙箱拒绝收口_不可重试_审计恰一条")
+  void sandboxRejectionCollectedOnceNotRetried() {
+    // 坑二回归（24 节）：SandboxViolationException 从工具上抛到这里是 RuntimeException 形态——core 不依赖 Sandbox 类型，
+    // 用抛「拒绝消息」的假工具锚同一条收口链：转失败结果、不可重试（重试被拒动作毫无意义）、审计恰一条
+    ThrowingTool violating = new ThrowingTool("命令不在白名单内: rm");
+    ToolExecutor withTools = new ToolExecutor(Map.of("http_get", violating), auditor, 0L);
+
+    ToolResult result = withTools.execute("s-1", GET);
+
+    assertFalse(result.success());
+    assertTrue(result.errorMessage().contains("命令不在白名单内"), "拒绝原因对模型可见: " + result.errorMessage());
+    assertEquals(1, violating.attempts.get(), "拒绝不可重试——一次即止");
+    verify(auditor, times(1))
+        .record(
+            eq("s-1"),
+            eq("http_get"),
+            eq("{\"url\":\"https://a\"}"),
+            isNull(),
+            eq(false),
+            contains("白名单"),
+            anyLong());
   }
 
   @Test
@@ -241,8 +265,10 @@ class ToolExecutorTest {
     }
   }
 
-  /** 抛 RuntimeException 的假工具（异常不吞用例）。 */
+  /** 抛 RuntimeException 的假工具（异常不吞用例；计数器供 24 节「拒绝不重试」回归断言尝试次数）。 */
   private static final class ThrowingTool implements YokeTool {
+
+    private final AtomicInteger attempts = new AtomicInteger();
 
     private final String message;
 
@@ -267,6 +293,7 @@ class ToolExecutorTest {
 
     @Override
     public ToolResult execute(JsonNode input) {
+      attempts.incrementAndGet();
       throw new IllegalStateException(message);
     }
   }

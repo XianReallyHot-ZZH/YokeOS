@@ -1,6 +1,9 @@
 package com.yokeos.memory;
 
 import com.yokeos.core.memory.MemoryScope;
+import com.yokeos.tool.sandbox.ActionType;
+import com.yokeos.tool.sandbox.Sandbox;
+import com.yokeos.tool.sandbox.SandboxAction;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
@@ -34,18 +37,23 @@ public class MarkdownMemoryStore implements LongTermMemoryStore {
 
   private final int maxArchiveChars;
 
+  private final Sandbox sandbox;
+
   /**
    * @param memoryDir 记忆目录（{@code .yokeos/memory}），文件名固定 MEMORY.md
    * @param maxArchiveChars 归档区字符阈值（默认 4000，技 §5.1；超阈值从尾部保留最近内容）
+   * @param sandbox 路径白名单校验（FILE_WRITE，24 节接线——只拦写路径；load/recallByKeyword 进程内读不 enforce，research D8）
    */
-  public MarkdownMemoryStore(Path memoryDir, int maxArchiveChars) {
+  public MarkdownMemoryStore(Path memoryDir, int maxArchiveChars, Sandbox sandbox) {
     this.memoryFile = memoryDir.resolve("MEMORY.md");
     this.maxArchiveChars = maxArchiveChars;
+    this.sandbox = sandbox;
   }
 
   @Override
   public void append(String content, MemoryScope scope) {
-    // Sandbox 检查位：24 节接 sandbox.enforce(new SandboxAction(FILE_WRITE, memoryFile.toString()))
+    // 24 节接线：MEMORY.md 写入过路径白名单（specs/008 D7）——不过则异常上抛走既有失败审计
+    sandbox.enforce(new SandboxAction(ActionType.FILE_WRITE, memoryFile.toString()));
     Map<MemoryScope, List<String>> sections = readSections();
     sections.get(scope).add("- [" + LocalDate.now() + "] " + content);
     writeSections(sections);
