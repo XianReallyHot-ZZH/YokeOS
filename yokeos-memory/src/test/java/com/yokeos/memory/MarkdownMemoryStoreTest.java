@@ -46,6 +46,30 @@ class MarkdownMemoryStoreTest {
   }
 
   @Test
+  @DisplayName("readAll_回MEMORY.md原文_归档不因注入口径裁剪")
+  void readAllReturnsRawFileWithoutInjectionTrimming() throws IOException {
+    MarkdownMemoryStore tinyArchive = new MarkdownMemoryStore(tempDir, 10, whitelisting(tempDir));
+    String longArchive = "很长的归档记忆内容超过阈值".repeat(3);
+    tinyArchive.append("核心一条", MemoryScope.CORE);
+    tinyArchive.append(longArchive, MemoryScope.ARCHIVAL);
+
+    final String load = tinyArchive.load();
+    String readAll = tinyArchive.readAll();
+
+    assertTrue(readAll.contains("## 核心记忆"), "原文含核心分区标题");
+    assertTrue(readAll.contains("## 归档记忆"), "原文含归档分区标题");
+    assertTrue(readAll.contains(longArchive), "readAll 是观察口径：归档原文完整在内");
+    assertFalse(load.contains(longArchive), "load 是注入口径：超阈值归档被裁（两者差别即本用例）");
+    assertEquals(fileContent(), readAll, "readAll 与磁盘文件逐字一致");
+  }
+
+  @Test
+  @DisplayName("readAll_文件不存在_返回空串不炸")
+  void readAllOnMissingFileReturnsEmpty() {
+    assertEquals("", store().readAll(), "空记忆由展示层承载空数据态");
+  }
+
+  @Test
   @DisplayName("白名单拒绝时_记忆文件零发生")
   void sandboxRejectionBlocksMemoryWrite() {
     // 坑五回归（24 节）：mock 全拒 Sandbox——append 抛 SandboxViolationException 且 MEMORY.md 根本没被创建

@@ -67,6 +67,12 @@ public class SqliteMemoryStore implements LongTermMemoryStore {
   }
 
   @Override
+  public String readAll() {
+    // 结构化档的「全文视图」按注入同口径拼装（核心全量 + 归档最近 N 行视图）——行数上限之外无原文可回（data-model）
+    return load();
+  }
+
+  @Override
   public List<String> recallByKeyword(String keyword) {
     return repository.searchArchival(keyword).stream().map(MemoryEntry::getContent).toList();
   }

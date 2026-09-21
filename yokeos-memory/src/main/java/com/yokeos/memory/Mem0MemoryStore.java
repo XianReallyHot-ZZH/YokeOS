@@ -107,6 +107,12 @@ public class Mem0MemoryStore implements LongTermMemoryStore {
   }
 
   @Override
+  public String readAll() {
+    // 与 buildContext 同源（26 节拍板：mem0 档全文视图即注入视图——外部服务无「原文」概念）
+    return load();
+  }
+
+  @Override
   public List<String> recallByKeyword(String keyword) {
     sandbox.enforce(new SandboxAction(ActionType.HTTP_REQUEST, baseUrl));
     Map<String, Object> payload = new LinkedHashMap<>();

@@ -1,0 +1,63 @@
+<svg viewBox="0 0 820 432" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+  <rect width="820" height="432" fill="#ffffff"/>
+  <!-- ════════ defs：marker（yk 前缀） ════════ -->
+  <defs>
+    <marker id="yks" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/></marker>
+    <marker id="ykam" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f59e0b"/></marker>
+    <marker id="ykgr" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#22c55e"/></marker>
+  </defs>
+  <!-- ════════ 浏览器容器（SPA） ════════ -->
+  <rect x="40" y="24" width="740" height="186" rx="14" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="5,3"/>
+  <text x="56" y="46" fill="#475569" font-size="11" font-weight="bold">浏览器 · Web 管理台 /admin（Vue 3 SPA · Vite 构建）</text>
+  <text x="692" y="46" fill="#64748b" font-size="9.5">只读 · 零写入口</text>
+  <!-- 左侧竖导航五项 -->
+  <rect x="64" y="58" width="140" height="24" rx="6" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.6"/>
+  <text x="134" y="74" fill="#4338ca" font-size="11" font-weight="bold" text-anchor="middle">会话</text>
+  <rect x="64" y="88" width="140" height="24" rx="6" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.6"/>
+  <text x="134" y="104" fill="#4338ca" font-size="11" font-weight="bold" text-anchor="middle">Agent（Profile）</text>
+  <rect x="64" y="118" width="140" height="24" rx="6" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.6"/>
+  <text x="134" y="134" fill="#4338ca" font-size="11" font-weight="bold" text-anchor="middle">Tool</text>
+  <rect x="64" y="148" width="140" height="24" rx="6" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.6"/>
+  <text x="134" y="164" fill="#4338ca" font-size="11" font-weight="bold" text-anchor="middle">长期记忆</text>
+  <rect x="64" y="178" width="140" height="24" rx="6" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.6"/>
+  <text x="134" y="194" fill="#4338ca" font-size="11" font-weight="bold" text-anchor="middle">系统状态</text>
+  <!-- 右侧端点 chips 与对应连线 -->
+  <line x1="204" y1="70" x2="356" y2="70" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#yks)"/>
+  <rect x="360" y="58" width="220" height="24" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.6"/>
+  <text x="470" y="74" fill="#1d4ed8" font-size="10" font-weight="bold" text-anchor="middle">GET /api/v1/sessions</text>
+  <line x1="204" y1="100" x2="356" y2="100" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#yks)"/>
+  <rect x="360" y="88" width="220" height="24" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.6"/>
+  <text x="470" y="104" fill="#1d4ed8" font-size="10" font-weight="bold" text-anchor="middle">GET /api/v1/profiles</text>
+  <line x1="204" y1="130" x2="356" y2="130" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#yks)"/>
+  <rect x="360" y="118" width="220" height="24" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.6"/>
+  <text x="470" y="134" fill="#1d4ed8" font-size="10" font-weight="bold" text-anchor="middle">GET /api/v1/tools</text>
+  <line x1="204" y1="160" x2="356" y2="160" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#yks)"/>
+  <rect x="360" y="148" width="220" height="24" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.6"/>
+  <text x="470" y="164" fill="#1d4ed8" font-size="10" font-weight="bold" text-anchor="middle">GET /api/v1/memory</text>
+  <line x1="204" y1="190" x2="356" y2="190" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#yks)"/>
+  <rect x="360" y="178" width="220" height="24" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.6"/>
+  <text x="470" y="194" fill="#1d4ed8" font-size="10" font-weight="bold" text-anchor="middle">GET /api/v1/info</text>
+  <!-- 三态占位旁注 -->
+  <rect x="616" y="98" width="152" height="64" rx="6" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.4" stroke-dasharray="5,3"/>
+  <text x="692" y="122" fill="#475569" font-size="10.5" font-weight="bold" text-anchor="middle">三态占位</text>
+  <text x="692" y="140" fill="#64748b" font-size="9" text-anchor="middle">加载中 · 空数据 · 错误</text>
+  <!-- ════════ fetch 汇入服务端托管 ════════ -->
+  <line x1="410" y1="210" x2="410" y2="232" stroke="#f59e0b" stroke-width="2" marker-end="url(#ykam)"/>
+  <text x="420" y="226" fill="#92400e" font-size="9">fetch —— 只调同一组 REST 端点</text>
+  <!-- ════════ 主角：Spring 静态托管 ════════ -->
+  <rect x="40" y="234" width="740" height="54" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2.6"/>
+  <text x="410" y="258" fill="#b45309" font-size="15" font-weight="bold" text-anchor="middle">Spring 静态托管（与 REST 同端口同进程）</text>
+  <text x="410" y="278" fill="#92400e" font-size="11" text-anchor="middle">产物 classpath:/static/admin/ · SPA 刷新由服务端回落兜底 · 统一错误提示</text>
+  <!-- ════════ 两档缓存与回落 ════════ -->
+  <line x1="220" y1="288" x2="220" y2="312" stroke="#f59e0b" stroke-width="2" marker-end="url(#ykam)"/>
+  <line x1="600" y1="288" x2="600" y2="312" stroke="#f59e0b" stroke-width="2" marker-end="url(#ykam)"/>
+  <rect x="40" y="314" width="360" height="50" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+  <text x="220" y="335" fill="#15803d" font-size="12" font-weight="bold" text-anchor="middle">静态资源命中 → 原样返回</text>
+  <text x="220" y="353" fill="#166534" font-size="9" text-anchor="middle">/admin/assets/** immutable 365d · 文件名即指纹</text>
+  <rect x="420" y="314" width="360" height="50" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="5,3"/>
+  <text x="600" y="335" fill="#475569" font-size="12" font-weight="bold" text-anchor="middle">前端路由未命中 → 回落 index.html</text>
+  <text x="600" y="353" fill="#64748b" font-size="9" text-anchor="middle">/admin/** no-cache · 刷新不 404 · /api/v1 不受影响</text>
+  <!-- ════════ 注脚 ════════ -->
+  <text x="410" y="392" fill="#475569" font-size="12" text-anchor="middle">管理台没有自己的后端——五页数据全部来自只读端点，顺带验证「API 是完备的对外通道」</text>
+  <text x="410" y="411" fill="#94a3b8" font-size="10.5" text-anchor="middle">Agent 管理页与工作区页归 30 节 · 风格钉 website/ 设计 token（yokeos-admin-ui skill 同源）</text>
+</svg>

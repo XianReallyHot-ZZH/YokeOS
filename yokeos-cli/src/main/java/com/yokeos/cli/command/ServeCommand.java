@@ -6,12 +6,12 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 /**
- * {@code yokeos serve}（重命令）：启动完整运行时常驻——定时任务随行常驻调度（第 25 节已兑现：启动即注册全部 AGENT.md 的 schedules，cron
- * 到点自动触发）；REST 端点第 26 节接线。Ctrl-C 退出。
+ * {@code yokeos serve}（重命令）：启动完整运行时常驻——REST 11 端点 + Web 管理台（{@code /admin}，第 26 节已接线）与 定时任务随行常驻调度（第
+ * 25 节：启动即注册全部 AGENT.md 的 schedules，cron 到点自动触发）。Ctrl-C 退出。
  */
 @Command(
     name = "serve",
-    description = "启动常驻运行时（定时调度已随行；REST 端点 26 节接线）",
+    description = "启动常驻运行时（REST 端点与管理台已接线，定时调度随行）",
     mixinStandardHelpOptions = true)
 public final class ServeCommand implements java.util.concurrent.Callable<Integer> {
 

@@ -1,0 +1,30 @@
+/* 设计 token：逐字直取 website/.vitepress/theme/custom.css 的 --yoke-* 变量（yokeos-admin-ui skill，一个值不自创） */
+:root {
+  --yoke-bg: #0b1220;
+  --yoke-bg-soft: #111b31;
+  --yoke-bg-elev: #16223d;
+  --yoke-bg-deep: #0d1526;
+  --yoke-border: #1e2c4a;
+  --yoke-text-1: #e6eaf2;
+  --yoke-text-2: #97a3bc;
+  --yoke-text-3: #5c6a85;
+  --yoke-brand: #4f7cff;
+  --yoke-brand-hover: #6b90ff;
+  --yoke-accent: #f5a623;
+  --yoke-ok: #34d399;
+  --yoke-err: #f87171;
+  --yoke-font: 'Inter', 'SF Pro Display', -apple-system, sans-serif;
+  --yoke-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--yoke-bg);
+  color: var(--yoke-text-1);
+  font-family: var(--yoke-font);
+  font-size: 14px;
+}

@@ -3,6 +3,10 @@ website/node_modules/
 website/.vitepress/dist/
 website/.vitepress/cache/
 
+# 管理台前端（第 26 节）：npm 依赖与 Vite 构建产物——产物由 frontend-maven-plugin 构建期生成进包，不入库
+yokeos-web/src/main/frontend/node_modules/
+yokeos-web/src/main/resources/static/admin/
+
 # Java / Maven 构建产物
 target/
 *.class

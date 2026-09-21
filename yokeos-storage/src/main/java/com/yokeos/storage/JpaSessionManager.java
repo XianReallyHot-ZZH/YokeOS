@@ -5,9 +5,13 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yokeos.core.session.Message;
 import com.yokeos.core.session.SessionIds;
+import com.yokeos.core.session.SessionSummary;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 /**
  * SessionManager 的 JPA 实现（第 18 节）：sessions 表持久化 + 跨重启恢复。
@@ -72,6 +76,47 @@ public class JpaSessionManager implements com.yokeos.core.session.SessionManager
     entity.setMessagesJson(writeMessages(session.messages()));
     entity.setLastActiveAt(LocalDateTime.now());
     repository.save(entity);
+  }
+
+  /**
+   * 列最近会话摘要（第 26 节）：last_active_at 倒序 + 分页取前 limit 条。摘要只映射元数据列， 不走 {@link #restore}——不触发
+   * messages_json 反序列化（data-model 不变量④）。
+   */
+  @Override
+  public List<SessionSummary> listRecent(int limit) {
+    return repository
+        .findAll(
+            PageRequest.of(0, Math.max(0, limit), Sort.by(Sort.Direction.DESC, "lastActiveAt")))
+        .getContent()
+        .stream()
+        .map(
+            row ->
+                new SessionSummary(
+                    row.getSessionId(),
+                    row.getAgentName(),
+                    row.getChannel(),
+                    row.getUserId(),
+                    row.getStatus(),
+                    row.getLastActiveAt()))
+        .toList();
+  }
+
+  /**
+   * 归档（第 26 节，DELETE 端点）：status 置 archived + 写 archived_at；未命中 false。 归档是标记不是终结——getOrCreate 的
+   * findById 不查 status，同三元组仍幂等返回本会话（research D4）。
+   */
+  @Override
+  public boolean archive(String sessionId) {
+    return repository
+        .findById(sessionId)
+        .map(
+            row -> {
+              row.setStatus(SessionSummary.STATUS_ARCHIVED);
+              row.setArchivedAt(LocalDateTime.now());
+              repository.save(row);
+              return true;
+            })
+        .orElse(false);
   }
 
   /** 实体行恢复为领域 Session：messages_json 反序列化回历史（恢复构造器——恢复后追加不覆盖）。 */

@@ -11,7 +11,14 @@ spring:
     # 工作区内的 SQLite（yokeos init 先行创建 .yokeos/；测试经 yokeos.db.dir 指到 target/）
     url: jdbc:sqlite:${yokeos.db.dir:.yokeos}/yokeos.db
     driver-class-name: org.sqlite.JDBC
+    hikari:
+      # 26 节（并发 invoke 实证 SQLITE_BUSY 后的定论）：sqlite-jdbc 3.53 的 busy handler 对写冲突不可靠
+      # （PRAGMA / Properties / setBusyTimeout 三形态探针全部立即 BUSY）——SQLite 单写者的正解是单连接串行化：
+      # 池收成 1 条，全部读写经同一条连接排队（连接获取层阻塞等待，无 BUSY）；配合关 OSIV，请求不跨 LLM
+      # 秒级调用占用连接，短 DB 操作交错通过，LLM 并发吞吐不受影响。
+      maximum-pool-size: 1
   jpa:
+    open-in-view: false # 26 节：默认 true 会把连接绑到整个请求（含秒级 LLM 调用）——并发下池耗尽的放大器
     hibernate:
       ddl-auto: none
     properties:

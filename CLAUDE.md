@@ -22,7 +22,7 @@ YokeOS 是用 Java 实现的面向企业场景的 **Agent 底座（Agent Harness
 | MCP | MCP Java SDK |
 | 日志 | Logback + SLF4J（结构化 JSON，禁 `System.out`） |
 | 管理台 | Vue 3 + Vite，经 frontend-maven-plugin（Node v20.18.0）构建，第 26 节落地 |
-| API 文档 | springdoc-openapi 2.6.0 |
+| API 文档 | springdoc-openapi 2.8.13（26 节实证：2.6.0 与 Boot 3.5 二进制不兼容，NoSuchMethodError） |
 | 构建 | Maven 多模块（groupId `com.yokeos`），fat JAR |
 
 **代码注释约定**：中文为主，技术术语保留英文原词（traceId、fat JAR、`${ENV_VAR}` 等）；注释只写为什么（H5），出处逐字引用宪法/文档条款（如「宪法 7：审计 day one」）。
@@ -157,7 +157,7 @@ yokeos/
 
 ## Web Service API
 
-统一前缀 `/api/v1`，统一信封 `{code, message, data, timestamp}`。第一阶段 **18 个端点**按五组：会话管理 4（sessions CRUD + messages）· Agent 调用与动态管理 7（`generate` 一句话草稿不落盘、CRUD、`invoke`）· 工作区 2（tree / file 只读）· 信息查询 3（profiles / memory / tools）· 系统状态 2（health / info）。
+统一前缀 `/api/v1`，统一信封 `{code, message, data, timestamp}`。第一阶段 **19 个端点**按五组：会话管理 5（sessions CRUD + messages + 列表，列表端点为 26 节「上游赢」补位）· Agent 调用与动态管理 7（`generate` 一句话草稿不落盘、CRUD、`invoke`）· 工作区 2（tree / file 只读）· 信息查询 3（profiles / memory / tools）· 系统状态 2（health / info）。
 
 Web 管理台第一版（第 26 节）：只读观察五页 + Agent 管理页 + 工作区页，与 REST 同端口同进程，只调同一组端点。**不做**：认证（假设内网）、SSE、WebSocket、RBAC、限流。定时任务管理端点与白名单管理端点显式列为扩展规划位（ADR 0008，不悄悄补进第一阶段）。
 
@@ -228,6 +228,11 @@ yokeos provider list / tool list / session list
 | core 主代码此前零 Spring 依赖 | 宪法 4 调度池（TaskScheduler/CronTrigger）落 core 时编译即红「程序包 org.springframework.scheduling 不存在」——core 只在 test 域经 starter-test 间接可见 spring-context，plan 层「传递件已有」的假设不查模块依赖就落笔会漏 | 模块级依赖显式声明 `org.springframework:spring-context`（BOM 管版本非新坐标），pom 注释记理由；「零新增依赖」表述要核到**模块 pom** 一级而非全仓 classpath（25 节实证） |
 | 静态单例 SQLite 测试库跨用例污染 | 22 节 `MemoryEntryRepositoryTest` 的静态临时库形态被照抄到有「恰一行/唯一任务」全表断言的测试——前序用例的 setEnabled(false)/历史行全部串场，断言「恰一行」变「恰三行」 | 同库形态 + 全表断言 = 必须 `@BeforeEach` 清两表；照抄基建形态时先核对断言口径是否查全表（25 节实证） |
 | task_id 用声明序号派生 | `{profileName}#{序号}` 绑定的是声明位置不是任务——**调换顺序/删中间条目/中间插入后重启，早报的 run_count 与执行历史整体错位嫁接给晚报**（reconcile 原地更新定义字段，旧数据无声接错对象）——不是丢状态，是接错账，审计语义被污染 | id 由 frontmatter 作者声明（必填 + profile 内唯一，AgentLoader 剔除坏条目有声日志），task_id = `{profileName}:{id}` 前缀防跨 Agent 撞名（25 节用户实证后修正案） |
+| springdoc 2.6.0 与 Boot 3.5 二进制不兼容 | /v3/api-docs 与 swagger-ui 500：`NoSuchMethodError: ControllerAdviceBean.<init>`（2.6.x 面向 Boot 3.3/Spring FW 6.1） | 升 2.8.x 线（定 2.8.13），CLAUDE.md/技 §1.2 已同步；宪法文件内版本字面量留用户 PATCH（26 节实证） |
+| `@WebMvcTest` 用在无主类的库模块 | 向上搜不到 `@SpringBootConfiguration` 切片起不来；而给引导类加 `@ComponentScan` 又会**绕过 slice 类型过滤器**——未测 Controller 的依赖把上下文炸掉 | 测试包放裸 `@SpringBootConfiguration + @EnableAutoConfiguration` 引导类（不带扫描），每个测试 `@Import({被测Controller, GlobalExceptionHandler})` 显式登记（26 节实证，参照 `WebSliceTestBoot`） |
+| sqlite-jdbc 3.53 的 busy handler 对写冲突不可靠 | 并发 insert/commit 直接 `SQLITE_BUSY` 立即失败——`PRAGMA busy_timeout`、`Properties.busy_timeout`、`SQLiteDataSource.setBusyTimeout` 三形态探针**全部不等待**（18 节坑表「busy_timeout 解并发」只在读并发成立）；Hikari `connection-init-sql` PRAGMA 同样无效 | 生产源 `spring.datasource.hikari.maximum-pool-size=1`（单连接串行化，连接获取层排队）+ `spring.jpa.open-in-view=false`（OSIV 把连接绑到整个请求、跨秒级 LLM 调用，是并发耗尽的放大器）——8 并发 invoke 全 200 实证（26 节） |
+| 测试类改系统属性不还原 → 跨类污染 | 25 节 Scheduler E2E `@BeforeAll` 设 `yokeos.root/db.dir` 指向 @TempDir 且不还原——类结束 TempDir 被清，**同 JVM 后跑**的 `@SpringBootTest` 上下文拿到悬空路径 → `SQLITE_CANTOPEN`（单跑绿合跑红，排查方向被误导为新建测试） | 污染源 `@AfterAll System.clearProperty` 还原；新测试 `@SpringBootTest(properties=...)` 自钉关键属性免疫（26 节实证） |
+| Spring AI Provider 故障族直穿兜底 500 | 错 key 401 → `NonTransientAiException`（非 IllegalStateException）→ 落 500 兜底，违背技 §7.4「Provider 故障 503」口径 | `GlobalExceptionHandler` 显式映射 `{NonTransientAiException, TransientAiException}` → 503（消息是 Provider 侧原文非内部细节）；错 key 注入实证（26 节） |
 | 手跑真 serve（fat JAR 前）三连坑 | ① boot pom mainClass 硬编码 CLI 入口且 XML 配置优先于 `-Dspring-boot.run.mainClass` 覆盖；② `dependency:build-classpath` 解析的是 m2 旧 jar——前序节新类（如 Sandbox/McpJsonMapper）CNFE；③ boot fat jar 嵌套结构不进 `-cp` classpath，application.yaml 丢失 → datasource 报「no driver」 | ① 不用 spring-boot:run，直接 `java -cp ... com.yokeos.cli.YokeOsCli serve`；② 先 `mvn install -DskipTests` 刷新 m2；③ classpath 前置 `yokeos-boot/target/classes`（原始 classes 含 application.yaml）；另 kimi 连坐坑照旧给哑值（25 节实证，31 节 fat JAR 打包课直接受益） |
 
 ---

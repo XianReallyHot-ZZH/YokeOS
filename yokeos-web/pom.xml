@@ -27,6 +27,11 @@
             <groupId>com.yokeos</groupId>
             <artifactId>yokeos-provider</artifactId>
         </dependency>
+        <!-- 26 节：GET /api/v1/tools 列 ToolRegistry（含 MCP 注册的运行时真相源，research D6）——web 是顶层消费者，方向合法无循环 -->
+        <dependency>
+            <groupId>com.yokeos</groupId>
+            <artifactId>yokeos-tool</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -36,6 +41,18 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
         </dependency>
+        <!-- Controller 上 @SuppressFBWarnings 需要（第一阶段端点无认证的设计说明，参照同款）；yokeos-tool/core 同款 provided + 显式版本 -->
+        <dependency>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-annotations</artifactId>
+            <version>${spotbugs.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- 26 节：GlobalExceptionHandler 直接 import Provider 故障族异常（版本随根 BOM spring-ai.version；此前经 provider 传递，显式化编译依赖） -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-retry</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -43,4 +60,60 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <properties>
+        <!-- 前端构建默认随 mvn 触发（26 节验收锚：全量构建至少一次不带 skip）；纯 Java 快速构建 -Dfrontend.skip=true -->
+        <frontend.skip>false</frontend.skip>
+        <frontend.node.version>v20.18.0</frontend.node.version>
+    </properties>
+
+    <build>
+        <plugins>
+            <!-- 管理台 Vue 前端（research D8 / CLAUDE.md 技术栈表钉版）：npm install + vite build，
+                 产物落 src/main/resources/static/admin，随 process-resources 进包、由 WebConfig 托在 /admin。
+                 绑 generate-resources（早于 process-resources / test）——一条 mvn 命令出全量包。 -->
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>1.15.1</version>
+                <configuration>
+                    <workingDirectory>src/main/frontend</workingDirectory>
+                    <installDirectory>target</installDirectory>
+                    <skip>${frontend.skip}</skip>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>install-node-and-npm</id>
+                        <goals>
+                            <goal>install-node-and-npm</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <nodeVersion>${frontend.node.version}</nodeVersion>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm-install</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <arguments>install</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm-build</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <arguments>run build</arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
