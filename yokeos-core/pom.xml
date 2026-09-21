@@ -30,6 +30,12 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
+        <!-- Spring 调度设施（TaskScheduler/CronTrigger，宪法 4 唯一明文例外的承载）：版本随 Boot parent
+             BOM，非新第三方坐标——core 此前仅在 test 域经 starter-test 间接可见（25 节实施偏差，记验收报告）。 -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
         <!-- SpotBugs 注解：record + 不可变副本场景的 EI_EXPOSE_REP 类型级误报就地标注 -->
         <dependency>
             <groupId>com.github.spotbugs</groupId>

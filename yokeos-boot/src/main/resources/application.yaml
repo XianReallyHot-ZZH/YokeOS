@@ -24,6 +24,7 @@ spring:
         - classpath:db/schema-001-audit.sql
         - classpath:db/schema-002-sessions.sql
         - classpath:db/schema-003-memory.sql
+        - classpath:db/schema-004-scheduler.sql
 
 server:
   port: 8080

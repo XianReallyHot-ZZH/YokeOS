@@ -13,7 +13,7 @@ public final class GatewayCommand implements java.util.concurrent.Callable<Integ
 
   @Override
   public Integer call() {
-    System.out.println("YokeOS 运行时已启动（gateway 骨架；多通道挂载在扩展阶段接入）。Ctrl-C 退出。");
+    System.out.println("YokeOS 运行时已启动（gateway；定时调度随行常驻，多通道挂载扩展阶段接入）。Ctrl-C 退出。");
     SpringApplication.run(YokeosRuntime.class);
     ServeCommand.keepAlive();
     return 0;

@@ -6,12 +6,12 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 /**
- * {@code yokeos serve}（重命令，启动骨架）：启动完整运行时常驻——REST 端点第 26 节接线（本节只起上下文）， 定时任务随 serve/gateway 常驻调度归 25
- * 节。Ctrl-C 退出。
+ * {@code yokeos serve}（重命令）：启动完整运行时常驻——定时任务随行常驻调度（第 25 节已兑现：启动即注册全部 AGENT.md 的 schedules，cron
+ * 到点自动触发）；REST 端点第 26 节接线。Ctrl-C 退出。
  */
 @Command(
     name = "serve",
-    description = "启动 HTTP API 服务（REST 端点 26 节接线，当前为运行时骨架）",
+    description = "启动常驻运行时（定时调度已随行；REST 端点 26 节接线）",
     mixinStandardHelpOptions = true)
 public final class ServeCommand implements java.util.concurrent.Callable<Integer> {
 
@@ -21,7 +21,7 @@ public final class ServeCommand implements java.util.concurrent.Callable<Integer
   @Override
   public Integer call() {
     System.setProperty("server.port", String.valueOf(port));
-    System.out.println("YokeOS 运行时已启动（serve 骨架；REST 端点将在第 26 节接线）。Ctrl-C 退出。");
+    System.out.println("YokeOS 运行时已启动（定时调度随行常驻；REST 端点将在第 26 节接线）。Ctrl-C 退出。");
     SpringApplication.run(YokeosRuntime.class);
     keepAlive();
     return 0;
