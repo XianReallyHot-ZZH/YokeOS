@@ -67,7 +67,7 @@ YokeOS 的完整技术栈（版本与参照实现逐项对齐，groupId 换为 `
 8. **MCP Java SDK**（MCP Client 集成，社区项目，可能需要部分自实现）
 9. **Logback** 加 **SLF4J**（结构化日志）
 10. **Vue3 + Vite**，经 **frontend-maven-plugin**（Node v20.18.0）构建（Web 管理台，产物托管在 `yokeos-web`）
-11. **springdoc-openapi 2.6.0**（OpenAPI 文档）
+11. **springdoc-openapi 2.8.13**（OpenAPI 文档；26 节实施实证 2.6.0 与 Spring FW 6.2 二进制不兼容，升 2.8.x 线）
 12. **Micrometer** 加 **Prometheus**（指标采集，扩展阶段）
 
 平台基线说明：Spring AI 2.0 的硬性基线已升到 Spring Boot 4 / Framework 7，第一阶段锁定 Boot 3.5.x 是与参照实现保持逐节可比的刻意选择，如实记为已知技术债；升级到 Boot 4 + Spring AI 2.0 列为扩展阶段候选，作为一次真实的架构升级练习（见行业调研 4.5 节）。
@@ -420,16 +420,17 @@ Web Service 是 YokeOS 的对外完整门面，业务系统通过 REST API 接�
 
 **Web 管理台第一版。** 与 REST 同端口、同进程托管的 Vue3 单页应用，Vite 构建、经 frontend-maven-plugin 在 Maven 构建期编译、产物托管在 `yokeos-web` 的静态资源目录（`/admin/` 路径，SPA 内部路径刷新回落到入口页，不影响 REST 路由）。第一版页面：**只读观察五页**（会话、Agent（Profile）、Tool、长期记忆、系统状态含各 Provider 连通情况，数据全部来自只读端点，界面不设写入口）、**Agent 管理页**（列表 + 查看/编辑/删除 + 「一句话新建 → 预览可改 → 创建」流程）、**工作区页**（目录树 + 只读浏览文件）。管理台只调用 7.2 的同一组 REST 端点，不带独立后端逻辑。
 
-### 7.2 第一阶段 18 个端点
+### 7.2 第一阶段 19 个端点
 
 统一前缀 `/api/v1`，按五组组织（与需求文档 5.10 一致）：
 
-**会话管理（4 个）：**
+**会话管理（5 个）：**
 
 1. `POST /api/v1/sessions`（创建）
-2. `POST /api/v1/sessions/{id}/messages`（发消息，触发 ReAct 循环）
-3. `GET /api/v1/sessions/{id}`（查历史）
-4. `DELETE /api/v1/sessions/{id}`（归档）
+2. `GET /api/v1/sessions`（列表，最近 ≤100 条 + `?status=` 过滤——26 节「上游赢」补位，管理台会话页数据源）
+3. `POST /api/v1/sessions/{id}/messages`（发消息，触发 ReAct 循环）
+4. `GET /api/v1/sessions/{id}`（查历史）
+5. `DELETE /api/v1/sessions/{id}`（归档）
 
 **Agent 调用与动态管理（7 个）：**
 
@@ -461,7 +462,7 @@ Web Service 是 YokeOS 的对外完整门面，业务系统通过 REST API 接�
 
 Memory 的 append/clear/search；Tool describe 和调用历史；LLM call 历史和 token 统计；**`AgentScheduler` 的调度管理端点**（查任务与状态、查执行历史、立即补跑一次、启用/停用——定义的增改仍走 `PUT /api/v1/agents/{name}`，这里补的是运行态控制）；Webhook 触发；SSE 流式响应；Prometheus metrics；OpenAPI spec 导出；**白名单管理端点**。
 
-> **与参照实现的一处显式偏差（上游赢）：** 参照实现在其窗口内交付了定时任务管理的四个运行态端点（`/api/v1/schedules` 前缀的查询/执行历史/立即执行/启停）、管理台"定时任务"页，以及沙箱白名单管理端点。YokeOS 需求文档的核心端点清单（18 个）与管理台页面清单均未包含它们——"定时执行历史可查"由 `scheduled_tasks`/`task_executions` 落库加 Session 查询与审计表承接，白名单走配置文件形态，第一阶段的可查性与管控已经够用。按"上游赢、理由写进文档"的纪律，这两组端点与对应管理页列入扩展阶段，不悄悄加进第一阶段范围。
+> **与参照实现的一处显式偏差（上游赢）：** 参照实现在其窗口内交付了定时任务管理的四个运行态端点（`/api/v1/schedules` 前缀的查询/执行历史/立即执行/启停）、管理台"定时任务"页，以及沙箱白名单管理端点。YokeOS 需求文档的核心端点清单（19 个——26 节实施时按「上游赢」补入参照同款的会话列表端点）与管理台页面清单均未包含它们——"定时执行历史可查"由 `scheduled_tasks`/`task_executions` 落库加 Session 查询与审计表承接，白名单走配置文件形态，第一阶段的可查性与管控已经够用。按"上游赢、理由写进文档"的纪律，这两组端点与对应管理页列入扩展阶段，不悄悄加进第一阶段范围。
 
 ### 7.4 关键设计点
 
@@ -857,7 +858,7 @@ mvn clean package
 | 23 | Sandbox 设计评审（评审课，不产码）：接口签名与白名单校验规则定稿 |
 | 24 | `Sandbox` 接口 + `WhitelistSandbox`、三条校验方法、异常走既有审计路径 |
 | 25 | `AgentScheduler`（`ThreadPoolTaskScheduler` + `CronTrigger`）、并发锁、`scheduled_tasks`/`task_executions` 建表、`ScheduledTaskStore` 契约与 JPA 实现 |
-| 26 | `WebServer` + 18 个端点 + `GlobalExceptionHandler` + OpenAPI；Web 管理台第一版（只读观察五页 + Agent 管理页 + 工作区页） |
+| 26 | `WebServer` + 11 个端点（会话 5 含列表、invoke 1、信息查询 3、系统状态 2）+ `GlobalExceptionHandler` 扩展 + OpenAPI；Web 管理台只读观察五页（Agent 管理页与工作区页归 30 节随写侧端点落地） |
 | 27 | 全流程串联（串联课，不开新规格）：CLI → ReAct → Tool → Notify 端到端打通 |
 | 28 | 全流程串联（串联课）：端到端链路固化为 `@Tag("integration")` 集成测试，稳定复跑 |
 | 29 | 一个目录 = 一个 Agent：`AgentLoader.deriveProfile`、公共 Skill 库与按名引用注入、运行时注册（`ProfileRegistry`/`AgentScheduler` 运行时方法） |
@@ -904,7 +905,7 @@ YokeOS 技术方案核心：**JDK 21 + Spring Boot 3.5.x** 单体应用，自实
 3. **能力三** Memory 两层记忆（统一门面，长期记忆三档后端一次交付，向量检索放扩展，接口预留升级空间）
 4. **能力四** 工具体系（内置 9 个 Tool 加扩展 Tool 三档接入，主推 Agent 目录 加 MCP 零代码，`NotifyTools` 对称补上出站通知能力，第一阶段 Tool 相关三合一为一个模块）
 5. **能力五** 通知与定时（Notify 是出站通道、`AgentScheduler` 是第三触发源，与人推复用同一条执行链路）
-6. **能力六** 对外服务（REST API 五组操作第一阶段 18 个端点，业务系统集成的唯一通道，附 Web 管理台第一版）
+6. **能力六** 对外服务（REST API 五组操作第一阶段 19 个端点，业务系统集成的唯一通道，附 Web 管理台第一版）
 
 六个能力加支撑模块是**底座**（第一部分），本身不是某个具体的业务 Agent。真正定义一个业务 Agent 靠的是**一个目录**（`AGENT.md` frontmatter 配置加任务指令正文，可选公共 Skill 按名引用与附属资源），第一阶段丢目录即上线、改定义免重启，动态管理经 `/api/v1/agents` 一组端点完成（第二部分，第 11 章）。
 

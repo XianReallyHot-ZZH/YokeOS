@@ -1,8 +1,14 @@
 package com.yokeos.web;
 
 import com.yokeos.web.common.ApiResponse;
+import com.yokeos.web.error.AgentTimeoutException;
+import com.yokeos.web.error.ProviderUnavailableException;
+import com.yokeos.web.error.ResourceNotFoundException;
+import com.yokeos.web.error.SessionNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.retry.NonTransientAiException;
+import org.springframework.ai.retry.TransientAiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -40,6 +46,41 @@ public class GlobalExceptionHandler {
     LOG.error("Service unavailable: {}", sanitize(ex.getMessage()));
     return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
         .body(ApiResponse.error(HttpStatus.SERVICE_UNAVAILABLE.value(), ex.getMessage()));
+  }
+
+  /** 404 —— 领域资源不存在（第 26 节：会话 / Agent）。消息是受控字面量（含缺失名字，调用方排查必需）， 非内部细节。 */
+  @ExceptionHandler({SessionNotFoundException.class, ResourceNotFoundException.class})
+  public ResponseEntity<ApiResponse<Void>> handleDomainNotFound(RuntimeException ex) {
+    LOG.warn("Resource not found: {}", sanitize(ex.getMessage()));
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(ApiResponse.error(HttpStatus.NOT_FOUND.value(), ex.getMessage()));
+  }
+
+  /** 503 —— Provider 显式故障（第 26 节）：与 {@code IllegalStateException}→503 并列的显式语义。 */
+  @ExceptionHandler(ProviderUnavailableException.class)
+  public ResponseEntity<ApiResponse<Void>> handleProviderDown(ProviderUnavailableException ex) {
+    LOG.error("Provider unavailable: {}", sanitize(ex.getMessage()));
+    return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+        .body(ApiResponse.error(HttpStatus.SERVICE_UNAVAILABLE.value(), ex.getMessage()));
+  }
+
+  /**
+   * 503 —— Spring AI 的 Provider 故障族（第 26 节）：401/403 等不可重试（NonTransient）与限流/超载等可重试耗尽
+   * （Transient）都属「Provider 故障」语义（技 §7.4），消息是 Provider 侧原文、非内部细节。 错 key 注入实证此路径（26 节人工项）。
+   */
+  @ExceptionHandler({NonTransientAiException.class, TransientAiException.class})
+  public ResponseEntity<ApiResponse<Void>> handleAiProviderFailure(RuntimeException ex) {
+    LOG.error("AI provider failure: {}", sanitize(ex.getMessage()));
+    return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+        .body(ApiResponse.error(HttpStatus.SERVICE_UNAVAILABLE.value(), ex.getMessage()));
+  }
+
+  /** 504 —— Agent 调用超时（第 26 节口径占位）：真实超时由 provider 层承载，同步模型不造硬中断（research D10）。 */
+  @ExceptionHandler(AgentTimeoutException.class)
+  public ResponseEntity<ApiResponse<Void>> handleTimeout(AgentTimeoutException ex) {
+    LOG.error("Agent invocation timeout: {}", sanitize(ex.getMessage()));
+    return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
+        .body(ApiResponse.error(HttpStatus.GATEWAY_TIMEOUT.value(), ex.getMessage()));
   }
 
   /** 500 —— 其余一切的兜底。 */

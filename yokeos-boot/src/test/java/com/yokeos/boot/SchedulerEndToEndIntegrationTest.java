@@ -13,6 +13,7 @@ import com.yokeos.storage.TaskExecutionRepository;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -90,6 +91,16 @@ class SchedulerEndToEndIntegrationTest {
     Files.writeString(workspace.resolve("memory/MEMORY.md"), "## 核心记忆\n\n## 归档记忆\n");
     System.setProperty("yokeos.root", workspace.toString());
     System.setProperty("yokeos.db.dir", workspace.toString());
+  }
+
+  /**
+   * 还原系统属性（26 节补丁）：@TempDir 在类结束后被清理，若不还原，同 JVM 里后跑的 上下文（如 WebSmoke 冒烟）会拿到悬空路径——SQLite
+   * SQLITE_CANTOPEN 即此因（属性污染跨测试类）。
+   */
+  @AfterAll
+  static void restoreSystemProperties() {
+    System.clearProperty("yokeos.root");
+    System.clearProperty("yokeos.db.dir");
   }
 
   @Test

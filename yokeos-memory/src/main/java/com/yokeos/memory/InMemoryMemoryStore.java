@@ -44,6 +44,11 @@ public class InMemoryMemoryStore implements LongTermMemoryStore {
   }
 
   @Override
+  public String readAll() {
+    return load(); // 结构化口径同 sqlite 档：全文视图即注入视图（测试基建，无原文概念）
+  }
+
+  @Override
   public List<String> recallByKeyword(String keyword) {
     List<String> hits = new ArrayList<>();
     for (String line : archive) {

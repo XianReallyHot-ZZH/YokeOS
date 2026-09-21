@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.yokeos.core.provider.ProviderResponse;
 import com.yokeos.core.session.Session;
 import com.yokeos.core.session.SessionManager;
+import com.yokeos.core.session.SessionSummary;
 import jakarta.persistence.EntityManagerFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -181,6 +182,72 @@ class SessionManagerTest {
     assertEquals(4, ids.size());
     ids.forEach(id -> assertEquals(expectedId, id, "全部拿到同一条会话"));
     assertEquals(rowsBefore, repository.count(), "主键唯一兜底：并发不产生第二条（零新增）");
+  }
+
+  @Test
+  @DisplayName("listRecent_最近活跃倒序且尊重上限")
+  void listRecentReturnsNewestFirstAndRespectsLimit() throws InterruptedException {
+    SessionManager sessionManager = manager();
+    Session first = sessionManager.getOrCreate("web", "list-u1", "weather");
+    sessionManager.save(first);
+    Thread.sleep(20); // 拉开 last_active_at，SQLite 时间戳同刻会让排序不稳
+    Session second = sessionManager.getOrCreate("web", "list-u2", "weather");
+    sessionManager.save(second);
+    Thread.sleep(20);
+    Session third = sessionManager.getOrCreate("invoke", "list-u3", "weather");
+    sessionManager.save(third);
+
+    java.util.List<SessionSummary> top = sessionManager.listRecent(2);
+
+    assertEquals(2, top.size(), "上限生效");
+    assertEquals(third.sessionId(), top.get(0).sessionId(), "最近活跃在前");
+    assertEquals(second.sessionId(), top.get(1).sessionId(), "次活跃随后");
+    assertTrue(
+        sessionManager.listRecent(100).stream()
+            .anyMatch(s -> s.sessionId().equals(first.sessionId())),
+        "上限宽于总量时全量可见");
+    assertTrue(top.stream().noneMatch(s -> s.sessionId().equals(first.sessionId())), "被截掉的是最旧的");
+  }
+
+  @Test
+  @DisplayName("archive_置archived与archived_at且未命中返回false")
+  void archiveMarksStatusAndArchivedAt() {
+    SessionManager sessionManager = manager();
+    org.junit.jupiter.api.Assertions.assertFalse(
+        sessionManager.archive("no-such-session"), "未命中 false（调用方据此转 404）");
+
+    Session session = sessionManager.getOrCreate("web", "archive-u1", "weather");
+    session.appendUser("归档前最后一句");
+    sessionManager.save(session);
+    assertTrue(sessionManager.archive(session.sessionId()));
+
+    com.yokeos.storage.Session row = repository.findById(session.sessionId()).orElseThrow();
+    assertEquals("archived", row.getStatus());
+    assertNotNull(row.getArchivedAt(), "归档时间落列");
+    assertTrue(
+        sessionManager.listRecent(100).stream()
+            .anyMatch(
+                s -> s.sessionId().equals(session.sessionId()) && "archived".equals(s.status())),
+        "摘要视图同样显示已归档");
+  }
+
+  @Test
+  @DisplayName("归档后同三元组getOrCreate_幂等返回原会话且历史保留")
+  void archivedSession_getOrCreateStillReturnsSameWithHistory() {
+    SessionManager sessionManager = manager();
+    Session original = sessionManager.getOrCreate("web", "revive-u1", "weather");
+    original.appendUser("历史第一句");
+    sessionManager.save(original);
+    sessionManager.archive(original.sessionId());
+
+    Session again = sessionManager.getOrCreate("web", "revive-u1", "weather");
+
+    assertEquals(original.sessionId(), again.sessionId(), "幂等返回同一条（标记不终结）");
+    assertEquals(1, again.messages().size(), "历史保留——归档不清空对话");
+    assertEquals(
+        "archived",
+        repository.findById(original.sessionId()).orElseThrow().getStatus(),
+        "状态仍是 archived，不隐式复活（research D4）");
   }
 
   private static String createSchemaBackedSqlite() {

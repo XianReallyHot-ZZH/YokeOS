@@ -73,6 +73,12 @@ public class MarkdownMemoryStore implements LongTermMemoryStore {
   }
 
   @Override
+  public String readAll() {
+    // 原貌口径（26 节）：文件存在回原文、不经分区解析与归档裁剪；不存在视作空记忆（空数据态由展示层承载）
+    return Files.exists(memoryFile) ? readFile() : "";
+  }
+
+  @Override
   public List<String> recallByKeyword(String keyword) {
     List<String> hits = new ArrayList<>();
     for (String line : readSections().get(MemoryScope.ARCHIVAL)) { // 只读归档区（契约四）

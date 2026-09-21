@@ -25,4 +25,7 @@ public interface MemoryService {
 
   /** {@code recall_memory} 转发：按关键词只在归档区检索（契约四：关键词包含匹配，不做复杂化）。 */
   List<String> recall(String keyword);
+
+  /** 只读全文视图（第 26 节，GET /api/v1/m 数据源）：观察口径，非注入口径——markdown 档回 MEMORY.md 原文两分区原貌， 结构化档按注入同口径拼装。 */
+  String readAll();
 }

@@ -468,6 +468,7 @@ Web Service 是 YokeOS 的对外完整门面，业务系统通过 REST API 接�
 | 类别 | 端点 | 说明 |
 |------|------|------|
 | 会话管理 | `POST /api/v1/sessions` | 创建会话 |
+| 会话管理 | `GET /api/v1/sessions` | 列出最近会话（≤100 条，`?status=` 过滤；26 节「上游赢」补位，管理台会话页数据源） |
 | 会话管理 | `POST /api/v1/sessions/{id}/messages` | 发消息（触发 ReAct 循环） |
 | 会话管理 | `GET /api/v1/sessions/{id}` | 查历史 |
 | 会话管理 | `DELETE /api/v1/sessions/{id}` | 归档会话 |
@@ -871,7 +872,7 @@ YokeOS 第一阶段的实施按参照实现公开构建过程的课程节序组�
 - [ ] 扩展 Tool 接入（方式一零代码 Agent 目录 + MCP 跑通；方式三 @Tool 注解示例跑通）
 - [ ] MCP Client 集成、CLI Channel
 - [ ] 通知与定时（notify 推 Webhook 通知渠道；`AgentScheduler` 到点自跑，与 CLI/Web 复用同一条执行链路）
-- [ ] Web Service 核心端点全部跑通（会话 4 + Agent 调用与动态管理 7 + 工作区 2 + 信息查询 3 + 系统状态 2）
+- [ ] Web Service 核心端点全部跑通（会话 5 含列表补位 + Agent 调用与动态管理 7 + 工作区 2 + 信息查询 3 + 系统状态 2）
 - [ ] Web 管理台第一版（只读观察五页 + Agent 管理页 + 工作区页）
 - [ ] Session 持久化（SQLite，跨重启恢复）
 - [ ] 12 个命令行工具

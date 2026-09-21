@@ -194,11 +194,12 @@ public class YokeosRuntime {
   /**
    * 20 节 ToolRegistry 统一注册面（17 节预告的替换兑现）：内置三组注解注册 + notify 直接注册 + MCP server 工具接入（.yokeos/
    * mcp_servers.yaml，失联只 WARN 不拖垮启动）， 22 节补记忆两件（save_memory / recall_memory，specs/006 裁决二—— 随能力三落位
-   * memory 模块、注册进注册面一视同仁）， 24 节四件经构造注入过沙箱（specs/008 D7：enforce 落点在动作发生处）， {@code registry.asMap()}
-   * 喂 PromptBuilder/ToolExecutor（两消费方构造签名不动）。
+   * memory 模块、注册进注册面一视同仁）， 24 节四件经构造注入过沙箱（specs/008 D7：enforce 落点在动作发生处）。 26 节起注册表本身即 Bean（web 层
+   * GET /api/v1/tools 的注入目标——注册表是唯一真相源，research D6）： 既有 {@code tools} Map Bean
+   * 改由本注册表派生，PromptBuilder / ToolExecutor 的既有消费形态零变化。
    */
   @Bean
-  Map<String, YokeTool> tools(MemoryEntryRepository memoryEntryRepository) {
+  ToolRegistry toolRegistry(MemoryEntryRepository memoryEntryRepository) {
     Sandbox sandbox = sandbox();
     ToolRegistry registry = new ToolRegistry();
     registry.registerAnnotated(new FileTools(sandbox));
@@ -208,7 +209,12 @@ public class YokeosRuntime {
     registry.register(new NotifyTools(Map.of("webhook", new WebhookNotifyAdapter()), sandbox));
     new McpClientService(new McpConfigLoader(workspace().resolve("mcp_servers.yaml")))
         .connectAll(registry);
-    return registry.asMap();
+    return registry;
+  }
+
+  @Bean
+  Map<String, YokeTool> tools(ToolRegistry toolRegistry) {
+    return toolRegistry.asMap(); // 17 节起 PromptBuilder/ToolExecutor 的既有消费形态（Map 注入）不变
   }
 
   /**

@@ -53,6 +53,16 @@ class MemoryServiceImplTest {
   }
 
   @Test
+  @DisplayName("readAll转发_观察口径透传后端")
+  void readAllForwardsToStore() {
+    when(store.readAll()).thenReturn("## 核心记忆\n- [2026-09-21] 原文");
+
+    assertEquals("## 核心记忆\n- [2026-09-21] 原文", service.readAll());
+
+    verify(store).readAll();
+  }
+
+  @Test
   @DisplayName("remember转发_参数原样到后端")
   void rememberForwardsToStore() {
     service.remember("值得记住的事", MemoryScope.CORE);

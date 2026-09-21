@@ -41,4 +41,9 @@ public final class MemoryServiceImpl implements MemoryService {
   public List<String> recall(String keyword) {
     return store.recallByKeyword(keyword);
   }
+
+  @Override
+  public String readAll() {
+    return store.readAll(); // 观察口径透传（26 节 GET /api/v1/m）——拼装差异由各档后端承载
+  }
 }

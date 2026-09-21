@@ -1,0 +1,72 @@
+<svg viewBox="0 0 820 445" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+  <rect width="820" height="445" fill="#ffffff"/>
+  <!-- ════════ defs：marker（yk 前缀） ════════ -->
+  <defs>
+    <marker id="yks" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/></marker>
+    <marker id="ykam" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f59e0b"/></marker>
+    <marker id="ykgr" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#22c55e"/></marker>
+    <marker id="ykbl" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#3b82f6"/></marker>
+  </defs>
+  <!-- ════════ 两个入口（业务系统 / 管理台浏览器） ════════ -->
+  <rect x="40" y="24" width="280" height="54" rx="10" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+  <text x="180" y="48" fill="#4338ca" font-size="15" font-weight="bold" text-anchor="middle">业务系统 · HTTP 客户端</text>
+  <text x="180" y="68" fill="#6366f1" font-size="11" text-anchor="middle">同步 invoke · 会话保持 · 跨语言接入</text>
+  <rect x="500" y="24" width="280" height="54" rx="10" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+  <text x="640" y="48" fill="#4338ca" font-size="15" font-weight="bold" text-anchor="middle">浏览器 · Web 管理台</text>
+  <text x="640" y="68" fill="#6366f1" font-size="11" text-anchor="middle">/admin 只读五页 · 只调同一组端点</text>
+  <line x1="180" y1="78" x2="180" y2="102" stroke="#94a3b8" stroke-width="2" marker-end="url(#yks)"/>
+  <line x1="640" y1="78" x2="640" y2="102" stroke="#94a3b8" stroke-width="2" marker-end="url(#yks)"/>
+  <!-- ════════ 主角：yokeos serve 对外门面 ════════ -->
+  <rect x="40" y="106" width="740" height="56" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2.6"/>
+  <text x="410" y="131" fill="#b45309" font-size="16" font-weight="bold" text-anchor="middle">yokeos serve —— 对外门面（Web Service）</text>
+  <text x="410" y="151" fill="#92400e" font-size="12" text-anchor="middle">Spring MVC + 虚拟线程 :8080 · 统一前缀 /api/v1 · 统一信封 ApiResponse · 异常单出口</text>
+  <!-- ════════ fan-out：六个 Controller ════════ -->
+  <line x1="410" y1="162" x2="410" y2="184" stroke="#f59e0b" stroke-width="2"/>
+  <line x1="95" y1="184" x2="725" y2="184" stroke="#f59e0b" stroke-width="2"/>
+  <text x="410" y="178" fill="#92400e" font-size="10.5" text-anchor="middle">6 个 Controller · 薄壳（校验 / 包装 / 兜错）</text>
+  <line x1="95" y1="184" x2="95" y2="206" stroke="#f59e0b" stroke-width="2" marker-end="url(#ykam)"/>
+  <line x1="221" y1="184" x2="221" y2="206" stroke="#f59e0b" stroke-width="2" marker-end="url(#ykam)"/>
+  <line x1="347" y1="184" x2="347" y2="206" stroke="#f59e0b" stroke-width="2" marker-end="url(#ykam)"/>
+  <line x1="473" y1="184" x2="473" y2="206" stroke="#f59e0b" stroke-width="2" marker-end="url(#ykam)"/>
+  <line x1="599" y1="184" x2="599" y2="206" stroke="#f59e0b" stroke-width="2" marker-end="url(#ykam)"/>
+  <line x1="725" y1="184" x2="725" y2="206" stroke="#f59e0b" stroke-width="2" marker-end="url(#ykam)"/>
+  <rect x="40" y="208" width="110" height="46" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="95" y="228" fill="#1d4ed8" font-size="13" font-weight="bold" text-anchor="middle">Session</text>
+  <text x="95" y="245" fill="#334155" font-size="9" text-anchor="middle">5 端点 · 含列表</text>
+  <rect x="166" y="208" width="110" height="46" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="221" y="228" fill="#1d4ed8" font-size="13" font-weight="bold" text-anchor="middle">Agent</text>
+  <text x="221" y="245" fill="#334155" font-size="9" text-anchor="middle">本节仅 invoke</text>
+  <rect x="292" y="208" width="110" height="46" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="347" y="228" fill="#1d4ed8" font-size="13" font-weight="bold" text-anchor="middle">Profile</text>
+  <text x="347" y="245" fill="#334155" font-size="9" text-anchor="middle">GET ×1</text>
+  <rect x="418" y="208" width="110" height="46" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="473" y="228" fill="#1d4ed8" font-size="13" font-weight="bold" text-anchor="middle">Memory</text>
+  <text x="473" y="245" fill="#334155" font-size="9" text-anchor="middle">GET ×1</text>
+  <rect x="544" y="208" width="110" height="46" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="599" y="228" fill="#1d4ed8" font-size="13" font-weight="bold" text-anchor="middle">Tool</text>
+  <text x="599" y="245" fill="#334155" font-size="9" text-anchor="middle">GET ×1</text>
+  <rect x="670" y="208" width="110" height="46" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="725" y="228" fill="#1d4ed8" font-size="13" font-weight="bold" text-anchor="middle">System</text>
+  <text x="725" y="245" fill="#334155" font-size="9" text-anchor="middle">health · info</text>
+  <!-- ════════ 左路汇流：Session + Agent → AgentService ════════ -->
+  <line x1="95" y1="254" x2="95" y2="276" stroke="#3b82f6" stroke-width="2"/>
+  <line x1="221" y1="254" x2="221" y2="276" stroke="#3b82f6" stroke-width="2"/>
+  <line x1="95" y1="276" x2="221" y2="276" stroke="#3b82f6" stroke-width="2"/>
+  <line x1="158" y1="276" x2="158" y2="302" stroke="#3b82f6" stroke-width="2" marker-end="url(#ykbl)"/>
+  <!-- ════════ 右路汇流：四个只读 Controller → 查询服务 ════════ -->
+  <line x1="347" y1="254" x2="347" y2="276" stroke="#3b82f6" stroke-width="2"/>
+  <line x1="473" y1="254" x2="473" y2="276" stroke="#3b82f6" stroke-width="2"/>
+  <line x1="599" y1="254" x2="599" y2="276" stroke="#3b82f6" stroke-width="2"/>
+  <line x1="725" y1="254" x2="725" y2="276" stroke="#3b82f6" stroke-width="2"/>
+  <line x1="347" y1="276" x2="725" y2="276" stroke="#3b82f6" stroke-width="2"/>
+  <line x1="536" y1="276" x2="536" y2="302" stroke="#3b82f6" stroke-width="2" marker-end="url(#ykbl)"/>
+  <rect x="40" y="304" width="280" height="52" rx="10" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="180" y="326" fill="#1d4ed8" font-size="14" font-weight="bold" text-anchor="middle">AgentService.process</text>
+  <text x="180" y="345" fill="#334155" font-size="10.5" text-anchor="middle">yokeos chat（cli）· web · invoke 同一引擎</text>
+  <rect x="440" y="304" width="340" height="52" rx="10" fill="#ede9fe" stroke="#a855f7" stroke-width="2"/>
+  <text x="610" y="326" fill="#6b21a8" font-size="14" font-weight="bold" text-anchor="middle">只读查询（不进 ReAct）</text>
+  <text x="610" y="345" fill="#7c3aed" font-size="10.5" text-anchor="middle">ProfileRegistry · MemoryService.readAll() · ToolRegistry</text>
+  <!-- ════════ 注脚 ════════ -->
+  <text x="410" y="392" fill="#475569" font-size="12" text-anchor="middle">人推三入口（cli · web · invoke）汇入同一个 AgentService.process，共享同一份 Session 存储与审计两表</text>
+  <text x="410" y="412" fill="#94a3b8" font-size="10.5" text-anchor="middle">本节 11 端点；Agent 写侧 6 + 工作区 2 端点归 29/30 节（刻意留白）· 管理台与 REST 同端口同进程</text>
+</svg>
