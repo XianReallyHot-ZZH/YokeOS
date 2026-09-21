@@ -2,9 +2,11 @@ package com.yokeos.cli;
 
 import com.yokeos.channel.cli.CliChannel;
 import com.yokeos.cli.command.ProviderListCommand;
+import com.yokeos.core.agent.AgentScheduler;
 import com.yokeos.core.agent.AgentService;
 import com.yokeos.core.agent.PromptBuilder;
 import com.yokeos.core.agent.ReActLoop;
+import com.yokeos.core.agent.ScheduledTaskStore;
 import com.yokeos.core.agent.ToolExecutor;
 import com.yokeos.core.audit.LlmCallAuditor;
 import com.yokeos.core.audit.ToolInvocationAuditor;
@@ -26,12 +28,15 @@ import com.yokeos.provider.ProvidersProperties;
 import com.yokeos.provider.SpringAiProviderService;
 import com.yokeos.provider.ToolSchemaAdapter;
 import com.yokeos.storage.JpaLlmCallAuditor;
+import com.yokeos.storage.JpaScheduledTaskStore;
 import com.yokeos.storage.JpaSessionManager;
 import com.yokeos.storage.JpaToolInvocationAuditor;
 import com.yokeos.storage.JpaToolInvocationReader;
 import com.yokeos.storage.LlmCallRepository;
 import com.yokeos.storage.MemoryEntryRepository;
+import com.yokeos.storage.ScheduledTaskRepository;
 import com.yokeos.storage.SessionRepository;
+import com.yokeos.storage.TaskExecutionRepository;
 import com.yokeos.storage.ToolInvocationRepository;
 import com.yokeos.tool.NotifyTools;
 import com.yokeos.tool.ToolRegistry;
@@ -56,6 +61,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 /**
  * 重命令（chat/serve/gateway）的 Spring 装配面（第 18 节）。轻命令不进这里（课件坑二：为列个目录不值得等 Spring 启动）。
@@ -270,5 +276,41 @@ public class YokeosRuntime {
       com.yokeos.core.audit.ToolInvocationReader toolInvocationReader,
       ProfileRegistry profileRegistry) {
     return new CliChannel(agentService, sessionManager, toolInvocationReader, profileRegistry);
+  }
+
+  /**
+   * 调度线程池（宪法 4「全程同步」的唯一明文例外：第 25 节 ThreadPoolTaskScheduler）。daemon 是刚需： chat 这类一次性命令跑完后 JVM
+   * 必须能退，不被调度线程挂住（坑七）；chat 会话期间到点的任务也会真触发一次（与参照行为一致）。
+   */
+  @Bean
+  ThreadPoolTaskScheduler taskScheduler() {
+    ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+    scheduler.setPoolSize(2);
+    scheduler.setThreadNamePrefix("yokeos-sched-");
+    scheduler.setDaemon(true);
+    scheduler.initialize();
+    return scheduler;
+  }
+
+  /** 任务状态与执行历史落 SQLite（第 25 节）：契约在 core，JPA 实现在 storage（依赖倒置）。 */
+  @Bean
+  ScheduledTaskStore scheduledTaskStore(
+      ScheduledTaskRepository tasks, TaskExecutionRepository executions) {
+    return new JpaScheduledTaskStore(tasks, executions);
+  }
+
+  /**
+   * 第三触发源「钟推」（第 25 节）：initMethod=registerAll——依赖注入完成后启动即扫描全部 Profile.schedules 逐条注册（ProfileRegistry
+   * 已在装配期填充）；定时任务随 serve/gateway 常驻调度（技 §8.6）。
+   */
+  @Bean(initMethod = "registerAll")
+  AgentScheduler agentScheduler(
+      ThreadPoolTaskScheduler taskScheduler,
+      ProfileRegistry profileRegistry,
+      AgentService agentService,
+      SessionManager sessionManager,
+      ScheduledTaskStore scheduledTaskStore) {
+    return new AgentScheduler(
+        taskScheduler, profileRegistry, agentService, sessionManager, scheduledTaskStore);
   }
 }

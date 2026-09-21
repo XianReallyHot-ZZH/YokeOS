@@ -223,6 +223,11 @@ yokeos provider list / tool list / session list
 | Spotless 与 Checkstyle 对 switch 块内首条注释的缩进要求互斥 | google-java-format 要 8 空格、Checkstyle `CommentsIndentation` 要 4/6——来回 `spotless:apply` 与 checkstyle 轮番红 | 唯一双过形态 = 注释放到 switch **语句之前**，不进块内（24 节实证） |
 | P3C `SwitchStatementRule` 对 Java 14+ 箭头 switch 的 default 识别不了 | default 分支实际在位仍报「switch块缺少default」（PMD 6.55 的 AST 不认箭头形态） | `@SuppressWarnings("PMD.SwitchStatementRule")` + javadoc 记工具代差理由（17 节 Impl 命名抑制同款先例，24 节实证） |
 | 起 YokeosRuntime 真上下文的 E2E 测试被 deny-all 缺省拦自家 | 加沙箱后清点「构造调用点」不够——`CliFullFlowTest` 这类不经构造语句、直接起真装配上下文的测试，其 http_get 在 classpath 无 yaml 时撞上空域名白名单（deny-all 缺省）而红 | 这类测试用 `@Primary` 覆盖 tools Bean 自备白名单（与 boot 集成测试同款），生产缺省语义不动；改造面清点要 grep「构造调用」+「真上下文测试」两维（24 节实证） |
+| Mockito 对 primitive 参数用 `any()` | `recordExecution(..., boolean, ..., long, ...)` 的 matcher 传 `any()`/`any(Long.class)` 返回 null，拆箱即 NPE；且 NPE 抛出后 matcher 栈悬空，**后续用例连环报 InvalidUseOfMatchers/UnfinishedVerification**（报错位置在别人的 setUp，误导排查方向） | primitive 参数一律 `anyBoolean()/anyLong()`；看到「setUp 里第一个 mock() 就报 matcher 误用」先查上一个用例是否拆箱 NPE（25 节实证） |
+| 重叠跳过测试用同线程占锁 | 测试线程自己 `lockFor(id).lock()` 后同线程 `tryLock()` 必成功——ReentrantLock 对同线程可重入，「上一次还在跑」的模拟完全失效，verify(never()) 反而红 | 真实重叠是跨线程的（调度线程池）：另一线程占锁 + `CountDownLatch` 双闩协调（占锁完成再触发、断言完再放），参照钉版树同款（25 节实证） |
+| core 主代码此前零 Spring 依赖 | 宪法 4 调度池（TaskScheduler/CronTrigger）落 core 时编译即红「程序包 org.springframework.scheduling 不存在」——core 只在 test 域经 starter-test 间接可见 spring-context，plan 层「传递件已有」的假设不查模块依赖就落笔会漏 | 模块级依赖显式声明 `org.springframework:spring-context`（BOM 管版本非新坐标），pom 注释记理由；「零新增依赖」表述要核到**模块 pom** 一级而非全仓 classpath（25 节实证） |
+| 静态单例 SQLite 测试库跨用例污染 | 22 节 `MemoryEntryRepositoryTest` 的静态临时库形态被照抄到有「恰一行/唯一任务」全表断言的测试——前序用例的 setEnabled(false)/历史行全部串场，断言「恰一行」变「恰三行」 | 同库形态 + 全表断言 = 必须 `@BeforeEach` 清两表；照抄基建形态时先核对断言口径是否查全表（25 节实证） |
+| 手跑真 serve（fat JAR 前）三连坑 | ① boot pom mainClass 硬编码 CLI 入口且 XML 配置优先于 `-Dspring-boot.run.mainClass` 覆盖；② `dependency:build-classpath` 解析的是 m2 旧 jar——前序节新类（如 Sandbox/McpJsonMapper）CNFE；③ boot fat jar 嵌套结构不进 `-cp` classpath，application.yaml 丢失 → datasource 报「no driver」 | ① 不用 spring-boot:run，直接 `java -cp ... com.yokeos.cli.YokeOsCli serve`；② 先 `mvn install -DskipTests` 刷新 m2；③ classpath 前置 `yokeos-boot/target/classes`（原始 classes 含 application.yaml）；另 kimi 连坐坑照旧给哑值（25 节实证，31 节 fat JAR 打包课直接受益） |
 
 ---
 

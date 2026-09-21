@@ -675,7 +675,7 @@ session list
 
 | 字段 | 说明 |
 |------|------|
-| `task_id` | 主键，schedule 的 id（frontmatter `schedules` 里声明） |
+| `task_id` | 主键，派生生成：`{profileName}#{声明序号}`（第 25 节拍板，参照 id 无校验两瑕疵不继承，见 `docs/class/025-scheduler.md` 拍板①） |
 | `profile_name` | 归属 Profile |
 | `cron` | cron 表达式 |
 | `zone` | 时区 |
