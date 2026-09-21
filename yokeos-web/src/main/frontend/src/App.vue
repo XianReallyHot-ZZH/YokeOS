@@ -1,6 +1,11 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 
+import logoUrl from './assets/logo.svg'
+
+// 主题切换（yokeos-admin-ui skill：暗色默认、html.dark 类切换、localStorage 记住——与官网机制同构）
+const THEME_KEY = 'yokeos-admin-theme'
+
 // YokeOS 管理台第一版（第 26 节）：只读观察五页。
 // 规范出处 .claude/skills/yokeos-admin-ui——token 直取官网、三态占位、零写入口、只调 /api/v1 只读端点。
 // 信封约定：成功 code=0、错误 code=HTTP 状态值；错误态直接展示信封 message。
@@ -14,6 +19,13 @@ const pages = [
 ]
 
 const active = ref('sessions')
+const isDark = ref(document.documentElement.classList.contains('dark'))
+
+function toggleTheme() {
+  isDark.value = !isDark.value
+  document.documentElement.classList.toggle('dark', isDark.value)
+  localStorage.setItem(THEME_KEY, isDark.value ? 'dark' : 'light')
+}
 const state = ref({ loading: false, error: '', empty: false })
 const sessions = ref([])
 const profiles = ref([])
@@ -82,7 +94,6 @@ onMounted(load)
 <template>
   <div class="shell">
     <nav class="nav">
-      <div class="brand">YokeOS 管理台</div>
       <button
         v-for="page in pages"
         :key="page.key"
@@ -93,7 +104,17 @@ onMounted(load)
         {{ page.label }}
       </button>
     </nav>
-    <main class="content">
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-brand">
+          <img :src="logoUrl" class="topbar-logo" alt="YokeOS" />
+          <span class="topbar-title">管理台</span>
+        </div>
+        <button class="theme-toggle" type="button" @click="toggleTheme">
+          {{ isDark ? '☀ 亮色' : '☾ 暗色' }}
+        </button>
+      </header>
+      <div class="content">
       <div v-if="state.loading" class="placeholder">加载中…</div>
       <div v-else-if="state.error" class="placeholder error">加载失败：{{ state.error }}</div>
       <div v-else-if="state.empty" class="placeholder">暂无数据</div>
@@ -177,6 +198,7 @@ onMounted(load)
           </div>
         </div>
       </div>
+      </div>
     </main>
   </div>
 </template>
@@ -198,13 +220,6 @@ onMounted(load)
   gap: 4px;
 }
 
-.brand {
-  font-weight: 600;
-  color: var(--yoke-text-1);
-  padding: 0 10px 14px;
-  letter-spacing: 0.5px;
-}
-
 .nav-item {
   text-align: left;
   background: none;
@@ -223,12 +238,45 @@ onMounted(load)
 
 .nav-item.active {
   color: var(--yoke-brand-hover);
-  background: rgba(79, 124, 255, 0.14);
+  background: var(--yoke-brand-soft);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--yoke-border);
+  justify-content: space-between;
+  padding: 13px 32px;
+}
+
+.topbar-brand {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.topbar-logo {
+  display: block;
+  height: 24px;
+  width: auto;
+}
+
+.topbar-title {
+  color: var(--yoke-text-1);
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 .content {
   flex: 1;
-  padding: 28px 32px;
+  padding: 24px 32px;
   overflow-x: auto;
 }
 
@@ -336,7 +384,7 @@ onMounted(load)
 }
 
 .card-value.accent {
-  color: var(--yoke-accent);
+  color: var(--yoke-accent-text); /* 亮底上纯琥珀对比不足，用官网亮档 accent-text */
 }
 
 .card-sub {
@@ -357,6 +405,21 @@ onMounted(load)
   padding: 4px 10px;
 }
 
+.theme-toggle {
+  background: none;
+  border: 1px solid var(--yoke-border);
+  border-radius: 6px;
+  color: var(--yoke-text-2);
+  cursor: pointer;
+  font: inherit;
+  padding: 5px 12px;
+}
+
+.theme-toggle:hover {
+  border-color: var(--yoke-brand);
+  color: var(--yoke-text-1);
+}
+
 /* 响应式：窄屏导航收为顶部横排（skill 组件规范） */
 @media (max-width: 820px) {
   .shell {
@@ -371,9 +434,8 @@ onMounted(load)
     width: 100%;
   }
 
-  .brand {
-    padding: 8px 10px;
-    width: 100%;
+  .topbar {
+    padding: 11px 18px;
   }
 
   .content {

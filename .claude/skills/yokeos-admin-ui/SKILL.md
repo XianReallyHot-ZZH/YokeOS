@@ -31,6 +31,21 @@ description: 生成与扩展 YokeOS Web 管理台页面——视觉钉死官网 
 }
 ```
 
+### 亮色档（html:not(.dark)，官网同段逐字直取）
+
+```css
+html:not(.dark) {
+  --yoke-bg: #f7f9fe; --yoke-bg-soft: #ffffff; --yoke-bg-elev: #eef2fb; --yoke-bg-deep: #eef2fb;
+  --yoke-border: #dbe3f2; --yoke-text-1: #0b1220; --yoke-text-2: #44506b; --yoke-text-3: #7c87a0;
+  --yoke-brand: #3d66e0; --yoke-brand-hover: #2e51c4; --yoke-brand-soft: rgba(79, 124, 255, 0.12);
+  --yoke-accent: #f5a623; --yoke-accent-text: #b87400;  /* 亮底上纯琥珀对比不足，文字级高亮用同档 accent-text */
+}
+```
+
+**双主题约定**（与官网机制同构）：暗色是基线默认（`:root` + `html.dark` 类）；切换只动 html 类，组件一律消费
+token 不写死色值。`main.js` 挂载前按 `localStorage['yokeos-admin-theme']` 初始化（缺省 dark，防首屏闪错）；
+topbar 右上放切换钮（`☀ 亮色` / `☾ 暗色` 幽灵钮），点击切类并存回同一键。状态圆点 ok/err 两档同值（语义色通用）。
+
 ## 工程约定
 
 - 前端工程：`yokeos-web/src/main/frontend/`（Vue 3 + Vite，与官网同栈）；构建经 frontend-maven-plugin（Node v20.18.0，绑 generate-resources），纯 Java 快速构建走 `-Dfrontend.skip=true`。
@@ -41,7 +56,7 @@ description: 生成与扩展 YokeOS Web 管理台页面——视觉钉死官网 
 
 ## 组件规范
 
-- 布局：左侧竖直深色导航（`--yoke-bg-deep` 底）+ 右侧内容区；顶部条放「YokeOS 管理台」标题；整体克制、留白足、圆角 4~6px。
+- 布局：左侧竖直深色导航（`--yoke-bg-deep` 底，只放导航项）+ 右侧内容区；内容区顶部横条（topbar）左放项目 logo（`src/assets/logo.svg`，源 `website/public/logo.svg` 同文件，高 24px）+「管理台」文案、右放主题切换钮（右上角，主流位）；整体克制、留白足、圆角 4~6px。
 - 表格：深色（表头 `--yoke-bg-elev`，行分隔 `--yoke-border`）；ID / 路径 / JSON 一律 `--yoke-mono`；状态列用小圆点 + 文本（active 绿 / archived 红，色值见 token）。
 - 三态占位（每页必须有）：加载中（骨架或「加载中…」）/ 空数据（`--yoke-text-3` 占位文案）/ 错误（`--yoke-err` 文案 + 信封 message）。
 - 响应式：窄屏（≤820px）导航收为顶部横排；表格允许横向滚动。
@@ -54,4 +69,5 @@ description: 生成与扩展 YokeOS Web 管理台页面——视觉钉死官网 
 - [ ] 所有颜色 / 字体值来自上表 token，无自创色值
 - [ ] ID / 代码 / 全文用等宽字体；状态用圆点而非纯文字
 - [ ] 窄屏抽查：导航收横排、无横向破版
+- [ ] 双主题抽查：切到亮色全站无「暗色残留块」（表格/卡片/圆点/高亮全走 token）；刷新后记住选择、首屏不闪错主题
 - [ ] `npm run build` 产物落 `../resources/static/admin/`，`mvn -pl yokeos-web -am package` 后 `/admin/` 可达

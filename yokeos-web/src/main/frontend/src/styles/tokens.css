@@ -1,4 +1,5 @@
-/* 设计 token：逐字直取 website/.vitepress/theme/custom.css 的 --yoke-* 变量（yokeos-admin-ui skill，一个值不自创） */
+/* 设计 token：逐字直取 website/.vitepress/theme/custom.css 的 --yoke-* 变量（yokeos-admin-ui skill，一个值不自创）。
+   双主题机制与官网同构：html.dark 为暗色基线（默认），html:not(.dark) 为亮色覆盖——切换只动 html 类，值全部来自官网两档。 */
 :root {
   --yoke-bg: #0b1220;
   --yoke-bg-soft: #111b31;
@@ -10,11 +11,30 @@
   --yoke-text-3: #5c6a85;
   --yoke-brand: #4f7cff;
   --yoke-brand-hover: #6b90ff;
+  --yoke-brand-soft: rgba(79, 124, 255, 0.14);
   --yoke-accent: #f5a623;
+  --yoke-accent-text: #f5a623;
   --yoke-ok: #34d399;
   --yoke-err: #f87171;
   --yoke-font: 'Inter', 'SF Pro Display', -apple-system, sans-serif;
   --yoke-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+}
+
+/* 亮色档：官网 html:not(.dark) 段逐字直取（accent 在亮底对比不足，用官网同档的 accent-text #b87400） */
+html:not(.dark) {
+  --yoke-bg: #f7f9fe;
+  --yoke-bg-soft: #ffffff;
+  --yoke-bg-elev: #eef2fb;
+  --yoke-bg-deep: #eef2fb;
+  --yoke-border: #dbe3f2;
+  --yoke-text-1: #0b1220;
+  --yoke-text-2: #44506b;
+  --yoke-text-3: #7c87a0;
+  --yoke-brand: #3d66e0;
+  --yoke-brand-hover: #2e51c4;
+  --yoke-brand-soft: rgba(79, 124, 255, 0.12);
+  --yoke-accent: #f5a623;
+  --yoke-accent-text: #b87400;
 }
 
 * {
