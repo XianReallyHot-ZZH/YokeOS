@@ -68,9 +68,11 @@
 
 ### 6. 人工项当场跑完 + 剩余清单
 
-当场完成：接口中立性 microVM 反套自查（§五）· 凭证卫生 grep（`sk-` 零明文，唯一命中为 16 节「明文被拒」反向用例假值）· 装配卫生 grep（§5 第 6 条）· 真链路拦截演示的域名维度（`realModelUnauthorizedActionInterceptedAndAudited` 真 DeepSeek 通过）· 集成冒烟全量（8 用例真 key 全绿）。
+当场完成：接口中立性 microVM 反套自查（§五）· 凭证卫生 grep（`sk-` 零明文，唯一命中为 16 节「明文被拒」反向用例假值）· 装配卫生 grep（§5 第 6 条）· 集成冒烟全量（8 用例真 key 全绿）。
 
-**剩余人工项（1 项）**：交互式 `yokeos chat` 三连演示的路径/命令两维度（域名维度已自动化真链路承载）——quickstart 场景三 1~5 步完整人工走一遍，约 5 分钟。理想为零，此处以「单维度自动化 + 双维度待演」收口，理由：三维度拦截语义同一道闸（同一 `enforce`），自动化已锚链路与留痕形态。
+**合流后补强（2026-09-21，用户指项）**：`SandboxEndToEndIntegrationTest`——真模型六步串联三重白名单，**三维各一对「拒绝 + 放行」**（/etc/hosts 拒+SOUL.md 放 / whoami 拒+echo 放 / example.com 拒+open-meteo 放），原「剩余人工项」的三连演示由真模型自动化承载（30.7s 实跑通过，javadoc 含 debug 断点导读——兼作 24 节源码阅读用例）。
+
+**剩余人工项（1 项）**：交互式 `yokeos chat` 体感演示（quickstart 场景三完整人工走一遍，约 5 分钟）——链路与留痕形态已全部由自动化承载，此项仅为交互体感。
 
 ## 二、分批说明（留后续节）
 
@@ -121,6 +123,10 @@ mvn -pl yokeos-core -am test -Dtest=ToolExecutorTest
 # 集成冒烟（真 key；预期 8 用例全绿，缺 key 自动 skip）
 source ~/.zshrc
 mvn -pl yokeos-boot -am test -Dgroups=integration -DexcludedGroups= -Dsurefire.failIfNoSpecifiedTests=false
+
+# 24 节专属：三维白名单一拒一放真模型串联（合流后补强；debug 阅读源码的导读用例）
+mvn -pl yokeos-boot -am test -Dgroups=integration -DexcludedGroups= \
+    -Dtest='SandboxEndToEndIntegrationTest' -Dsurefire.failIfNoSpecifiedTests=false
 
 # 不变量 grep（预期全部零命中 / 指定输出）
 grep -rn "@Component" yokeos-tool/src/main/java/com/yokeos/tool/sandbox/   # 0
