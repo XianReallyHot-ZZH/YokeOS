@@ -4,7 +4,7 @@
 >
 > **语料出处**：[需] `docs/DemandAnalysis.md` §5.8（定时任务·第三触发源）/§11（第 25 节行「Agent 按 cron 到点自跑，执行历史可查」） · [技] `docs/TechnicalSolution.md` §8.5（本节主章）/§8.6（serve/gateway 常驻）/§9.2（`scheduled_tasks`/`task_executions` 两表字段）/§13（第 25 节交付物行）/§13.2（调度管理端点显式偏差） · [宪] CLAUDE.md 宪法 4（ThreadPoolTaskScheduler 唯一异步例外）/宪法 7（手工建表脚本） · [指] `docs/AiProgrammingGuide.md` §4.1/§4.4 · [参] 参照课件第 25 节 + 钉版树 `AgentScheduler`/`ScheduledTaskStore`/`JpaScheduledTaskStore` 及其测试（其 `SchedulerFlowIT`/`ScheduledTaskE2ETest` 依赖管理端点 POST run，按 ADR 0008 偏差改造）+ 参照 `specs/008-scheduled-tasks/spec.md`（FR-001~007 与 Edge Cases 取材） · [码] `YokeosRuntime` 现状（`ProfileRegistry`/`AgentService`/`SessionManager` Bean 已在，16~18 节）、`ServeCommand`/`GatewayCommand` 骨架留位注释、`Profile.ScheduleConfig`（16 节定稿三字段）。
 >
-> **拍板记录**（2026-09-21，用户批准「同意，继续」）：① **~~task_id 派生生成~~（已被修正案①′取代）**：`task_id = {profileName}#{声明序号，从 1 起}`（同 profile 内按声明顺序编号，跨 profile 天然不冲突）。裁决依据（参照库研究结论）：技 §9.2 原文「schedule 的 id（frontmatter `schedules` 里声明）」与本仓 16 节定稿 `Profile.ScheduleConfig(cron, zone, message)` 三字段、CLAUDE.md 数据模型段口径冲突（软门禁③）；参照显式 id 的完整收益在其 28 节管理端点 REST 路径——本仓该端点显式列扩展阶段（ADR 0008），25/29/30 节窗口内派生 id 功能等价（注销按旧 Profile 派生 id 全量清、不依赖新旧对齐；仅「删条目/调顺序后旧 run_count 不延续」一差异，新定义新状态语义可辩护）；参照 id 无必填校验（缺 id 静默跳过）与无唯一性校验（同 id 表行/句柄互相覆盖）两处瑕疵随派生整个消掉；扩展阶段上调度管理端点时加**可选** id 字段缺省回退派生，平滑演进。技 §9.2 该行括号说明已同步修订（修文档优先，第 16 节 llm_calls 补列先例）——不动 Profile 已定稿契约（软门禁④）。② 配图：本节不新画，复用 `docs/images/docs-scheduler.svg`（三触发源汇入 `AgentService`，技 §8.5 同款）；参照课件 class-25-2（职责边界）/class-25-3（执行流程）两张的语义已在文中文字承载，若定稿后需要专属配图按 019~022 补图先例另行补齐（024 拍板⑤同款）。
+> **拍板记录**（2026-09-21，用户批准「同意，继续」）：① **~~task_id 派生生成~~（已被修正案①′取代）**：`task_id = {profileName}#{声明序号，从 1 起}`（同 profile 内按声明顺序编号，跨 profile 天然不冲突）。裁决依据（参照库研究结论）：技 §9.2 原文「schedule 的 id（frontmatter `schedules` 里声明）」与本仓 16 节定稿 `Profile.ScheduleConfig(cron, zone, message)` 三字段、CLAUDE.md 数据模型段口径冲突（软门禁③）；参照显式 id 的完整收益在其 28 节管理端点 REST 路径——本仓该端点显式列扩展阶段（ADR 0008），25/29/30 节窗口内派生 id 功能等价（注销按旧 Profile 派生 id 全量清、不依赖新旧对齐；仅「删条目/调顺序后旧 run_count 不延续」一差异，新定义新状态语义可辩护）；参照 id 无必填校验（缺 id 静默跳过）与无唯一性校验（同 id 表行/句柄互相覆盖）两处瑕疵随派生整个消掉；扩展阶段上调度管理端点时加**可选** id 字段缺省回退派生，平滑演进。技 §9.2 该行括号说明已同步修订（修文档优先，第 16 节 llm_calls 补列先例）——不动 Profile 已定稿契约（软门禁④）。② 配图：本节不新画，复用 `docs/images/docs-scheduler.svg`（三触发源汇入 `AgentService`，技 §8.5 同款）；参照课件 class-25-2（职责边界）/class-25-3（执行流程）两张的语义已在文中文字承载，若定稿后需要专属配图按 019~022 补图先例另行补齐（024 拍板⑤同款）——**2026-09-21 已补齐三张专属配图**（`class-025-1` 职责边界 / `class-025-2` 执行流程 / `class-025-3` task_id 修正案结果对），正文相应位置已嵌入。
 >
 > **修正案记录**（2026-09-21 合流后，用户实证拍板「走方案1」）：**①′ task_id 改为显式 id（frontmatter 声明）**——拍板①的序号派生经用户抓出正确性缺陷：`{profileName}#{序号}` 绑定的是声明位置而非任务本身，**调换顺序/删中间条目/中间插入后重启，旧任务的 run_count 与执行历史错位嫁接给另一条任务**（reconcile 原地更新定义字段，数据无声接错对象）——「不延续」可以辩护、「接错账」不能。修正：`Profile.ScheduleConfig` 加 `id` 字段（四字段），AgentLoader 校验 **id 必填 + profile 内唯一**（坏条目有声剔除、不拖垮 Agent——参照「缺 id 静默跳过/同 id 互相覆盖」两瑕疵仍不继承），`task_id = {profileName}:{id}`（前缀防跨 Agent 同 id 撞表行/锁/句柄）。技 §9.2、CLAUDE.md 数据模型段、坑表同步修订；本文件第二/三/四部分的派生表述以本修正案为准（历史正文保留不改，见下）。
 >
@@ -27,6 +27,8 @@ Provider（16）、ReAct（17）、CLI（18）、Notify（19）、Tool（20）�
 ## 二、动手前先想清楚几件事
 
 **第一，把职责划窄，别让它膨胀成小型工作流引擎。** 这个模块只干一件事——**到点了，拼一条消息，交给 `AgentService`**。消息里具体说什么话，是 AGENT.md frontmatter 的事；消息交上去之后怎么处理，是 ReActLoop 的事。这两件都不归定时任务模块管。
+
+![定时任务模块的职责边界：只做「到点拼消息交入口」一件事，消息内容归 frontmatter、处理过程归既有执行链，状态与历史落两表](../images/class-025-1.svg)
 
 **第二，别自己写调度器。** Spring 自带 `TaskScheduler`，支持标准 cron 表达式、支持动态注册任务。跟 Provider 那节「协议转换不自己造」同一个原则：能用现成的就不重复造轮子，要写的只是薄薄一层，把「frontmatter 里配的定时规则」接到 Spring 的调度能力上。注意宪法 4 全程同步禁异步，**唯一例外就是本节的 `ThreadPoolTaskScheduler` 调度线程池**（宪法原文点名）——触发线程之外的执行链路（`AgentService.process` 往下）仍是纯同步阻塞，跑在调度线程上。
 
@@ -74,6 +76,8 @@ CronTrigger 到点（ThreadPoolTaskScheduler 线程，daemon）
                   taskStore.recordExecution(taskId, sessionId, startedAt, success,
                                             error, durationMs, nextExecution(sc))（坑三后半；自身失败只记日志）
 ```
+
+![一次钟推从头到尾：查启用 → 抢锁 → 同一入口执行 → 成败都落历史；停用/重叠/失败三支护栏全部跳过或吞掉、不崩调度器](../images/class-025-2.svg)
 
 **第一步：core——接口与值对象先立（契约先行）。**
 
@@ -130,6 +134,8 @@ public class AgentScheduler {
   private ZoneId resolveZone(String zone) { /* 空/blank 回退系统时区，否则 ZoneId.of(zone) */ }
 }
 ```
+
+![task_id 显式 id 修正案：账跟任务走——序号派生在调序/删插后把旧 run_count 与执行历史错位嫁接（修正案①′）](../images/class-025-3.svg)
 
 日志纪律（CRLF 门禁）：「定时任务 {} 已注册」这类**编译期常量消息 + 动态值走参数化/异常堆栈**——id/cron/zone 来自运营方手写的 AGENT.md（非请求输入），但本仓门禁只认 API 形态，一律 19/20 节同款形态书写。
 

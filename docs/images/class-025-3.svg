@@ -1,0 +1,40 @@
+<svg viewBox="0 0 820 390" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+  <rect width="820" height="390" fill="#ffffff"/>
+  <!-- ════════ defs：marker（yk 前缀） ════════ -->
+  <defs>
+    <marker id="ykrd" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#ef4444"/></marker>
+    <marker id="ykgr" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#22c55e"/></marker>
+  </defs>
+  <!-- ════════ 情境：声明变更后重启对账 ════════ -->
+  <rect x="110" y="24" width="600" height="52" rx="10" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="5,3"/>
+  <text x="410" y="45" fill="#475569" font-size="11.5" font-weight="bold" text-anchor="middle">同一 profile 的 schedules 声明被调序 / 删中间条目 / 中间插入，随后重启 reconcile</text>
+  <text x="410" y="64" fill="#64748b" font-size="9.5" text-anchor="middle">定义源是 frontmatter，表内运行状态按 task_id 重新对账</text>
+  <!-- ════════ 分叉 ════════ -->
+  <line x1="410" y1="76" x2="410" y2="96" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="5,3"/>
+  <line x1="218" y1="96" x2="602" y2="96" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="5,3"/>
+  <line x1="218" y1="96" x2="218" y2="114" stroke="#ef4444" stroke-width="2" marker-end="url(#ykrd)"/>
+  <line x1="602" y1="96" x2="602" y2="114" stroke="#22c55e" stroke-width="2" marker-end="url(#ykgr)"/>
+  <!-- ════════ 左：序号派生（已废弃） ════════ -->
+  <rect x="40" y="118" width="356" height="86" rx="10" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
+  <text x="218" y="143" fill="#b91c1c" font-size="12.5" font-weight="bold" text-anchor="middle">序号派生（修正案前 · 已废弃）</text>
+  <text x="218" y="164" fill="#b91c1c" font-size="10.5" text-anchor="middle">task_id = {profile}#{声明序号}</text>
+  <text x="218" y="184" fill="#b91c1c" font-size="10.5" text-anchor="middle">id 绑定的是声明位置，不绑任务本身</text>
+  <line x1="218" y1="204" x2="218" y2="240" stroke="#ef4444" stroke-width="2" marker-end="url(#ykrd)"/>
+  <rect x="40" y="244" width="356" height="72" rx="8" fill="#fee2e2" stroke="#ef4444" stroke-width="1.6"/>
+  <text x="218" y="266" fill="#b91c1c" font-size="11.5" font-weight="bold" text-anchor="middle">错位嫁接</text>
+  <text x="218" y="285" fill="#b91c1c" font-size="9.5" text-anchor="middle">旧 run_count 与执行历史无声接给「现在在这个位置上」的另一条任务</text>
+  <text x="218" y="301" fill="#b91c1c" font-size="9.5" text-anchor="middle">——不是丢状态，是接错账（用户实证抓出的缺陷）</text>
+  <!-- ════════ 右：显式 id（现行） ════════ -->
+  <rect x="424" y="118" width="356" height="86" rx="10" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+  <text x="602" y="143" fill="#15803d" font-size="12.5" font-weight="bold" text-anchor="middle">显式 id（修正案①′ · 现行）</text>
+  <text x="602" y="164" fill="#166534" font-size="10.5" text-anchor="middle">task_id = {profile}:{id}，账跟任务走</text>
+  <text x="602" y="184" fill="#166534" font-size="10.5" text-anchor="middle">id 必填 + profile 内唯一（坏条目有声剔除）</text>
+  <line x1="602" y1="204" x2="602" y2="240" stroke="#22c55e" stroke-width="2" marker-end="url(#ykgr)"/>
+  <rect x="424" y="244" width="356" height="72" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.6"/>
+  <text x="602" y="266" fill="#15803d" font-size="11.5" font-weight="bold" text-anchor="middle">账跟任务走</text>
+  <text x="602" y="285" fill="#166534" font-size="9.5" text-anchor="middle">声明位置怎么变，状态与历史按 id 对号入座；</text>
+  <text x="602" y="301" fill="#166534" font-size="9.5" text-anchor="middle">前缀防跨 Agent 同 id 撞表行 / 锁 / 句柄</text>
+  <!-- ════════ 注脚 ════════ -->
+  <text x="410" y="346" fill="#475569" font-size="12" text-anchor="middle">task_id 的唯一职责是让「账」跟着「任务」走——序号做不到，显式 id 做到</text>
+  <text x="410" y="366" fill="#94a3b8" font-size="10.5" text-anchor="middle">修正案①′（2026-09-21 用户实证拍板）；参照「缺 id 静默跳过 / 同 id 互相覆盖」两瑕疵仍不继承（宪法 9）</text>
+</svg>
