@@ -89,3 +89,14 @@
 ## 结论
 
 六项证据全过、剩余人工项为零：**第 25 节完成**。可演示成果口径（需 §11 第 25 节行）「Agent 按 cron 到点自跑，执行历史可查」由⑥前两行直接兑现。commit、合流（`--no-ff` + 合流点重跑全量门禁）、push 由人决定。
+
+## 修正案：task_id 派生 → 显式 id（2026-09-21，合流后用户实证）
+
+**问题**（用户抓出）：`taskIdOf` 序号派生 `{profileName}#{声明序号}` 绑定声明位置而非任务本身——调换 frontmatter 顺序/删中间条目/中间插入后重启，旧任务的 run_count、执行历史、停用状态**错位嫁接**给另一条任务（reconcile 原地更新定义字段，数据无声接错对象）。「执行历史可查」查出的是错账——拍板①当时把差异定性为「不延续」（软损失）是论证盲点：不是丢数据，是接错数据。
+
+**修正**（用户拍板「走方案1」）：
+- `Profile.ScheduleConfig` → 四字段 `(id, cron, zone, message)`；`AgentLoader` 校验 **id 必填 + profile 内唯一**（坏条目有声剔除不拖垮 Agent——参照两瑕疵仍不继承）
+- `task_id = {profileName}:{作者声明的 id}`——绑定源是作者 id（编辑顺序无关），前缀防跨 Agent 同 id 撞表行/锁/句柄
+- `AgentScheduler.taskIdOf` 改 `{profileName}:{sc.id()}`；全部测试断言形态 `ops-agent:daily` 等
+
+**验证**：`AgentSchedulerTest` 12/12（含新用例「taskId 来自作者声明加 profile 前缀且跨 Agent 同 id 不互撞」）、`AgentLoaderTest` 10/10（新增缺 id 剔除、重复 id 剔除两用例）、`JpaScheduledTaskStoreTest` 8/8（TASK_ID 常量改 `ops-agent:daily`）、E2E 重跑绿（frontmatter seed 加 `id: report`、TASK_ID `sched-e2e:report`）；`mvn clean verify` 九模块全绿（见下）。文档同步：技 §9.2 task_id 行、CLAUDE.md 数据模型段与坑表（错位嫁接坑）、教学文档 025 头部修正案记录①′。

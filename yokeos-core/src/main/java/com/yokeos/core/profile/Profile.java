@@ -74,8 +74,11 @@ public record Profile(
     }
   }
 
-  /** 定时触发声明（消费归第 25 节；channel/user 固定 scheduler 的钟推）。 */
-  public record ScheduleConfig(String cron, String zone, String message) {}
+  /**
+   * 定时触发声明（消费归第 25 节；channel/user 固定 scheduler 的钟推）。id 由作者声明（25 节修正案：身份绑定
+   * 不随声明顺序漂移——序号派生在调序/删插时会错位嫁接执行历史）。
+   */
+  public record ScheduleConfig(String id, String cron, String zone, String message) {}
 
   /** ReAct 与截断设置（消费归第 17 节；缺省 10 / 20）。 */
   public record Settings(int maxIterations, int maxHistoryTurns) {

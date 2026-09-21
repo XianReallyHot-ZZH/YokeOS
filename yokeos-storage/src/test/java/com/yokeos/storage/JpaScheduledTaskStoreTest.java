@@ -44,7 +44,7 @@ import org.sqlite.SQLiteDataSource;
 @ContextConfiguration(classes = JpaScheduledTaskStoreTest.TestJpaConfig.class)
 class JpaScheduledTaskStoreTest {
 
-  private static final String TASK_ID = "ops-agent#1";
+  private static final String TASK_ID = "ops-agent:daily";
 
   private static final Instant T1 = Instant.parse("2026-09-21T01:00:00Z");
 
@@ -137,7 +137,7 @@ class JpaScheduledTaskStoreTest {
   @Test
   @DisplayName("isEnabled未登记返回true（fail-open）")
   void isEnabledFailsOpenForUnknownTask() {
-    assertTrue(store.isEnabled("never-registered#1"), "登记滞后不该让任务漏跑");
+    assertTrue(store.isEnabled("never-registered:daily"), "登记滞后不该让任务漏跑");
   }
 
   @Test

@@ -42,7 +42,7 @@ class SchedulerEndToEndIntegrationTest {
 
   private static final String AGENT_NAME = "sched-e2e";
 
-  private static final String TASK_ID = AGENT_NAME + "#1";
+  private static final String TASK_ID = AGENT_NAME + ":report";
 
   static @TempDir Path workspace;
 
@@ -76,7 +76,8 @@ class SchedulerEndToEndIntegrationTest {
           name: deepseek
           model: deepseek-chat
         schedules:
-          - cron: "0 0 0 1 1 *"
+          - id: report
+            cron: "0 0 0 1 1 *"
             zone: Asia/Shanghai
             message: 报到：一句话确认你在岗即可
         settings:

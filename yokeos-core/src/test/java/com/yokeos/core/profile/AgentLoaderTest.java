@@ -32,6 +32,67 @@ class AgentLoaderTest {
   private final Set<String> known = Set.of("deepseek", "kimi");
 
   @Test
+  @DisplayName("schedules缺id的条目被剔除且不拖垮其它条目（25节修正案校验）")
+  void scheduleWithoutIdIsDropped() throws IOException {
+    writeAgent(
+        "sched-validated",
+        """
+        ---
+        name: sched-validated
+        provider:
+          name: deepseek
+          model: deepseek-chat
+        schedules:
+          - cron: "0 9 * * *"
+            zone: Asia/Shanghai
+            message: 缺 id 的坏条目
+          - id: good-one
+            cron: "0 18 * * *"
+            zone: Asia/Shanghai
+            message: 好条目
+        ---
+        正文
+        """);
+
+    var profiles = loader.loadAll(workspace, known);
+
+    assertEquals(1, profiles.size(), "坏条目剔除不拖垮整个 Agent");
+    assertEquals(1, profiles.get(0).schedules().size(), "缺 id 的条目被剔除");
+    assertEquals("good-one", profiles.get(0).schedules().get(0).id(), "好条目照常保留");
+  }
+
+  @Test
+  @DisplayName("schedules同profile内id重复的后到条目被剔除（25节修正案校验）")
+  void scheduleWithDuplicatedIdKeepsFirstOnly() throws IOException {
+    writeAgent(
+        "sched-validated",
+        """
+        ---
+        name: sched-validated
+        provider:
+          name: deepseek
+          model: deepseek-chat
+        schedules:
+          - id: twin
+            cron: "0 9 * * *"
+            zone: Asia/Shanghai
+            message: 先到的
+          - id: twin
+            cron: "0 18 * * *"
+            zone: Asia/Shanghai
+            message: 后到的重复 id
+        ---
+        正文
+        """);
+
+    var profiles = loader.loadAll(workspace, known);
+
+    assertEquals(1, profiles.size());
+    assertEquals(1, profiles.get(0).schedules().size(), "重复 id 的后到条目被剔除");
+    assertEquals("0 9 * * *", profiles.get(0).schedules().get(0).cron(), "保留先到的");
+  }
+
+  @Test
   @DisplayName("合法frontmatter_全字段派生并解析ENV占位")
   void validFrontmatterDerivesAllFields() throws IOException {
     writeAgent(
@@ -60,7 +121,8 @@ class AgentLoaderTest {
               config:
                 url: https://hooks.example.com/x
         schedules:
-          - cron: "0 9 * * *"
+          - id: morning-check
+            cron: "0 9 * * *"
             zone: Asia/Shanghai
             message: 早安检查
         bootstrap: [AGENTS.md, SOUL.md, USER.md]
@@ -89,6 +151,7 @@ class AgentLoaderTest {
     assertEquals("ops-hook", p.notifyChannels().get(0).name());
     assertEquals("webhook", p.notifyChannels().get(0).type());
     assertEquals("https://hooks.example.com/x", p.notifyChannels().get(0).config().get("url"));
+    assertEquals("morning-check", p.schedules().get(0).id());
     assertEquals("0 9 * * *", p.schedules().get(0).cron());
     assertEquals("Asia/Shanghai", p.schedules().get(0).zone());
     assertEquals("早安检查", p.schedules().get(0).message());

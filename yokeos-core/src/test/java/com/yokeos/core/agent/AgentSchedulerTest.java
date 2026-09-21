@@ -68,8 +68,8 @@ class AgentSchedulerTest {
         new AgentScheduler(taskScheduler, profileRegistry, agentService, sessionManager, taskStore);
   }
 
-  private static ScheduleConfig sc(String cron, String zone, String message) {
-    return new ScheduleConfig(cron, zone, message);
+  private static ScheduleConfig sc(String id, String cron, String zone, String message) {
+    return new ScheduleConfig(id, cron, zone, message);
   }
 
   private static Profile profileNamed(String name, ScheduleConfig... schedules) {
@@ -85,7 +85,7 @@ class AgentSchedulerTest {
   @DisplayName("注册时CronTrigger带上配置的cron和时区（时区以固定上下文下次触发时刻证明）")
   void registerPassesCronAndZoneToTrigger() {
     when(profileRegistry.all())
-        .thenReturn(List.of(profileNamed(PROFILE_NAME, sc(CRON, ZONE, "跑"))));
+        .thenReturn(List.of(profileNamed(PROFILE_NAME, sc("daily", CRON, ZONE, "跑"))));
 
     scheduler.registerAll();
 
@@ -110,7 +110,7 @@ class AgentSchedulerTest {
   @DisplayName("zone缺省或空白时回退服务器系统时区（analyze C2）")
   void registerFallsBackToSystemZoneWhenZoneBlank() {
     when(profileRegistry.all())
-        .thenReturn(List.of(profileNamed(PROFILE_NAME, sc(CRON, null, "跑"))));
+        .thenReturn(List.of(profileNamed(PROFILE_NAME, sc("daily", CRON, null, "跑"))));
 
     scheduler.registerAll();
 
@@ -126,7 +126,7 @@ class AgentSchedulerTest {
   @Test
   @DisplayName("钟推会话三元组固定scheduler/scheduler/Agent名且两次触发同一Session")
   void runOnceUsesFixedSchedulerSessionTriple() {
-    Profile profile = profileNamed(PROFILE_NAME, sc(CRON, ZONE, "汇总昨天的进度"));
+    Profile profile = profileNamed(PROFILE_NAME, sc("summary", CRON, ZONE, "汇总昨天的进度"));
     Session session = stubSession(PROFILE_NAME);
     when(sessionManager.getOrCreate("scheduler", "scheduler", PROFILE_NAME)).thenReturn(session);
 
@@ -151,11 +151,14 @@ class AgentSchedulerTest {
   }
 
   @Test
-  @DisplayName("派生taskId同profile按声明序号区分且跨profile前缀隔离（坑十）")
-  void taskIdDerivedFromProfileNameAndDeclarationIndex() {
+  @DisplayName("taskId来自作者声明加profile前缀且跨Agent同id不互撞（25节修正案）")
+  void taskIdFromAuthorIdWithProfilePrefix() {
     Profile twoRules =
-        profileNamed(PROFILE_NAME, sc(CRON, ZONE, "早报"), sc("0 0 18 * * *", ZONE, "晚报"));
-    Profile another = profileNamed("night-agent", sc(CRON, ZONE, "夜巡"));
+        profileNamed(
+            PROFILE_NAME,
+            sc("morning", CRON, ZONE, "早报"),
+            sc("evening", "0 0 18 * * *", ZONE, "晚报"));
+    Profile another = profileNamed("night-agent", sc("daily", CRON, ZONE, "夜巡"));
 
     scheduler.registerProfile(twoRules);
     scheduler.registerProfile(another);
@@ -163,20 +166,20 @@ class AgentSchedulerTest {
     ArgumentCaptor<String> taskIds = ArgumentCaptor.forClass(String.class);
     verify(taskStore, times(3)).reconcile(taskIds.capture(), any(), any(), any(), any(), any());
     assertEquals(
-        List.of(PROFILE_NAME + "#1", PROFILE_NAME + "#2", "night-agent#1"),
+        List.of(PROFILE_NAME + ":morning", PROFILE_NAME + ":evening", "night-agent:daily"),
         taskIds.getAllValues(),
-        "派生规则：{profileName}#{声明序号，从 1 起}");
+        "任务标识 = {profileName}:{作者声明的 id}——同 profile 不同 id，跨 profile 同 id 靠前缀隔离不互撞");
   }
 
   @Test
   @DisplayName("runNow按taskId找到任务立即执行、找不到点名报错（人推补跑入口）")
   void runNowFindsTaskOrThrows() {
-    Profile profile = profileNamed(PROFILE_NAME, sc(CRON, ZONE, "补跑一次"));
+    Profile profile = profileNamed(PROFILE_NAME, sc("rerun", CRON, ZONE, "补跑一次"));
     when(profileRegistry.all()).thenReturn(List.of(profile));
     Session session = stubSession(PROFILE_NAME);
     when(sessionManager.getOrCreate(any(), any(), any())).thenReturn(session);
 
-    scheduler.runNow(PROFILE_NAME + "#1");
+    scheduler.runNow(PROFILE_NAME + ":rerun");
     verify(agentService).process(session, "补跑一次");
 
     assertThrows(IllegalArgumentException.class, () -> scheduler.runNow("no-such-task"));
@@ -186,27 +189,28 @@ class AgentSchedulerTest {
   @DisplayName("单条cron非法只跳过该条其它照常注册（坑六）")
   void invalidCronSkipsOnlyThatRule() {
     Profile profile =
-        profileNamed(PROFILE_NAME, sc("not-a-cron", ZONE, "坏规则"), sc(CRON, ZONE, "好规则"));
+        profileNamed(
+            PROFILE_NAME, sc("bad", "not-a-cron", ZONE, "坏规则"), sc("good", CRON, ZONE, "好规则"));
 
     assertDoesNotThrow(() -> scheduler.registerProfile(profile));
 
     verify(taskScheduler, times(1)).schedule(any(Runnable.class), any(Trigger.class));
     ArgumentCaptor<String> taskIds = ArgumentCaptor.forClass(String.class);
     verify(taskStore, times(1)).reconcile(taskIds.capture(), any(), any(), any(), any(), any());
-    assertEquals(PROFILE_NAME + "#2", taskIds.getValue(), "坏规则跳过、好规则照常登记");
+    assertEquals(PROFILE_NAME + ":good", taskIds.getValue(), "坏规则跳过、好规则照常登记");
   }
 
   @Test
   @DisplayName("注册时逐条reconcile登记且下次触发时刻可算出")
   void registerReconcilesEachScheduleWithNextRun() {
     when(profileRegistry.all())
-        .thenReturn(List.of(profileNamed(PROFILE_NAME, sc(CRON, ZONE, "跑"))));
+        .thenReturn(List.of(profileNamed(PROFILE_NAME, sc("daily", CRON, ZONE, "跑"))));
 
     scheduler.registerAll();
 
     verify(taskStore)
         .reconcile(
-            eq(PROFILE_NAME + "#1"),
+            eq(PROFILE_NAME + ":daily"),
             eq(PROFILE_NAME),
             eq(CRON),
             eq(ZONE),
@@ -217,8 +221,8 @@ class AgentSchedulerTest {
   @Test
   @DisplayName("停用任务runOnce跳过且不记执行（analyze C1，停用≠失败）")
   void disabledTaskSkipsWithoutRecording() {
-    Profile profile = profileNamed(PROFILE_NAME, sc(CRON, ZONE, "停用的任务"));
-    when(taskStore.isEnabled(PROFILE_NAME + "#1")).thenReturn(false);
+    Profile profile = profileNamed(PROFILE_NAME, sc("daily", CRON, ZONE, "停用的任务"));
+    when(taskStore.isEnabled(PROFILE_NAME + ":daily")).thenReturn(false);
 
     scheduler.runOnce(profile, profile.schedules().get(0));
 
@@ -230,10 +234,10 @@ class AgentSchedulerTest {
   @Test
   @DisplayName("上一次还没跑完时本次触发直接跳过且跳过是一次性的（坑二）")
   void skipsWhenPreviousRunStillHoldingLock() throws InterruptedException {
-    Profile profile = profileNamed(PROFILE_NAME, sc(CRON, ZONE, "汇总昨天的进度"));
+    Profile profile = profileNamed(PROFILE_NAME, sc("summary", CRON, ZONE, "汇总昨天的进度"));
     Session session = stubSession(PROFILE_NAME);
     when(sessionManager.getOrCreate(any(), any(), any())).thenReturn(session);
-    java.util.concurrent.locks.Lock lock = scheduler.lockFor(PROFILE_NAME + "#1");
+    java.util.concurrent.locks.Lock lock = scheduler.lockFor(PROFILE_NAME + ":summary");
     // 真实重叠是跨线程的（调度线程池）：ReentrantLock 对同线程可重入，同线程占锁后 tryLock 必成功——
     // 必须让另一线程占着锁，runOnce 的 tryLock 才会真失败（参照钉版树同款双闩手法）。
     java.util.concurrent.CountDownLatch locked = new java.util.concurrent.CountDownLatch(1);
@@ -269,7 +273,7 @@ class AgentSchedulerTest {
   @Test
   @DisplayName("任务抛异常不外抛且锁必须被释放且失败留痕（坑三，二进宫断言）")
   void processFailureDoesNotPropagateAndReleasesLock() {
-    Profile profile = profileNamed(PROFILE_NAME, sc(CRON, ZONE, "会挂的任务"));
+    Profile profile = profileNamed(PROFILE_NAME, sc("fragile", CRON, ZONE, "会挂的任务"));
     Session session = stubSession(PROFILE_NAME);
     when(sessionManager.getOrCreate(any(), any(), any())).thenReturn(session);
     when(agentService.process(any(), any())).thenThrow(new RuntimeException("boom"));
@@ -291,7 +295,7 @@ class AgentSchedulerTest {
   @Test
   @DisplayName("执行记录落库自身失败不外抛且锁照样释放（坑三兜底）")
   void recordExecutionFailureSwallowedAndLockReleased() {
-    Profile profile = profileNamed(PROFILE_NAME, sc(CRON, ZONE, "留痕会挂的任务"));
+    Profile profile = profileNamed(PROFILE_NAME, sc("trace-fragile", CRON, ZONE, "留痕会挂的任务"));
     Session session = stubSession(PROFILE_NAME);
     when(sessionManager.getOrCreate(any(), any(), any())).thenReturn(session);
     org.mockito.Mockito.doThrow(new RuntimeException("db down"))

@@ -675,7 +675,7 @@ session list
 
 | 字段 | 说明 |
 |------|------|
-| `task_id` | 主键，派生生成：`{profileName}#{声明序号}`（第 25 节拍板，参照 id 无校验两瑕疵不继承，见 `docs/class/025-scheduler.md` 拍板①） |
+| `task_id` | 主键，`{profileName}:{frontmatter 声明的 id}`（25 节修正案：id 作者声明、必填 + profile 内唯一——AgentLoader 校验剔除坏条目；序号派生会随调序/删插错位嫁接执行历史，弃） |
 | `profile_name` | 归属 Profile |
 | `cron` | cron 表达式 |
 | `zone` | 时区 |

@@ -30,9 +30,10 @@ import org.springframework.scheduling.support.SimpleTriggerContext;
  * process} 既有链路、finally 必放锁、执行留痕自身失败也不外抛）； 坑四时区显式（{@link CronTrigger} 带 {@link
  * ZoneId}，不由服务器系统时区替用户做主）。
  *
- * <p>任务 id 派生生成 {@code {profileName}#{声明序号}}（25 节拍板①：锁维度、表主键、句柄 key 共用；同值重复声明共享同一 id——与参照同 id
- * 语义一致，两条完全相同的规则本身无意义）。会话三元组固定 {@code (scheduler, scheduler, profileName)}，session_id 由 {@link
- * SessionManager} 内部经 SessionIds 单点拼接，本类不生成。
+ * <p>任务标识 {@code {profileName}:{作者声明的 id}}（25 节修正案：id 由 frontmatter 声明，必填 + profile
+ * 内唯一——AgentLoader 校验；绑定不随声明顺序漂移，序号派生在调序/删插时会错位嫁接执行历史；profile 名前缀防跨 Agent 撞名）。锁维度、表主键、句柄 key
+ * 共用此标识。会话三元组固定 {@code (scheduler, scheduler, profileName)}，session_id 由 {@link SessionManager} 内部经
+ * SessionIds 单点拼接，本类不生成。
  *
  * <p>纯 POJO：装配与启动注册由 YokeosRuntime 显式做（{@code @Bean(initMethod="registerAll")})，core 类不放 Spring
  * 注解（与 AgentService/ReActLoop 同构）。
@@ -193,11 +194,11 @@ public final class AgentScheduler {
   }
 
   /**
-   * 派生任务标识：{@code "{profileName}#{声明序号，从 1 起}"}（拍板①）。序号取声明位置（indexOf 按值相等——同值 重复声明共享同一 id，与参照同 id
-   * 语义一致）。
+   * 任务标识：{@code "{profileName}:{作者声明的 id}"}——绑定源是作者 id（编辑顺序无关），前缀只做跨 Agent 命名空间隔离 （两个 Agent 同写
+   * {@code id: daily} 不互撞表行/锁/句柄）。
    */
   static String taskIdOf(Profile profile, Profile.ScheduleConfig sc) {
-    return profile.name() + "#" + (profile.schedules().indexOf(sc) + 1);
+    return profile.name() + ":" + sc.id();
   }
 
   /** 按 cron/zone 算下次触发时刻；非法配置返回 null（不影响执行本身——research D9）。 */

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -211,7 +212,7 @@ public final class AgentLoader {
         strList(fm.get("mcp_servers")),
         channels(fm.get("channels")),
         notifyChannels(notify.get("channels")),
-        schedules(fm.get("schedules")),
+        schedules(fm.get("schedules"), strOr(fm.get("name"), dirName)),
         strList(fm.get("bootstrap")),
         parsedSettings);
   }
@@ -256,14 +257,36 @@ public final class AgentLoader {
     return result;
   }
 
-  private static List<Profile.ScheduleConfig> schedules(Object raw) {
+  /**
+   * schedules 派生（25 节修正案：id 作者声明、必填 + profile 内唯一）。坏条目剔除记日志、不拖垮整个 Agent—— 与 notify 渠道剔除同款
+   * 哲学（定时是可选能力，坏条目有声剔除优于静默跳过——参照「缺 id 静默 NPE / 同 id 互相覆盖」两瑕疵不继承）。
+   */
+  private static List<Profile.ScheduleConfig> schedules(Object raw, String profileName) {
     List<Profile.ScheduleConfig> result = new ArrayList<>();
+    Set<String> seenIds = new HashSet<>();
     if (raw instanceof List<?> list) {
       for (Object item : list) {
         Map<String, Object> m = mapOf(item);
+        String id = strOrNull(m.get("id"));
+        if (id == null || id.isBlank()) {
+          // 消息编译期常量，Agent 名进异常消息（CRLF 门禁——与 tools 点名过滤同款形态）
+          log.warn(
+              "剔除缺少 id 的定时任务（Agent 与 cron 见异常消息）",
+              new IllegalArgumentException("agent=" + profileName + ", cron=" + m.get("cron")));
+          continue;
+        }
+        if (!seenIds.add(id)) {
+          log.warn(
+              "剔除 id 重复的定时任务（Agent 与 id 见异常消息）",
+              new IllegalArgumentException("agent=" + profileName + ", id=" + id));
+          continue;
+        }
         result.add(
             new Profile.ScheduleConfig(
-                strOrNull(m.get("cron")), strOrNull(m.get("zone")), strOrNull(m.get("message"))));
+                id,
+                strOrNull(m.get("cron")),
+                strOrNull(m.get("zone")),
+                strOrNull(m.get("message"))));
       }
     }
     return result;

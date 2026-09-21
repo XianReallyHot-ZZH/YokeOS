@@ -107,7 +107,7 @@ yokeos/
 
 ## 核心数据模型
 
-**AGENT.md frontmatter**（→ `deriveProfile` → `Profile`）：`name`、`description`、`identity`（`agent_name`、`prompt`）、`provider`（`name`、`model`、`temperature`、`api_key: ${ENV_VAR}`）、`tools`、`skills`（按名引用）、`mcp_servers`、`channels`、`notify.channels`（`name`/`type: webhook`/`config`）、`schedules`（cron + 时区 + 消息）、`bootstrap`、`settings`（`max_iterations` 默认 10、`max_history_turns` 默认 20）。
+**AGENT.md frontmatter**（→ `deriveProfile` → `Profile`）：`name`、`description`、`identity`（`agent_name`、`prompt`）、`provider`（`name`、`model`、`temperature`、`api_key: ${ENV_VAR}`）、`tools`、`skills`（按名引用）、`mcp_servers`、`channels`、`notify.channels`（`name`/`type: webhook`/`config`）、`schedules`（`id` 必填且 profile 内唯一 + cron + 时区 + 消息，25 节修正案）、`bootstrap`、`settings`（`max_iterations` 默认 10、`max_history_turns` 默认 20）。
 
 **SQLite 六张表**（手工建表脚本）：
 
@@ -227,6 +227,7 @@ yokeos provider list / tool list / session list
 | 重叠跳过测试用同线程占锁 | 测试线程自己 `lockFor(id).lock()` 后同线程 `tryLock()` 必成功——ReentrantLock 对同线程可重入，「上一次还在跑」的模拟完全失效，verify(never()) 反而红 | 真实重叠是跨线程的（调度线程池）：另一线程占锁 + `CountDownLatch` 双闩协调（占锁完成再触发、断言完再放），参照钉版树同款（25 节实证） |
 | core 主代码此前零 Spring 依赖 | 宪法 4 调度池（TaskScheduler/CronTrigger）落 core 时编译即红「程序包 org.springframework.scheduling 不存在」——core 只在 test 域经 starter-test 间接可见 spring-context，plan 层「传递件已有」的假设不查模块依赖就落笔会漏 | 模块级依赖显式声明 `org.springframework:spring-context`（BOM 管版本非新坐标），pom 注释记理由；「零新增依赖」表述要核到**模块 pom** 一级而非全仓 classpath（25 节实证） |
 | 静态单例 SQLite 测试库跨用例污染 | 22 节 `MemoryEntryRepositoryTest` 的静态临时库形态被照抄到有「恰一行/唯一任务」全表断言的测试——前序用例的 setEnabled(false)/历史行全部串场，断言「恰一行」变「恰三行」 | 同库形态 + 全表断言 = 必须 `@BeforeEach` 清两表；照抄基建形态时先核对断言口径是否查全表（25 节实证） |
+| task_id 用声明序号派生 | `{profileName}#{序号}` 绑定的是声明位置不是任务——**调换顺序/删中间条目/中间插入后重启，早报的 run_count 与执行历史整体错位嫁接给晚报**（reconcile 原地更新定义字段，旧数据无声接错对象）——不是丢状态，是接错账，审计语义被污染 | id 由 frontmatter 作者声明（必填 + profile 内唯一，AgentLoader 剔除坏条目有声日志），task_id = `{profileName}:{id}` 前缀防跨 Agent 撞名（25 节用户实证后修正案） |
 | 手跑真 serve（fat JAR 前）三连坑 | ① boot pom mainClass 硬编码 CLI 入口且 XML 配置优先于 `-Dspring-boot.run.mainClass` 覆盖；② `dependency:build-classpath` 解析的是 m2 旧 jar——前序节新类（如 Sandbox/McpJsonMapper）CNFE；③ boot fat jar 嵌套结构不进 `-cp` classpath，application.yaml 丢失 → datasource 报「no driver」 | ① 不用 spring-boot:run，直接 `java -cp ... com.yokeos.cli.YokeOsCli serve`；② 先 `mvn install -DskipTests` 刷新 m2；③ classpath 前置 `yokeos-boot/target/classes`（原始 classes 含 application.yaml）；另 kimi 连坐坑照旧给哑值（25 节实证，31 节 fat JAR 打包课直接受益） |
 
 ---
