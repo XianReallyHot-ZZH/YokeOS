@@ -13,8 +13,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * system prompt 的供给者（宪法 8：AGENT.md 归上下文层，不是 Tool）。每次组装重新读文件、零缓存——用户改完 立即生效（技
- * §8.3）。拼接顺序：identity.prompt → Bootstrap（固定相对序 AGENTS.md → SOUL.md → USER.md，每段带角色
- * header，无覆盖语义）→〔引用 Skill 正文：29 节留位〕→ AGENT.md 正文压轴。
+ * §8.3）。拼接顺序：identity.prompt → Bootstrap（固定相对序 AGENTS.md → SOUL.md → USER.md，每段带角色 header，无覆盖语义）→
+ * 引用 Skill 正文（29 节接线：公共库按名引用、点名即整段注入）→ AGENT.md 正文压轴。
  */
 public final class ContextLoader {
 
@@ -41,12 +41,12 @@ public final class ContextLoader {
     this.workspace = workspace;
   }
 
-  /** 组装 system prompt：identity → Bootstrap →〔Skill 位：29 节接线〕→ AGENT.md 正文。 */
+  /** 组装 system prompt：identity → Bootstrap → 点名 Skill 正文（29 节接线）→ AGENT.md 正文压轴。 */
   public String loadSystemPrompt(Profile profile) {
     StringBuilder sb = new StringBuilder();
     sb.append(profile.identity().prompt()).append('\n');
     appendBootstrap(sb, bootstrapSelection(profile));
-    // 引用 Skill 正文注入位：公共 Skill 库与按名引用归第 29 节，本节不读 skills/ 目录。
+    appendSkills(sb, profile.skills());
     sb.append(stripFrontmatter(readAgentMarkdown(profile)));
     return sb.toString();
   }
@@ -72,6 +72,33 @@ public final class ContextLoader {
         sb.append(entry.getValue()).append('\n').append(Files.readString(file)).append('\n');
       } catch (IOException e) {
         throw new UncheckedIOException("读 Bootstrap 失败: " + entry.getKey(), e);
+      }
+    }
+  }
+
+  /**
+   * 点名的公共 Skill 正文按声明序注入，每段带「## 技能（名）」段头（技 §11.1：跨 Agent 共享的治理资产）。 三态分界与 Bootstrap
+   * 同款：路径非常规文件（缺失）WARN 有痕跳过（静默略过变有痕——20 节 tools 点名同款，research D2）； 读失败抛
+   * UncheckedIOException（「规范悄悄丢了」类软故障不静默，research D3）；SKILL.md 的 agentskills.io frontmatter
+   * 只剥不解析（目录名才是按名引用的键，research D1）。Agent 目录内的 skills/ 子目录不读——公共库是唯一注入来源 （research D8）。
+   */
+  private void appendSkills(StringBuilder sb, List<String> referenced) {
+    for (String name : referenced) {
+      Path skill = workspace.resolve("skills").resolve(name).resolve("SKILL.md");
+      if (!Files.isRegularFile(skill)) {
+        // 消息编译期常量，Skill 名进异常消息（CRLF 门禁——与 tools 点名 WARN 同款形态）
+        LOG.warn(
+            "Agent 点名的 Skill 在公共库不存在（跳过注入，名字见异常消息）", new IllegalArgumentException("skill=" + name));
+        continue;
+      }
+      try {
+        sb.append("## 技能（")
+            .append(name)
+            .append("）\n")
+            .append(stripFrontmatter(Files.readString(skill)))
+            .append('\n');
+      } catch (IOException e) {
+        throw new UncheckedIOException("读 SKILL.md 失败: " + skill, e);
       }
     }
   }

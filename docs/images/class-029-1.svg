@@ -1,0 +1,68 @@
+<svg viewBox="0 0 820 640" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+  <rect width="820" height="640" fill="#ffffff"/>
+  <!-- ════════ defs：marker（yk 前缀） ════════ -->
+  <defs>
+    <marker id="yks" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/></marker>
+    <marker id="ykam" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f59e0b"/></marker>
+    <marker id="ykgr" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#22c55e"/></marker>
+    <marker id="ykpu" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#a855f7"/></marker>
+  </defs>
+  <!-- ════════ 主角：一个 Agent 目录（amber） ════════ -->
+  <rect x="40" y="24" width="380" height="116" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2.6"/>
+  <text x="230" y="52" fill="#b45309" font-size="15" font-weight="bold" text-anchor="middle">一个 Agent 目录（= 一个业务 Agent）</text>
+  <text x="230" y="74" fill="#92400e" font-size="11.5" text-anchor="middle">.yokeos/agents/daily-reconcile/</text>
+  <text x="230" y="94" fill="#92400e" font-size="9.5" text-anchor="middle">AGENT.md：frontmatter（provider·tools·skills·schedules）+ 正文</text>
+  <text x="230" y="112" fill="#92400e" font-size="9.5" text-anchor="middle">scripts/ · REFERENCE.md 按需取用（不预载）</text>
+  <!-- ════════ 公共 Skill 库（purple，按名引用） ════════ -->
+  <rect x="480" y="24" width="300" height="116" rx="10" fill="#ede9fe" stroke="#a855f7" stroke-width="2"/>
+  <text x="630" y="50" fill="#6b21a8" font-size="14" font-weight="bold" text-anchor="middle">公共 Skill 库</text>
+  <text x="630" y="70" fill="#7c3aed" font-size="10" text-anchor="middle">skills/report-format/SKILL.md</text>
+  <text x="630" y="90" fill="#7c3aed" font-size="9.5" text-anchor="middle">frontmatter skills: [名] 按名引用</text>
+  <text x="630" y="108" fill="#7c3aed" font-size="9.5" text-anchor="middle">agentskills.io 兼容 · 跨 Agent 共享</text>
+  <line x1="424" y1="82" x2="476" y2="82" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#yks)"/>
+  <!-- ════════ AgentLoader：扫描与派生 ════════ -->
+  <line x1="230" y1="140" x2="230" y2="176" stroke="#f59e0b" stroke-width="2" marker-end="url(#ykam)"/>
+  <rect x="110" y="180" width="240" height="56" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="230" y="204" fill="#1d4ed8" font-size="14" font-weight="bold" text-anchor="middle">AgentLoader</text>
+  <text x="230" y="224" fill="#334155" font-size="10" text-anchor="middle">扫 agents/ → deriveProfile</text>
+  <!-- ════════ ProfileRegistry：注册进索引 ════════ -->
+  <line x1="230" y1="236" x2="230" y2="272" stroke="#f59e0b" stroke-width="2" marker-end="url(#ykam)"/>
+  <text x="244" y="258" fill="#92400e" font-size="9.5" text-anchor="start">派生 Profile 注册进索引</text>
+  <rect x="110" y="276" width="240" height="56" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="230" y="300" fill="#1d4ed8" font-size="14" font-weight="bold" text-anchor="middle">ProfileRegistry</text>
+  <text x="230" y="320" fill="#334155" font-size="10" text-anchor="middle">register · get · all ＋ exists/remove（本节）</text>
+  <!-- ════════ 底座 band：所有 Agent 共享 ════════ -->
+  <line x1="230" y1="332" x2="230" y2="368" stroke="#f59e0b" stroke-width="2" marker-end="url(#ykam)"/>
+  <text x="244" y="354" fill="#92400e" font-size="9.5" text-anchor="start">零改动复用整台底座</text>
+  <rect x="40" y="372" width="740" height="112" rx="14" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.4"/>
+  <text x="60" y="396" fill="#475569" font-size="11.5" font-weight="bold" text-anchor="start">底座（16~28 节）——所有 Agent 共享，一切吃 Profile</text>
+  <rect x="60" y="410" width="94" height="46" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.6"/>
+  <text x="107" y="430" fill="#1d4ed8" font-size="12" font-weight="bold" text-anchor="middle">ReAct 循环</text>
+  <text x="107" y="446" fill="#334155" font-size="8.5" text-anchor="middle">自实现</text>
+  <rect x="162" y="410" width="94" height="46" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.6"/>
+  <text x="209" y="430" fill="#1d4ed8" font-size="12" font-weight="bold" text-anchor="middle">Provider</text>
+  <text x="209" y="446" fill="#334155" font-size="8.5" text-anchor="middle">多模型路由</text>
+  <rect x="264" y="410" width="94" height="46" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.6"/>
+  <text x="311" y="430" fill="#1d4ed8" font-size="12" font-weight="bold" text-anchor="middle">内置 Tool</text>
+  <text x="311" y="446" fill="#334155" font-size="8.5" text-anchor="middle">九个 + MCP</text>
+  <rect x="366" y="410" width="94" height="46" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.6"/>
+  <text x="413" y="430" fill="#1d4ed8" font-size="12" font-weight="bold" text-anchor="middle">Memory</text>
+  <text x="413" y="446" fill="#334155" font-size="8.5" text-anchor="middle">两层记忆</text>
+  <rect x="468" y="410" width="94" height="46" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.6"/>
+  <text x="515" y="430" fill="#1d4ed8" font-size="12" font-weight="bold" text-anchor="middle">Sandbox</text>
+  <text x="515" y="446" fill="#334155" font-size="8.5" text-anchor="middle">三重白名单</text>
+  <rect x="570" y="410" width="94" height="46" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.6"/>
+  <text x="617" y="430" fill="#1d4ed8" font-size="12" font-weight="bold" text-anchor="middle">定时</text>
+  <text x="617" y="446" fill="#334155" font-size="8.5" text-anchor="middle">钟推触发</text>
+  <rect x="672" y="410" width="94" height="46" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.6"/>
+  <text x="719" y="430" fill="#1d4ed8" font-size="12" font-weight="bold" text-anchor="middle">Web</text>
+  <text x="719" y="446" fill="#334155" font-size="8.5" text-anchor="middle">19 端点</text>
+  <!-- ════════ 出口：到点自跑（green） ════════ -->
+  <line x1="410" y1="484" x2="410" y2="508" stroke="#94a3b8" stroke-width="2" marker-end="url(#yks)"/>
+  <rect x="40" y="512" width="740" height="60" rx="10" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+  <text x="410" y="536" fill="#15803d" font-size="12.5" font-weight="bold" text-anchor="middle">到点自跑：AgentScheduler 触发 → AgentService.process（与 CLI / Web 人推同一条链路）</text>
+  <text x="410" y="556" fill="#166534" font-size="10" text-anchor="middle">ReAct 想法 → 调系统能力 → notify 推送 · tool_invocations / llm_calls 审计留账</text>
+  <!-- ════════ 注脚 ════════ -->
+  <text x="410" y="598" fill="#475569" font-size="10.5" text-anchor="middle">丢一个目录即上线一个会自己跑的 Agent——本节补上「定义程序、装上去、跑起来」的标准机制</text>
+  <text x="410" y="616" fill="#94a3b8" font-size="9.5" text-anchor="middle">宪法 8：frontmatter 经 deriveProfile 派生 Profile · Skill 不进 ToolRegistry · ContextLoader 零缓存</text>
+</svg>

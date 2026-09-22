@@ -91,6 +91,21 @@ public final class AgentScheduler {
   }
 
   /**
+   * 注销该 Agent 的全部定时（29 节运行时原语，30 节 DELETE/PUT 消费）：按与注册侧同一 {@link #taskIdOf} 派生找句柄，
+   * cancel(false)——只取消后续排期、不打断正在执行的那次（跑完落账保审计完整）——并移除句柄。 句柄不存在（重复注销/从未注册）静默无操作；无 schedules
+   * 空跑不报错。不联动 ProfileRegistry、不写 scheduled_tasks 表——「先注销定时再移出索引再归档」的编排归 30 节 AgentLifecycleService。
+   */
+  public void unregisterProfile(Profile profile) {
+    for (Profile.ScheduleConfig sc : profile.schedules()) {
+      String taskId = taskIdOf(profile, sc);
+      ScheduledFuture<?> future = scheduledTasks.remove(taskId);
+      if (future != null) {
+        future.cancel(false); // 不打断执行中（research D5）
+      }
+    }
+  }
+
+  /**
    * 注册单个 Agent 的全部定时：逐条 {@code CronTrigger(cron, zone)} 动态注册并留可注销句柄，同时 reconcile 登记进
    * SQLite（重启后可查）。单条 cron/时区非法只跳过这条、不拖垮其它（坑六，FR-007）。
    */

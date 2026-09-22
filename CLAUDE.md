@@ -239,6 +239,9 @@ yokeos provider list / tool list / session list
 | 测试类名连续大写同样被 `AbbreviationAsWordInName` 拦（19 节坑只记了方法名） | `MockAgentE2ETest`/`HumanTriggerFlowIT` 类名即红；且「IT 后缀不进 gate」手法在本仓行不通 | 类名 `…EndToEndTest`/`…IntegrationTest`；黑盒类要「不进常规 gate」用**无 Test 后缀**类名（surefire 默认 include 不匹配，`-Dtest` 显式才跑），tag 排除仍是主机制（27 节实证） |
 | 坏 provider 名造「Provider 层失败」走不通——AgentLoader 启动期就拦 | 想用 `provider: ghost` 的 Agent 驱动 `task_executions success=false`：校验面即 `providerMap.keySet()`，不在表整目录被 `deriveQuietly` 跳过，Agent 根本进不了注册表 | 测试本地 `FailingChatModel`（`call` 必抛）挂 `@Primary` 覆盖 providerMap、映射名如 `boom`——名字过启动校验、调用期必炸，正复现「map 里有、调用必炸」的故障形态（28 节实证） |
 | 钟推会话复用下历史累积影响模型行为——短间隔连续触发可能不重推 | 会跑第三次 `runNow` 断言「推送 ≥3」即红：prompt 里带着几秒前「刚查过、刚推过」的历史，真模型判定无需重复动作（任务成功、账面齐全，物理推送停在 2） | 断言分层：「调度器不死」锚**账面**（run_count 自增、执行历史 success、新 llm_calls 落账），物理推送只锚前几次；日跑 Demo 报文写明「无论历史如何本次都要重新执行」可压此象（28 节实证） |
+| AGENT.md 正文用 Agent 目录内相对路径指引附属脚本 | `python3 scripts/reconcile.py` 在 shell 工具的 cwd（工作区根）下找不到文件——真模型 10 轮重试同一条注定失败的命令烧穿 max_iterations，回复被「达到最大轮数」吞掉；审计表里 10 条 success=false 的 shell 是唯一线索 | 正文指引写**工作区根相对路径**（`.yokeos/agents/<name>/scripts/x.py`）并注明「shell 的工作目录是工作区根」；排查多轮不收敛先查 `tool_invocations` 的 error_message（29 节真跑实证，审计表反解即宪法 7 的价值现场） |
+| notify 占位 `${OPS_WEBHOOK_URL}` 未配置即真跑示例 Agent | 占位解析失败保留字面量 → webhook「no host」失败 → 模型把「推送未完成」当任务未竟，从头重跑全流程（跑脚本→写报告→推→又失败→循环） | 演示环境必须 export 真值（webhook.site 等一次性端点即可）；或正文明确「推送失败不阻断报告产出」——模型对失败渠道的执念只能靠指令拆解（29 节真跑实证） |
+| 给共享值对象/注册表加 mutator 触发 SpotBugs 可变性判定连锁 | `ProfileRegistry` 补 `remove` 后，**全部构造持有方**（AgentService/CliChannel/三个 ApiController）新报 `EI_EXPOSE_REP2` 逐模块拦 verify——单模块绿≠全量绿，连锁在下游模块才现形 | 持有方逐个补类级 `@SuppressFBWarnings({"EI_EXPOSE_REP","EI_EXPOSE_REP2"})` + justification（25 节 AgentScheduler 先例）；缺 `spotbugs-annotations` 依赖的模块按 web 模块同款补 provided 依赖（29 节实证，连锁面= grep `private final ProfileRegistry` 清点） |
 
 ---
 

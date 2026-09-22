@@ -21,8 +21,11 @@ import org.springframework.web.bind.annotation.RestController;
  * Agent 定义与管理的 CRUD 端点——本节刻意只此一个。
  */
 @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
-    value = "SPRING_ENDPOINT",
-    justification = "第一阶段 web API 无认证是设计决定（内网部署假设，需求 §5.10「第一阶段不做」）；认证（API Key + JWT）列扩展阶段")
+    value = {"SPRING_ENDPOINT", "EI_EXPOSE_REP", "EI_EXPOSE_REP2"},
+    justification =
+        "第一阶段 web API 无认证是设计决定（内网部署假设，需求 §5.10「第一阶段不做」）；认证（API Key + JWT）列扩展阶段。"
+            + "EI 两项：profileRegistry 是注入的单例服务，构造共享引用正是意图（25 节 AgentScheduler 同款；"
+            + "29 节 ProfileRegistry 增设 remove 运行时原语后 SpotBugs 可变性判定升级，随门禁连锁显式落档）")
 @RestController
 @RequestMapping("/api/v1/agents")
 public class AgentApiController {
