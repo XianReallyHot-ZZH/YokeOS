@@ -2,21 +2,29 @@
 import { computed, onMounted, ref } from 'vue'
 
 import logoUrl from './assets/logo.svg'
+import AgentsPage from './components/AgentsPage.vue'
+import WorkspacePage from './components/WorkspacePage.vue'
 
 // 主题切换（yokeos-admin-ui skill：暗色默认、html.dark 类切换、localStorage 记住——与官网机制同构）
 const THEME_KEY = 'yokeos-admin-theme'
 
-// YokeOS 管理台第一版（第 26 节）：只读观察五页。
-// 规范出处 .claude/skills/yokeos-admin-ui——token 直取官网、三态占位、零写入口、只调 /api/v1 只读端点。
+// YokeOS 管理台（第 26 节只读观察五页 + 第 30 节 Agent 管理页与工作区页）。
+// 规范出处 .claude/skills/yokeos-admin-ui——token 直取官网、三态占位、只调 /api/v1 端点；
+// 30 节两页是例外写侧（Agent 管理页走 /agents 写端点组，skill 例外条款）——体量大，拆独立组件自管加载态。
 // 信封约定：成功 code=0、错误 code=HTTP 状态值；错误态直接展示信封 message。
 
 const pages = [
   { key: 'sessions', label: '会话' },
+  { key: 'agents', label: 'Agent 管理' },
+  { key: 'workspace', label: '工作区' },
   { key: 'profiles', label: 'Agent（Profile）' },
   { key: 'tools', label: 'Tool' },
   { key: 'memory', label: '长期记忆' },
   { key: 'status', label: '系统状态' },
 ]
+
+// 30 节组件自管页：select 跳过 App 级 load（三态由组件内部承载）
+const selfManaged = new Set(['agents', 'workspace'])
 
 const active = ref('sessions')
 const isDark = ref(document.documentElement.classList.contains('dark'))
@@ -75,6 +83,10 @@ function select(page) {
     return
   }
   active.value = page.key
+  if (selfManaged.has(page.key)) {
+    state.value = { loading: false, error: '', empty: false } // 组件自载，清 App 级占位
+    return
+  }
   load()
 }
 
@@ -115,7 +127,9 @@ onMounted(load)
         </button>
       </header>
       <div class="content">
-      <div v-if="state.loading" class="placeholder">加载中…</div>
+      <AgentsPage v-if="active === 'agents'" />
+      <WorkspacePage v-else-if="active === 'workspace'" />
+      <div v-else-if="state.loading" class="placeholder">加载中…</div>
       <div v-else-if="state.error" class="placeholder error">加载失败：{{ state.error }}</div>
       <div v-else-if="state.empty" class="placeholder">暂无数据</div>
 

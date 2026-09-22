@@ -2,12 +2,15 @@ package com.yokeos.cli;
 
 import com.yokeos.channel.cli.CliChannel;
 import com.yokeos.cli.command.ProviderListCommand;
+import com.yokeos.core.agent.AgentLifecycleService;
 import com.yokeos.core.agent.AgentScheduler;
 import com.yokeos.core.agent.AgentService;
+import com.yokeos.core.agent.AgentStore;
 import com.yokeos.core.agent.PromptBuilder;
 import com.yokeos.core.agent.ReActLoop;
 import com.yokeos.core.agent.ScheduledTaskStore;
 import com.yokeos.core.agent.ToolExecutor;
+import com.yokeos.core.agent.WorkspaceWatcher;
 import com.yokeos.core.audit.LlmCallAuditor;
 import com.yokeos.core.audit.ToolInvocationAuditor;
 import com.yokeos.core.context.ContextLoader;
@@ -326,5 +329,65 @@ public class YokeosRuntime {
       ScheduledTaskStore scheduledTaskStore) {
     return new AgentScheduler(
         taskScheduler, profileRegistry, agentService, sessionManager, scheduledTaskStore);
+  }
+
+  /** 30 节：Agent 目录管家——workspace root 与启动扫描同源（{@link #workspace()}）。 */
+  @Bean
+  AgentStore agentStore() {
+    return new AgentStore(workspace());
+  }
+
+  /** 生成用 Provider（技 §3.3）：非密钥、无 ${ENV} 占位，走 Environment 绑定（不踩 22 节原文直读坑）； 空串缺省 = 未配置，不阻断启动。 */
+  @Value("${yokeos.agent-generation.provider:}")
+  private String agentGenerationProvider;
+
+  /** 生成用模型（技 §3.3）：空串 = 该 provider 默认模型。 */
+  @Value("${yokeos.agent-generation.model:}")
+  private String agentGenerationModel;
+
+  /**
+   * 30 节动态管理编排者（技 §11.3）：API create / WorkspaceWatcher 事件汇到同一段 register；
+   * 生成配置缺失不在装配期报错（生成是运行时功能非启动依赖）， 调用 generate 时 lifecycle 明确报错（503，技 §3.3 不静默回退）。 AgentLoader
+   * 与启动扫描同款（无状态类，独立实例等价同一套校验逻辑）。
+   */
+  @Bean
+  AgentLifecycleService agentLifecycleService(
+      ProfileRegistry profileRegistry,
+      AgentScheduler agentScheduler,
+      AgentStore agentStore,
+      ProviderService providerService,
+      Map<String, ChatModel> providerMap) {
+    return new AgentLifecycleService(
+        new AgentLoader(),
+        profileRegistry,
+        agentScheduler,
+        agentStore,
+        providerService,
+        agentGenerationProvider,
+        agentGenerationModel,
+        providerMap.keySet());
+  }
+
+  /**
+   * 监听执行器（30 节 research D8）：单线程 daemon——与 25 节调度池同类的基础设施守护线程（宪法 4 例外口径）， chat 这类一次性命令跑完 JVM 必须能退（同
+   * taskScheduler daemon 论证）；上下文关闭 shutdown → 监听线程中断 → Watcher 安静退出。
+   */
+  @Bean(destroyMethod = "shutdown")
+  java.util.concurrent.ExecutorService watcherExecutor() {
+    return java.util.concurrent.Executors.newSingleThreadExecutor(
+        r -> {
+          Thread thread = new Thread(r, "yokeos-watcher");
+          thread.setDaemon(true);
+          return thread;
+        });
+  }
+
+  /**
+   * 实时监听 .yokeos/agents/（30 节，FR-010）：initMethod=start——目录级事件汇到与 API create 同一段 register； 启动全量扫描仍走
+   * profileRegistry 既有链路，不重复登记（research D3）。
+   */
+  @Bean(initMethod = "start")
+  WorkspaceWatcher workspaceWatcher(AgentLifecycleService agentLifecycleService) {
+    return new WorkspaceWatcher(agentLifecycleService, workspace(), watcherExecutor());
   }
 }

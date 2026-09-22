@@ -242,6 +242,11 @@ yokeos provider list / tool list / session list
 | AGENT.md 正文用 Agent 目录内相对路径指引附属脚本 | `python3 scripts/reconcile.py` 在 shell 工具的 cwd（工作区根）下找不到文件——真模型 10 轮重试同一条注定失败的命令烧穿 max_iterations，回复被「达到最大轮数」吞掉；审计表里 10 条 success=false 的 shell 是唯一线索 | 正文指引写**工作区根相对路径**（`.yokeos/agents/<name>/scripts/x.py`）并注明「shell 的工作目录是工作区根」；排查多轮不收敛先查 `tool_invocations` 的 error_message（29 节真跑实证，审计表反解即宪法 7 的价值现场） |
 | notify 占位 `${OPS_WEBHOOK_URL}` 未配置即真跑示例 Agent | 占位解析失败保留字面量 → webhook「no host」失败 → 模型把「推送未完成」当任务未竟，从头重跑全流程（跑脚本→写报告→推→又失败→循环） | 演示环境必须 export 真值（webhook.site 等一次性端点即可）；或正文明确「推送失败不阻断报告产出」——模型对失败渠道的执念只能靠指令拆解（29 节真跑实证） |
 | 给共享值对象/注册表加 mutator 触发 SpotBugs 可变性判定连锁 | `ProfileRegistry` 补 `remove` 后，**全部构造持有方**（AgentService/CliChannel/三个 ApiController）新报 `EI_EXPOSE_REP2` 逐模块拦 verify——单模块绿≠全量绿，连锁在下游模块才现形 | 持有方逐个补类级 `@SuppressFBWarnings({"EI_EXPOSE_REP","EI_EXPOSE_REP2"})` + justification（25 节 AgentScheduler 先例）；缺 `spotbugs-annotations` 依赖的模块按 web 模块同款补 provided 依赖（29 节实证，连锁面= grep `private final ProfileRegistry` 清点） |
+| `.formatted` 写在分段拼接的最后一段字面量上 | `"A%s" + "B".formatted(x)`——formatted 只作用于紧邻字面量，前段 `%s` 原样落盘（30 节集成测试 AGENT.md 落盘 `name: %s` → SnakeYAML 炸 `%`） | 分段拼接先整体括号再 `.formatted`（`("A%s" + "B").formatted(x)`） |
+| MockMvc 轮询探针用 jsonPath `exists()` 断言 | `exists()` 失败抛 **AssertionError（Error 族）不进 `catch (Exception)`**——列表为空时第一圈就炸出测试，0.018s「假超时」、从未真正等待 Watcher（30 节实证） | 轮询探针取响应 body 解析比对返回 boolean、不抛断言；断言只放轮询出口 |
+| macOS 上写子目录内文件**不触发**父目录级 WatchService 事件 | 「目录 CREATE 先到、AGENT.md 后落盘，靠后续事件二次注册收敛」的假设在 macOS 不成立——首次注册失败 WARN 后**永不收敛**（参照回写 5.2.3 同结论，其钉版树无真丢目录测试故未暴露；30 节集成测试实证） | Watcher 对 CREATE/MODIFY 注册失败走**有界延迟重试**（5×500ms，经执行器排队）主动收敛，耗尽才 WARN 放弃 |
+| 集成测试用 mock provider 但 AGENT.md 不写 `model:` 行 | `MockChatModel` 响应无 model 元数据 → `llm_calls.model` NOT NULL 约束炸 → invoke 500（30 节实证） | mock Agent 的 frontmatter 必须写 `model:` 行（任意值）——审计列非空是 day one 纪律的硬约束 |
+| 测试方法名数字段后缀被 Checkstyle `MethodName` 拦 | `xxx_400`/`xxx_404` 违段形态（下划线后跟数字）；字母段 `_notFound` 放行——19/28 节坑的细化（30 节再实证） | 后缀语义用英文词（`BadRequest`/`NotFound`），中文原语义进 `@DisplayName` |
 
 ---
 

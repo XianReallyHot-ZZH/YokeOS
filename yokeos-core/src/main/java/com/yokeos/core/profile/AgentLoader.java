@@ -109,6 +109,32 @@ public final class AgentLoader {
       Path agentDir, Set<String> knownProviderNames, Function<String, String> env) {
     Map<String, Object> frontmatter = mapOf(resolvePlaceholders(frontmatterOf(agentDir), env));
     Profile profile = toProfile(directoryNameOf(agentDir), frontmatter);
+    return validateProvider(profile, knownProviderNames);
+  }
+
+  /**
+   * 字符串→Profile（第 30 节新增，analyze H1）：generate（剥围栏后）与 update（落盘前）的「不落盘校验」 共用——frontmatter 校验与 {@link
+   * #deriveProfile} 同一套（围栏解析/占位解析/provider 名单），另加 name 一致性： frontmatter 显式 name 与 expectedName
+   * 不符即拒（防注册键与目录错位——注册表键取 profile.name()，目录名是注销与归档的锚）。 新增公共方法是扩展非改接口（参照钉版树同款 parse
+   * 先例）；启动扫描的宽松语义（name 缺省回落目录名）不变。
+   */
+  public Profile parse(String agentMarkdown, String expectedName, Set<String> knownProviderNames) {
+    Map<String, Object> raw = rawFrontmatter(agentMarkdown);
+    String declared = strOrNull(raw.get("name"));
+    if (expectedName != null && declared != null && !declared.equals(expectedName)) {
+      throw new IllegalArgumentException(
+          ("AGENT.md frontmatter 的 name [%s] 与目标名 [%s] 不一致——注册键与目录会错位，" + "请统一后再提交")
+              .formatted(declared, expectedName));
+    }
+    // expectedName 传 null = 跳过一致性校验（generate 草稿形态——草稿无权威名，create 的 name 参数才是权威）
+    String fallbackName = expectedName != null ? expectedName : "draft";
+    Map<String, Object> frontmatter = mapOf(resolvePlaceholders(raw, System::getenv));
+    Profile profile = toProfile(fallbackName, frontmatter);
+    return validateProvider(profile, knownProviderNames);
+  }
+
+  /** provider 名单校验（deriveProfile 与 parse 共用的最后一段）。 */
+  private static Profile validateProvider(Profile profile, Set<String> knownProviderNames) {
     String providerName = profile.providerName();
     if (providerName == null || !knownProviderNames.contains(providerName)) {
       throw new IllegalArgumentException(
@@ -147,6 +173,11 @@ public final class AgentLoader {
     } catch (IOException e) {
       throw new IllegalArgumentException("AGENT.md 读取失败：" + md, e);
     }
+    return rawFrontmatter(content);
+  }
+
+  /** 字符串版围栏解析（deriveProfile 的文件版与 parse 的字符串版共用同一段逻辑）。 */
+  private static Map<String, Object> rawFrontmatter(String content) {
     String[] lines = content.split("\n", -1);
     if (lines.length == 0 || !FRONTMATTER_DELIMITER.equals(lines[0].trim())) {
       throw new IllegalArgumentException("AGENT.md 缺少 frontmatter 围栏（首行必须是 ---）");
