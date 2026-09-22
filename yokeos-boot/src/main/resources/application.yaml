@@ -60,6 +60,12 @@ yokeos:
     - name: kimi
       api-key: ${KIMI_API_KEY}
       base-url: https://api.moonshot.cn/v1
+  # 30 节（specs/015）：一句话生成的系统默认 Provider（技 §3.3）——与具体 Agent 的 Provider 配置是两回事。
+  # 走 Spring Environment 绑定（非密钥、无 ${ENV} 占位，不踩 22 节原文直读坑）；缺失不阻断启动
+  # （生成是运行时功能非启动依赖），调用 generate 端点时 503 + 配置方法提示，不静默回退任何 provider。
+  agent-generation:
+    provider: deepseek           # 已注册 provider name（指向上方 providers 显式映射表）
+    model: deepseek-chat         # 可选；缺省用该 provider 默认模型
   # 22 节（specs/007）：记忆后端选档与阈值。mem0 段占位不走 Boot 绑定解析（research D6，
   # 经 MemoryProperties 原文读取）——切到 mem0 档使用时才校验，缺环境变量不阻断启动。
   memory:
