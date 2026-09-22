@@ -46,6 +46,19 @@ class ProvidersPropertiesTest {
         () -> props.validate(Map.of("DEEPSEEK_API_KEY", "a", "KIMI_API_KEY", "b")::get));
   }
 
+  @Test
+  @DisplayName("mock保留名_显式配置免凭证校验_无api-key也通过")
+  void mockProviderName_skipsCredentialValidation() {
+    // 第 27 节坑二：mock 不需要 key——漏特判则显式挂 mock 即启动失败
+    var props = new ProvidersProperties();
+    ProviderItem mockItem = new ProviderItem();
+    mockItem.setName("mock");
+    props.setProviders(List.of(mockItem, item("deepseek", "${DEEPSEEK_API_KEY}")));
+
+    assertDoesNotThrow(
+        () -> props.validate(Map.of("DEEPSEEK_API_KEY", "a")::get), "mock 条目免 api-key 校验");
+  }
+
   private static ProviderItem item(String name, String apiKey) {
     ProviderItem item = new ProviderItem();
     item.setName(name);

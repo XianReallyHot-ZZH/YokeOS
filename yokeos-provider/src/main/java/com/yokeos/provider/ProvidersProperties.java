@@ -22,6 +22,9 @@ public class ProvidersProperties {
   /** 占位符形态：${ENV_VAR}——凭证只允许这种写法，明文 key 在启动期即被拒（宪法 7 / FR7）。 */
   private static final Pattern PLACEHOLDER = Pattern.compile("^\\$\\{[^}]+}$");
 
+  /** 内置 mock provider 的保留名（第 27 节）：不连真实端点，无需 api-key / base-url，显式配置时跳过凭证校验。 */
+  public static final String MOCK_PROVIDER_NAME = "mock";
+
   private List<ProviderItem> providers = new ArrayList<>();
 
   public List<ProviderItem> getProviders() {
@@ -44,6 +47,9 @@ public class ProvidersProperties {
       }
       if (!seen.add(item.getName())) {
         throw new IllegalStateException("yokeos.providers 名字重复：" + item.getName());
+      }
+      if (MOCK_PROVIDER_NAME.equals(item.getName())) {
+        continue; // 内置 mock（第 27 节）：不连真实端点，api-key / base-url 校验整段跳过
       }
       if (item.getApiKey() == null || !PLACEHOLDER.matcher(item.getApiKey()).matches()) {
         throw new IllegalStateException(

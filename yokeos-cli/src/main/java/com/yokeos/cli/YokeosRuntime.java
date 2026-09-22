@@ -24,6 +24,7 @@ import com.yokeos.memory.MemoryProperties;
 import com.yokeos.memory.MemoryServiceImpl;
 import com.yokeos.memory.SqliteMemoryStore;
 import com.yokeos.memory.builtin.MemoryTools;
+import com.yokeos.provider.MockChatModel;
 import com.yokeos.provider.ProvidersProperties;
 import com.yokeos.provider.SpringAiProviderService;
 import com.yokeos.provider.ToolSchemaAdapter;
@@ -108,6 +109,10 @@ public class YokeosRuntime {
 
     Map<String, ChatModel> map = new LinkedHashMap<>();
     for (ProvidersProperties.ProviderItem item : properties.getProviders()) {
+      if (ProvidersProperties.MOCK_PROVIDER_NAME.equals(item.getName())) {
+        map.put(item.getName(), new MockChatModel()); // 不连真实端点，无需 key/url（显式配置形态）
+        continue;
+      }
       OpenAiApi api =
           OpenAiApi.builder()
               .baseUrl(item.getBaseUrl())
@@ -116,6 +121,9 @@ public class YokeosRuntime {
       // model 不设默认值：随 Profile 逐请求传递（技 §3.3；SpringAiProviderService.buildOptions 18 节补齐）
       map.put(item.getName(), OpenAiChatModel.builder().openAiApi(api).build());
     }
+    // 内置保留名常挂（第 27 节拍板②）：mock 不进生产清单，无条件挂进显式映射表——
+    // 无 key 全链路自测随时可用；/info 列「Profile 引用到的 provider」，无 Agent 用它就不出现。
+    map.putIfAbsent(ProvidersProperties.MOCK_PROVIDER_NAME, new MockChatModel());
     return map;
   }
 
