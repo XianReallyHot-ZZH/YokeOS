@@ -21,6 +21,11 @@ import java.util.List;
  * 只作为三元组参数提供（id 拼接单点在 SessionIds，H4④）；IO 注入重载供测试脚本化驱动（research D8）。 启动即验 Profile：点名报错不进循环（spec US1
  * 场景 4）。
  */
+@edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+    value = {"EI_EXPOSE_REP", "EI_EXPOSE_REP2"},
+    justification =
+        "profileRegistry 等协作者是注入的单例服务，构造注入共享同一引用正是意图（25 节 AgentScheduler 同款先例）；"
+            + "29 节 ProfileRegistry 增设 remove 运行时原语后 SpotBugs 对其可变性判定升级，本注解随门禁连锁显式落档")
 public class CliChannel {
 
   private static final String CHANNEL = "cli";

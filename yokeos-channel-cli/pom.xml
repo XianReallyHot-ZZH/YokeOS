@@ -19,6 +19,13 @@
             <groupId>com.yokeos</groupId>
             <artifactId>yokeos-core</artifactId>
         </dependency>
+        <!-- 29 节：CliChannel 上 @SuppressFBWarnings 需要（ProfileRegistry 增设 remove 后 SpotBugs 可变性判定升级）；yokeos-web/core 同款 provided + 显式版本 -->
+        <dependency>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-annotations</artifactId>
+            <version>${spotbugs.version}</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
