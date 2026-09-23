@@ -4,13 +4,13 @@
 
 ## Three phases
 
-### Phase 1 (current): single-node runtime kernel
+### Phase 1 (delivered · v0.1.0): single-node runtime kernel
 
 - A complete runtime kernel aligned with the reference: [LLM routing](./provider), [self-implemented ReAct](./react-loop), [two-layer memory](./memory), [tools + sandbox](./tool-sandbox), [notify + scheduling](./notify), [REST API + web console](./web-service)
 - [One directory = one agent](./agent), dynamic management, multi-agent coexistence, packaged distribution
 - Audit tables and the whitelist sandbox in place from day one
 
-Phase 1 deliberately pursues no product-level differentiation: deliver unit by unit against the proven reference with equivalent acceptance, and let the engineering process itself be the deliverable — product-level forks wait for real usage judgment. Execution follows the reference's public build sequence (lessons 16→31), **self-paced but in order**, no calendar timeboxes, each lesson judged by its demonstrable outcome — see the [sequence table in Quick Start](./quick-start#milestone-targets).
+Phase 1 deliberately pursues no product-level differentiation: deliver unit by unit against the proven reference with equivalent acceptance, and let the engineering process itself be the deliverable — product-level forks wait for real usage judgment. Execution follows the reference's public build sequence (lessons 16→31), **self-paced but in order**, no calendar timeboxes, each lesson judged by its demonstrable outcome — see the [sequence table in Quick Start](./quick-start#milestone-targets). All 16 lessons are delivered (2026-09, `v0.1.0`); per-lesson specs and acceptance evidence live under `specs/`.
 
 ### Phase 2 (planned): capability completion & distributed foundation
 

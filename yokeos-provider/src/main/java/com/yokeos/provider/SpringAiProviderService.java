@@ -5,9 +5,13 @@ import com.yokeos.core.profile.Profile;
 import com.yokeos.core.provider.ProviderRequest;
 import com.yokeos.core.provider.ProviderResponse;
 import com.yokeos.core.provider.ToolCallRequest;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.SystemMessage;
+import org.springframework.ai.chat.messages.ToolResponseMessage;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -21,7 +25,12 @@ import org.springframework.ai.model.tool.ToolCallingChatOptions;
  *
  * <p>命名抑制：类名是拍板①定死的教学文档字面量（SpringAi 技术栈姓前缀 + 契约接口名），不按 P3C「实现类以 Impl 结尾」改名——契约实现体的文档链一致性优先于风格规则。
  */
-@SuppressWarnings("PMD.ServiceOrDaoClassShouldEndWithImplRule")
+@SuppressWarnings({
+  "PMD.ServiceOrDaoClassShouldEndWithImplRule",
+  // 24 节同款工具代差：PMD 6.55 的 AST 不认 Java 14+ 箭头 switch 的 default（toSpringAiMessages 的
+  // default 分支实际在位——user 之外角色走默认翻译），SwitchStatementRule 误报
+  "PMD.SwitchStatementRule"
+})
 public class SpringAiProviderService implements com.yokeos.core.provider.ProviderService {
 
   private final Map<String, ChatModel> providerMap;
@@ -53,7 +62,7 @@ public class SpringAiProviderService implements com.yokeos.core.provider.Provide
       throw new ProviderNotFoundException(providerName);
     }
     Prompt effective =
-        new Prompt(request.promptText(), buildOptions(profile, request.availableTools()));
+        new Prompt(toSpringAiMessages(request), buildOptions(profile, request.availableTools()));
     long startedAt = System.currentTimeMillis();
     try {
       ChatResponse response = model.call(effective);
@@ -117,7 +126,7 @@ public class SpringAiProviderService implements com.yokeos.core.provider.Provide
     AssistantMessage output = response.getResult().getOutput();
     List<ToolCallRequest> toolCalls =
         output.getToolCalls().stream()
-            .map(call -> new ToolCallRequest(call.name(), call.arguments()))
+            .map(call -> new ToolCallRequest(call.id(), call.name(), call.arguments()))
             .toList();
     return new ProviderResponse(output.getText(), toolCalls);
   }
@@ -127,5 +136,46 @@ public class SpringAiProviderService implements com.yokeos.core.provider.Provide
       return null;
     }
     return response.getMetadata().getUsage();
+  }
+
+  /**
+   * 中性请求 → Spring AI 消息序列（31 节结构化回传）：系统段作 SystemMessage 首位，历史按角色翻译——user → UserMessage；assistant 连
+   * toolCalls 一起重建（配对键 id 不丢，27 节坑：带 tool call 的构造只经 builder）；tool → ToolResponseMessage（toolCallId
+   * 关联）。存量旧消息无 id（拉平时代）时降级为 user 文本兜底，信息不丢。
+   */
+  private static List<org.springframework.ai.chat.messages.Message> toSpringAiMessages(
+      ProviderRequest request) {
+    List<org.springframework.ai.chat.messages.Message> result = new ArrayList<>();
+    result.add(new SystemMessage(request.systemPrompt()));
+    for (com.yokeos.core.session.Message message : request.history()) {
+      switch (message.role()) {
+        case "assistant" -> {
+          List<AssistantMessage.ToolCall> calls =
+              message.toolCalls().stream()
+                  .map(
+                      call ->
+                          new AssistantMessage.ToolCall(
+                              call.id(), "function", call.name(), call.argumentsJson()))
+                  .toList();
+          result.add(
+              AssistantMessage.builder().content(message.content()).toolCalls(calls).build());
+        }
+        case "tool" -> {
+          if (message.toolCallId() == null) {
+            result.add(new UserMessage("tool[" + message.toolName() + "]: " + message.content()));
+          } else {
+            result.add(
+                ToolResponseMessage.builder()
+                    .responses(
+                        List.of(
+                            new ToolResponseMessage.ToolResponse(
+                                message.toolCallId(), message.toolName(), message.content())))
+                    .build());
+          }
+        }
+        default -> result.add(new UserMessage(message.content()));
+      }
+    }
+    return result;
   }
 }

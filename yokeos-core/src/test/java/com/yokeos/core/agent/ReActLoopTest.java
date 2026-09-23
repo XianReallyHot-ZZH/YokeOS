@@ -37,12 +37,13 @@ class ReActLoopTest {
   private final ReActLoop loop = new ReActLoop(promptBuilder, providerService, toolExecutor);
 
   private static final ToolCallRequest HTTP_GET =
-      new ToolCallRequest("http_get", "{\"url\":\"https://api.open-meteo.com\"}");
+      new ToolCallRequest("call-1", "http_get", "{\"url\":\"https://api.open-meteo.com\"}");
 
   @Test
   @DisplayName("无工具调用_一轮收尾零工具执行")
   void noToolCallFinishesInOneRound() {
-    when(promptBuilder.build(any(), any())).thenReturn(new ProviderRequest("p", List.of()));
+    when(promptBuilder.build(any(), any()))
+        .thenReturn(new ProviderRequest("p", List.of(), List.of()));
     when(providerService.chat(any(), any(), any()))
         .thenReturn(new ProviderResponse("直接答复", List.of()));
     Session session = new Session("s-1", "ops-agent");
@@ -57,7 +58,8 @@ class ReActLoopTest {
   @Test
   @DisplayName("有工具调用_执行回填后进下一轮")
   void withToolCallExecutesAndFeedsNextRound() {
-    when(promptBuilder.build(any(), any())).thenReturn(new ProviderRequest("p", List.of()));
+    when(promptBuilder.build(any(), any()))
+        .thenReturn(new ProviderRequest("p", List.of(), List.of()));
     when(providerService.chat(any(), any(), any()))
         .thenReturn(
             new ProviderResponse(null, List.of(HTTP_GET)),
@@ -74,13 +76,25 @@ class ReActLoopTest {
         session.messages().stream()
             .anyMatch(m -> "tool".equals(m.role()) && "20度晴".equals(m.content())),
         "工具结果回填进 Session（下一轮 prompt 的输入源）");
+    assertTrue(
+        session.messages().stream()
+            .anyMatch(
+                m ->
+                    "assistant".equals(m.role())
+                        && m.toolCalls().stream().anyMatch(c -> c == HTTP_GET)),
+        "31 节结构化回传：assistant 消息携带 toolCalls（含协议 id）");
+    assertTrue(
+        session.messages().stream()
+            .anyMatch(m -> "tool".equals(m.role()) && "call-1".equals(m.toolCallId())),
+        "31 节结构化回传：tool 结果带 toolCallId 与 assistant.toolCalls 配对");
   }
 
   @Test
   @DisplayName("一轮多个工具调用_逐个顺序执行")
   void multipleToolCallsExecutedSequentially() {
-    ToolCallRequest second = new ToolCallRequest("http_get", "{\"url\":\"https://b\"}");
-    when(promptBuilder.build(any(), any())).thenReturn(new ProviderRequest("p", List.of()));
+    ToolCallRequest second = new ToolCallRequest("call-2", "http_get", "{\"url\":\"https://b\"}");
+    when(promptBuilder.build(any(), any()))
+        .thenReturn(new ProviderRequest("p", List.of(), List.of()));
     when(providerService.chat(any(), any(), any()))
         .thenReturn(new ProviderResponse(null, List.of(HTTP_GET, second)))
         .thenReturn(new ProviderResponse("done", List.of()));
@@ -97,7 +111,8 @@ class ReActLoopTest {
   @Test
   @DisplayName("每轮响应与工具结果都累积进Session_转满轮数也全留痕")
   void everyRoundAccumulatesIntoSession() {
-    when(promptBuilder.build(any(), any())).thenReturn(new ProviderRequest("p", List.of()));
+    when(promptBuilder.build(any(), any()))
+        .thenReturn(new ProviderRequest("p", List.of(), List.of()));
     when(providerService.chat(any(), any(), any()))
         .thenReturn(new ProviderResponse(null, List.of(HTTP_GET))); // 永不收敛
     when(toolExecutor.execute(any(), any())).thenReturn(ToolResult.ok("data"));
@@ -116,7 +131,8 @@ class ReActLoopTest {
   @Test
   @DisplayName("模型一直要调工具_转满最大轮数强制停")
   void modelKeepsRequestingToolsForceStopAtMaxIterations() {
-    when(promptBuilder.build(any(), any())).thenReturn(new ProviderRequest("p", List.of()));
+    when(promptBuilder.build(any(), any()))
+        .thenReturn(new ProviderRequest("p", List.of(), List.of()));
     when(providerService.chat(any(), any(), any()))
         .thenReturn(new ProviderResponse(null, List.of(HTTP_GET)));
     when(toolExecutor.execute(any(), any())).thenReturn(ToolResult.ok("data"));
@@ -131,7 +147,8 @@ class ReActLoopTest {
   @Test
   @DisplayName("最大轮数按Agent配置生效_5轮即停")
   void maxIterationsOverrideFromProfileFiveRounds() {
-    when(promptBuilder.build(any(), any())).thenReturn(new ProviderRequest("p", List.of()));
+    when(promptBuilder.build(any(), any()))
+        .thenReturn(new ProviderRequest("p", List.of(), List.of()));
     when(providerService.chat(any(), any(), any()))
         .thenReturn(new ProviderResponse(null, List.of(HTTP_GET)));
     when(toolExecutor.execute(any(), any())).thenReturn(ToolResult.ok("data"));
@@ -146,7 +163,8 @@ class ReActLoopTest {
   @Test
   @DisplayName("响应既无文本也无工具调用_按空串收尾")
   void neitherTextNorToolCallsReturnsEmptyString() {
-    when(promptBuilder.build(any(), any())).thenReturn(new ProviderRequest("p", List.of()));
+    when(promptBuilder.build(any(), any()))
+        .thenReturn(new ProviderRequest("p", List.of(), List.of()));
     when(providerService.chat(any(), any(), any()))
         .thenReturn(new ProviderResponse(null, List.of()));
     Session session = new Session("s-1", "ops-agent");
@@ -159,7 +177,8 @@ class ReActLoopTest {
   @Test
   @DisplayName("工具执行失败_结果回填循环继续不中断")
   void toolFailureResultFedBackLoopContinues() {
-    when(promptBuilder.build(any(), any())).thenReturn(new ProviderRequest("p", List.of()));
+    when(promptBuilder.build(any(), any()))
+        .thenReturn(new ProviderRequest("p", List.of(), List.of()));
     when(providerService.chat(any(), any(), any()))
         .thenReturn(
             new ProviderResponse(null, List.of(HTTP_GET)),

@@ -34,7 +34,7 @@ class ToolExecutorTest {
   private final ToolExecutor executor = new ToolExecutor(Map.of(), auditor, 0L);
 
   private static final ToolCallRequest GET =
-      new ToolCallRequest("http_get", "{\"url\":\"https://a\"}");
+      new ToolCallRequest("call-a", "http_get", "{\"url\":\"https://a\"}");
 
   @Test
   @DisplayName("执行成功_审计落success为true")
@@ -119,7 +119,8 @@ class ToolExecutorTest {
   @Test
   @DisplayName("未注册工具名_失败结果加审计留痕不抛异常")
   void unknownToolNameFailingResultPlusAudit() {
-    ToolResult result = executor.execute("s-1", new ToolCallRequest("no_such_tool", "{}"));
+    ToolResult result =
+        executor.execute("s-1", new ToolCallRequest("call-x", "no_such_tool", "{}"));
 
     assertFalse(result.success());
     assertTrue(result.errorMessage().contains("no_such_tool"), "失败原因指名工具");
@@ -141,7 +142,8 @@ class ToolExecutorTest {
     ToolExecutor withTools =
         new ToolExecutor(Map.of("http_get", stubReturning(ToolResult.ok("ok"))), auditor, 0L);
 
-    ToolResult result = withTools.execute("s-1", new ToolCallRequest("http_get", "{not-json"));
+    ToolResult result =
+        withTools.execute("s-1", new ToolCallRequest("call-b", "http_get", "{not-json"));
 
     assertFalse(result.success());
     verify(auditor)

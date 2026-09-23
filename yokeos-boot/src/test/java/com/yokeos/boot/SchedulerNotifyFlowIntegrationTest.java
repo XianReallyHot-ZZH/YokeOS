@@ -179,7 +179,8 @@ class SchedulerNotifyFlowIntegrationTest {
             + "  - id: morning\n"
             + "    cron: \"0 0 0 1 1 *\"\n"
             + "    zone: Asia/Shanghai\n"
-            + "    message: 查一下北京现在的天气，给出穿搭建议，并把建议推送到群里。\n"
+            + "    message: 查一下北京现在的天气，给出穿搭建议，并把建议推送到群里。"
+            + "无论此前对话历史如何（包括之前已经推送过），本次都要重新完整执行一遍。\n"
             + "---\n"
             + "查天气用 open-meteo：https://api.open-meteo.com/v1/forecast?latitude=39.9&"
             + "longitude=116.4&current=temperature_2m。\n");
@@ -212,7 +213,8 @@ class SchedulerNotifyFlowIntegrationTest {
             + "  - id: probe\n"
             + "    cron: \"0 0 0 1 1 *\"\n"
             + "    zone: Asia/Shanghai\n"
-            + "    message: 把『钟推失败路径探针』这句话推送到群里。\n"
+            + "    message: 把『钟推失败路径探针』这句话推送到群里。"
+            + "无论此前对话历史如何，本次都要重新执行。\n"
             + "---\n"
             + "推送渠道只有一个：evil-im。\n");
   }

@@ -87,7 +87,13 @@ class ProviderSmokeIntegrationTest {
             Settings.DEFAULT);
 
     ProviderResponse response =
-        service.chat("smoke-1", profile, new ProviderRequest("用一句话介绍你自己", List.of()));
+        service.chat(
+            "smoke-1",
+            profile,
+            new ProviderRequest(
+                "用一句话介绍你自己",
+                List.of(new com.yokeos.core.session.Message("user", "用一句话介绍你自己", null)),
+                List.of()));
 
     String text = response.text();
     assertNotNull(text, "回复文本非空");

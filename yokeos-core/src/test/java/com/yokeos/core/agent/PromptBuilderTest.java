@@ -14,6 +14,7 @@ import com.yokeos.core.profile.Profile.Settings;
 import com.yokeos.core.provider.ProviderRequest;
 import com.yokeos.core.provider.ProviderResponse;
 import com.yokeos.core.provider.ToolCallRequest;
+import com.yokeos.core.session.Message;
 import com.yokeos.core.session.Session;
 import com.yokeos.core.tool.ToolResult;
 import com.yokeos.core.tool.YokeTool;
@@ -31,9 +32,9 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 
 /**
- * PromptBuilder 组装 harness（docs/class/017-react-loop.md 第四部分 + 022 第 22 节接线）：固定顺序、日期时间行（Clock 注入
- * 断言——不赌真实时间）、轮界截断（坑二：超 N 轮截、恰好 N 轮不截、工具结果跟住提问轮）、availableTools 只带 Profile 点名工具； 22 节新增——[2]
- * 长期记忆位接线（注入位置、历史不重复、每次组装现调）。截断用例经 Profile Settings 把 maxHistoryTurns 压到 2。
+ * PromptBuilder 组装 harness（docs/class/017-react-loop.md 第四部分 + 022 记忆位 + 031 结构化改造）： 系统段固定顺序（system
+ * prompt + 日期时间行 + 长期记忆位）、轮界截断（坑二）、availableTools 只带点名工具； 31 节起历史以结构化清单传递（不再拉平进文本）—— assistant 的
+ * toolCalls 与 tool 的 toolCallId 原样透传（复读方根因修复的回归守点）。截断用例经 Profile Settings 把 maxHistoryTurns 压到 2。
  */
 class PromptBuilderTest {
 
@@ -52,20 +53,23 @@ class PromptBuilderTest {
   @TempDir Path workspace;
 
   @Test
-  @DisplayName("拼接顺序_system带日期时间行在前历史在后")
+  @DisplayName("系统段顺序_system在前日期时间行居中记忆在后_历史独立成段")
   void sectionsInOrderSystemWithDatetimeThenHistory() throws IOException {
     PromptBuilder builder = builderWith(Map.of());
     Session session = new Session("s-1", "ops-agent");
     session.appendUser("第一句");
 
-    String text = builder.build(session, profileTools(List.of(), Settings.DEFAULT)).promptText();
+    ProviderRequest request = builder.build(session, profileTools(List.of(), Settings.DEFAULT));
 
+    String text = request.systemPrompt();
     int system = text.indexOf("你是运维小欧的人格底座");
     int datetime = text.indexOf(EXPECTED_DATETIME);
-    int history = text.indexOf("第一句");
     assertTrue(system >= 0, "system prompt 在场");
     assertTrue(datetime > system, "日期时间行在 system prompt 末尾（模型自己不知道今天几号）");
-    assertTrue(history > datetime, "对话历史在记忆位（恒空）之后");
+    assertFalse(text.contains("第一句"), "31 节结构化改造：历史不进系统段文本");
+    assertEquals(1, request.history().size(), "历史以结构化清单独立传递");
+    assertEquals("user", request.history().get(0).role());
+    assertEquals("第一句", request.history().get(0).content());
   }
 
   @Test
@@ -78,11 +82,19 @@ class PromptBuilderTest {
       session.appendAssistant(new ProviderResponse("第" + i + "轮回答", List.of()));
     }
 
-    String text = builder.build(session, profileTools(List.of(), TWO_TURNS)).promptText();
+    ProviderRequest request = builder.build(session, profileTools(List.of(), TWO_TURNS));
 
-    assertFalse(text.contains("第1轮提问"), "坑二回归：超 maxHistoryTurns=2 的整轮被截");
-    assertFalse(text.contains("第1轮回答"), "轮内消息同进同出");
-    assertTrue(text.contains("第2轮提问") && text.contains("第3轮提问"), "最近 2 轮保留");
+    assertFalse(
+        request.history().stream().anyMatch(m -> m.content().contains("第1轮提问")),
+        "坑二回归：超 maxHistoryTurns=2 的整轮被截");
+    assertFalse(
+        request.history().stream().anyMatch(m -> m.content().contains("第1轮回答")), "轮内消息同进同出");
+    assertTrue(
+        request.history().stream().anyMatch(m -> m.content().contains("第2轮提问")),
+        "最近 2 轮保留（第 2 轮在场）");
+    assertTrue(
+        request.history().stream().anyMatch(m -> m.content().contains("第3轮提问")),
+        "最近 2 轮保留（第 3 轮在场）");
   }
 
   @Test
@@ -95,9 +107,9 @@ class PromptBuilderTest {
     session.appendUser("第2轮提问");
     session.appendAssistant(new ProviderResponse("答2", List.of()));
 
-    String text = builder.build(session, profileTools(List.of(), TWO_TURNS)).promptText();
+    ProviderRequest request = builder.build(session, profileTools(List.of(), TWO_TURNS));
 
-    assertTrue(text.contains("第1轮提问") && text.contains("第2轮提问"), "恰好 2 轮全保留");
+    assertEquals(4, request.history().size(), "恰好 2 轮（4 条消息）全保留");
   }
 
   @Test
@@ -107,9 +119,9 @@ class PromptBuilderTest {
     Session session = new Session("s-1", "ops-agent");
     session.appendUser("问");
 
-    String text = builder.build(session, profileTools(List.of(), Settings.DEFAULT)).promptText();
+    ProviderRequest request = builder.build(session, profileTools(List.of(), Settings.DEFAULT));
 
-    assertTrue(text.contains(EXPECTED_DATETIME), "期望值由固定时钟算出，不解析实现格式反推");
+    assertTrue(request.systemPrompt().contains(EXPECTED_DATETIME), "期望值由固定时钟算出，不解析实现格式反推");
   }
 
   @Test
@@ -135,37 +147,66 @@ class PromptBuilderTest {
     // 第 1 轮（将被截掉）：user + assistant(toolCall) + tool 结果
     session.appendUser("第1轮提问");
     session.appendAssistant(
-        new ProviderResponse(null, List.of(new ToolCallRequest("http_get", "{}"))));
-    session.appendToolResult("http_get", ToolResult.ok("第1轮工具结果"));
+        new ProviderResponse(null, List.of(new ToolCallRequest("call-9", "http_get", "{}"))));
+    session.appendToolResult(
+        new ToolCallRequest("call-9", "http_get", "{}"), ToolResult.ok("第1轮工具结果"));
     // 第 2、3 轮（保留）
     session.appendUser("第2轮提问");
     session.appendAssistant(new ProviderResponse("答2", List.of()));
     session.appendUser("第3轮提问");
     session.appendAssistant(new ProviderResponse("答3", List.of()));
 
-    String text = builder.build(session, profileTools(List.of(), TWO_TURNS)).promptText();
+    ProviderRequest request = builder.build(session, profileTools(List.of(), TWO_TURNS));
 
-    assertFalse(text.contains("第1轮工具结果"), "整轮截断——工具结果不孤悬（不撕裂）");
-    assertTrue(text.contains("第2轮提问"), "边界正确：最近 2 轮完整保留");
+    assertFalse(
+        request.history().stream().anyMatch(m -> m.content().contains("第1轮工具结果")),
+        "整轮截断——工具结果不孤悬（不撕裂）");
+    assertTrue(
+        request.history().stream().anyMatch(m -> m.content().contains("第2轮提问")), "边界正确：最近 2 轮完整保留");
   }
 
   @Test
-  @DisplayName("长期记忆注入在系统提示与对话历史之间")
+  @DisplayName("结构化历史透传_assistant带toolCalls_tool带配对id")
+  void structuredHistoryPassesToolCallPairing() throws IOException {
+    PromptBuilder builder = builderWith(Map.of());
+    Session session = new Session("s-1", "ops-agent");
+    ToolCallRequest call = new ToolCallRequest("call-7", "http_get", "{\"url\":\"https://a\"}");
+    session.appendUser("取数");
+    session.appendAssistant(new ProviderResponse(null, List.of(call)));
+    session.appendToolResult(call, ToolResult.ok("结果体"));
+
+    ProviderRequest request = builder.build(session, profileTools(List.of(), Settings.DEFAULT));
+
+    Message assistant =
+        request.history().stream()
+            .filter(m -> "assistant".equals(m.role()))
+            .findFirst()
+            .orElseThrow();
+    assertEquals(1, assistant.toolCalls().size(), "assistant 消息携带 toolCalls（31 节结构化回传）");
+    assertEquals("call-7", assistant.toolCalls().get(0).id(), "协议配对 id 原样透传");
+    Message tool =
+        request.history().stream().filter(m -> "tool".equals(m.role())).findFirst().orElseThrow();
+    assertEquals("call-7", tool.toolCallId(), "tool 结果带 toolCallId 与 assistant.toolCalls 配对");
+    assertEquals("http_get", tool.toolName());
+  }
+
+  @Test
+  @DisplayName("长期记忆注入在系统段_历史独立不混入")
   void memoryInjectedBetweenSystemAndHistory() throws IOException {
     PromptBuilder builder = builderWith(Map.of(), "## 核心记忆\n- [2026-09-18] 用户偏好中文交流");
     Session session = new Session("s-1", "ops-agent");
     session.appendUser("今天天气如何");
 
-    String text = builder.build(session, profileTools(List.of(), Settings.DEFAULT)).promptText();
+    ProviderRequest request = builder.build(session, profileTools(List.of(), Settings.DEFAULT));
 
+    String text = request.systemPrompt();
     int system = text.indexOf("你是运维小欧的人格底座");
     assertTrue(system >= 0, "system prompt 在场");
     int datetime = text.indexOf(EXPECTED_DATETIME);
     assertTrue(datetime > system, "日期时间行在 system prompt 之后");
     int memory = text.indexOf("用户偏好中文交流");
     assertTrue(memory > datetime, "长期记忆在日期时间行之后（技 §4.2 [2] 位，17 节恒空位兑现）");
-    int history = text.indexOf("今天天气如何");
-    assertTrue(history > memory, "对话历史在记忆位之后——system → 时间行 → 记忆 → 历史的固定顺序");
+    assertEquals("今天天气如何", request.history().get(0).content(), "对话历史独立成段（结构化清单首位）");
   }
 
   @Test
@@ -175,10 +216,12 @@ class PromptBuilderTest {
     Session session = new Session("s-1", "ops-agent");
     session.appendUser("只出现一次的提问");
 
-    String text = builder.build(session, profileTools(List.of(), Settings.DEFAULT)).promptText();
+    ProviderRequest request = builder.build(session, profileTools(List.of(), Settings.DEFAULT));
 
-    int occurrences = text.split("只出现一次的提问", -1).length - 1;
-    assertEquals(1, occurrences, "坑七回归：记忆注入后历史恰好出现一次（buildContext 只出长期记忆）");
+    long occurrences =
+        request.history().stream().filter(m -> "只出现一次的提问".equals(m.content())).count();
+    assertEquals(1, occurrences, "坑七回归：历史段恰好一条（buildContext 只出长期记忆）");
+    assertFalse(request.systemPrompt().contains("只出现一次的提问"), "历史不混入系统段");
   }
 
   @Test

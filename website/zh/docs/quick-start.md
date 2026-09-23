@@ -1,25 +1,28 @@
 # 快速开始
 
-> **第一阶段进行中，随实现回写。** 本页描述的是从文档链蒸馏的**目标用法**——它随打包发布的运行时一起在第一阶段末尾落地。今天可用的部分：整套[立项文档链](https://github.com/XianReallyHot-ZZH/YokeOS/tree/master/docs)与每单元正在累积的验收证据。
+> **第一阶段已交付（v0.1.0）。** 运行时内核已上线：两个日跑 Demo Agent 在真实环境按点自跑，每节课都有可追溯的规格与验收报告（[`specs/`](https://github.com/XianReallyHot-ZZH/YokeOS/tree/master/specs)），Demo 资产在 [`examples/demo/`](https://github.com/XianReallyHot-ZZH/YokeOS/tree/master/examples/demo)。本页描述的是真实用法。
 
-## 目标用法：五分钟一个业务 Agent
+## 五分钟一个业务 Agent
 
-YokeOS 的设计目标是：初始化工作区、写一份 `AGENT.md`、开始对话。第一阶段完成后，完整链路是这样的：
+YokeOS 的设计目标是：初始化工作区、写一份 `AGENT.md`、开始对话。用打包发布出来的运行时，完整链路是这样的：
 
 ```bash
+# 0 · 拿到 fat JAR（一个文件：全部依赖 + 配置 + Web 管理台）。
+#    alias yokeos="java -jar yokeos-boot-0.1.0.jar" 后，下面每条命令都可用 `yokeos …` 代替
+
 # 1 · 初始化工作区（幂等：已存在的目录和文件一律不覆盖）
-yokeos init
+java -jar yokeos-boot-0.1.0.jar init
 
 # 2 · 创建一个 Agent 目录（生成最小 AGENT.md 模板）
-yokeos profile create ops-agent
+java -jar yokeos-boot-0.1.0.jar profile create ops-agent
 
 # 3 · 编辑 AGENT.md：frontmatter 配 Provider、工具、通知、定时；正文写任务指令
 
 # 4 · 跟它对话
-yokeos chat --profile ops-agent
+java -jar yokeos-boot-0.1.0.jar chat --profile ops-agent
 
 # 或把能力暴露成 HTTP 服务
-yokeos serve --port 8080        # REST API + Web 管理台
+java -jar yokeos-boot-0.1.0.jar serve --port 8080   # REST API + Web 管理台 + 定时任务随行
 ```
 
 **前置条件**：Java 21，一个 LLM API key（DeepSeek / Qwen / Kimi / Ollama 等）。
@@ -46,7 +49,7 @@ yokeos serve --port 8080        # REST API + Web 管理台
 
 ## 两个日跑 Demo：第一阶段的验收
 
-早期按「一个 Demo 验证一个能力」拆过五个 Demo，但真实场景从来不是单一能力独立跑的——一个能打动人的 Agent，一定是多个能力叠在一起、自己到点跑起来的。最终收敛成两个**每日自动运行**的端到端 Demo，加起来覆盖全部六个核心能力加定时任务这个第三触发源：
+早期按「一个 Demo 验证一个能力」拆过五个 Demo，但真实场景从来不是单一能力独立跑的——一个能打动人的 Agent，一定是多个能力叠在一起、自己到点跑起来的。最终收敛成两个**每日自动运行**的端到端 Demo，加起来覆盖全部六个核心能力加定时任务这个第三触发源——两个都已上线，资产在 `examples/demo/`，审计对账证据见末节验收报告：
 
 ### Demo 一：每日天气（光杆 AGENT.md）
 
@@ -74,7 +77,7 @@ yokeos serve --port 8080        # REST API + Web 管理台
 
 ## 里程碑目标清单
 
-第一阶段按参照实现公开构建过程的课程节序组织（第 16→31 节），**节奏自定、顺序不乱**，不设日历时间盒。每节以「可演示成果」为完成判据：
+第一阶段按参照实现公开构建过程的课程节序组织（第 16→31 节），**节奏自定、顺序不乱**，不设日历时间盒。每节以「可演示成果」为完成判据——**16 节全部交付（2026-09，v0.1.0）**，每节规格与验收报告落 `specs/`：
 
 | 节 | 课型 | 能力主线 | 可演示成果 |
 |----|------|---------|-----------|

@@ -32,6 +32,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatModel;
@@ -53,7 +54,7 @@ class SpringAiProviderServiceTest {
       new SpringAiProviderService(
           Map.of("deepseek", deepseek, "kimi", kimi), new ToolSchemaAdapter(), auditor);
 
-  private final ProviderRequest request = new ProviderRequest("今天北京天气如何？", List.of());
+  private final ProviderRequest request = new ProviderRequest("你是运维助手。", List.of(), List.of());
 
   @Test
   @DisplayName("按名路由_两个provider不串台")
@@ -80,7 +81,10 @@ class SpringAiProviderServiceTest {
   @Test
   @DisplayName("带工具schema调用_请求里关闭了自动执行")
   void callWithToolSchemaDisablesAutoExecution() {
-    service.chat("s-1", profileUsing("deepseek"), new ProviderRequest("q", List.of(httpGetTool())));
+    service.chat(
+        "s-1",
+        profileUsing("deepseek"),
+        new ProviderRequest("q", List.of(), List.of(httpGetTool())));
 
     var captor = ArgumentCaptor.forClass(org.springframework.ai.chat.prompt.Prompt.class);
     verify(deepseek).call(captor.capture());
@@ -170,10 +174,10 @@ class SpringAiProviderServiceTest {
     assertEquals(2, out.toolCalls().size(), "两个调用请求一个不丢");
     assertEquals(
         List.of(
-            new ToolCallRequest("http_get", "{\"url\":\"https://a\"}"),
-            new ToolCallRequest("http_get", "{\"url\":\"https://b\"}")),
+            new ToolCallRequest("call-1", "http_get", "{\"url\":\"https://a\"}"),
+            new ToolCallRequest("call-2", "http_get", "{\"url\":\"https://b\"}")),
         out.toolCalls(),
-        "name 与 argumentsJson 逐项映射");
+        "id/name/argumentsJson 逐项映射（31 节：协议配对 id 不丢）");
   }
 
   @Test
@@ -206,6 +210,67 @@ class SpringAiProviderServiceTest {
 
     assertFalse(out.hasToolCalls(), "判停依据：无工具调用请求即收尾");
     assertTrue(out.toolCalls().isEmpty());
+  }
+
+  @Test
+  @DisplayName("结构化消息组装_系统段首位_assistant带toolCalls_tool按id配对")
+  void structuredMessagesSystemFirstToolPairingById() {
+    ChatResponse resp = mock(ChatResponse.class);
+    when(resp.getResult()).thenReturn(new Generation(new AssistantMessage("ok")));
+    when(resp.getMetadata()).thenReturn(mock(ChatResponseMetadata.class));
+    when(deepseek.call(any(org.springframework.ai.chat.prompt.Prompt.class))).thenReturn(resp);
+    ToolCallRequest call = new ToolCallRequest("call-31", "http_get", "{\"url\":\"https://a\"}");
+    List<com.yokeos.core.session.Message> history =
+        List.of(
+            new com.yokeos.core.session.Message("user", "查天气", null),
+            new com.yokeos.core.session.Message("assistant", "我来查", null, List.of(call), null),
+            new com.yokeos.core.session.Message("tool", "20度晴", "http_get", List.of(), "call-31"));
+
+    service.chat("s-1", profileUsing("deepseek"), new ProviderRequest("你是助手。", history, List.of()));
+
+    var captor = ArgumentCaptor.forClass(org.springframework.ai.chat.prompt.Prompt.class);
+    verify(deepseek).call(captor.capture());
+    var messages = captor.getValue().getInstructions();
+    assertEquals(4, messages.size(), "系统段 + 三条历史");
+    assertEquals(
+        org.springframework.ai.chat.messages.MessageType.SYSTEM,
+        messages.get(0).getMessageType(),
+        "31 节回归：系统段作 SystemMessage 首位（不再拉平成单条 user）");
+    assertEquals("你是助手。", messages.get(0).getText());
+    assertEquals(
+        org.springframework.ai.chat.messages.MessageType.USER, messages.get(1).getMessageType());
+    AssistantMessage assistant = assertInstanceOf(AssistantMessage.class, messages.get(2));
+    assertEquals(1, assistant.getToolCalls().size(), "assistant 连 toolCalls 重建");
+    assertEquals("call-31", assistant.getToolCalls().get(0).id());
+    ToolResponseMessage tool = assertInstanceOf(ToolResponseMessage.class, messages.get(3));
+    assertEquals("call-31", tool.getResponses().get(0).id(), "tool 结果按 toolCallId 配对回传");
+    assertEquals("http_get", tool.getResponses().get(0).name());
+  }
+
+  @Test
+  @DisplayName("存量旧消息无id_降级为user文本兜底不丢信息")
+  void legacyToolMessageWithoutIdDegradesToUserText() {
+    ChatResponse resp = mock(ChatResponse.class);
+    when(resp.getResult()).thenReturn(new Generation(new AssistantMessage("ok")));
+    when(resp.getMetadata()).thenReturn(mock(ChatResponseMetadata.class));
+    when(deepseek.call(any(org.springframework.ai.chat.prompt.Prompt.class))).thenReturn(resp);
+    List<com.yokeos.core.session.Message> legacy =
+        List.of(
+            new com.yokeos.core.session.Message("user", "查天气", null),
+            new com.yokeos.core.session.Message("assistant", "我来查", null),
+            new com.yokeos.core.session.Message("tool", "20度晴", "http_get")); // 三参兼容形态=无 id
+
+    service.chat("s-1", profileUsing("deepseek"), new ProviderRequest("你是助手。", legacy, List.of()));
+
+    var captor = ArgumentCaptor.forClass(org.springframework.ai.chat.prompt.Prompt.class);
+    verify(deepseek).call(captor.capture());
+    var messages = captor.getValue().getInstructions();
+    assertEquals(
+        org.springframework.ai.chat.messages.MessageType.USER,
+        messages.get(3).getMessageType(),
+        "无 id 的存量 tool 消息降级为 user 文本");
+    assertTrue(messages.get(3).getText().contains("20度晴"), "信息不丢");
+    assertTrue(messages.get(3).getText().contains("http_get"), "工具名保留");
   }
 
   private static Profile profileUsing(String providerName) {

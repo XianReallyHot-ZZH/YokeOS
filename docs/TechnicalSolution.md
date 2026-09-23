@@ -173,12 +173,12 @@ ReAct 是 **Reason** 加 **Act** 的简称。算法步骤：
 
 **`ReActLoop` 模块。** Agent 的核心循环引擎。输入 Session 和用户消息，输出最终响应。内部维护当前迭代次数，调用 `ProviderService` 调 LLM，调用 `ToolExecutor` 执行 Tool，把每轮的响应和工具结果累积到 Session 对话历史。核心循环逻辑精简，约数十行 Java，不依赖 Spring AI 的 Agent 抽象，让实现者完整掌握 Agent 的工作机制。
 
-**`PromptBuilder` 模块。** 组装每轮 LLM 调用的 Prompt。按四部分顺序拼接：
+**`PromptBuilder` 模块。** 组装每轮 LLM 调用的 Prompt。系统段按固定顺序拼文本，对话历史以**结构化消息清单**传递（31 节结构化回传：assistant 的 toolCalls 与 tool 的 toolCallId 原样保留，provider 侧翻译成协议原生消息——`SystemMessage` 首位 + `UserMessage` / `AssistantMessage(toolCalls)` / `ToolResponseMessage(toolCallId)`；此前历史被拉平成单条 user 文本，模型偶发把每轮当任务开头复读同一工具调用，31 节钟推日报连推 8 版的实证后修正）：
 
 1. system prompt（`AGENT.md` 正文（这个 Agent 的指令）加 Bootstrap 文件加引用到的 Skill 正文，由 `ContextLoader` 提供；末尾附当前日期时间——LLM 自己不知道今天几号，定时场景的"今天"全靠这一行）
-2. Memory 注入（会话历史加长期记忆，由 `MemoryService` 提供）
-3. 对话历史（按 `maxHistoryTurns` 截断后的 Session messages）
-4. 当前 Profile 可用的 Tool 列表（按 Function Calling 格式）
+2. Memory 注入（长期记忆，由 `MemoryService` 提供，拼进系统段）
+3. 对话历史（按 `maxHistoryTurns` 截断后的 Session messages，结构化清单原样传递）
+4. 当前 Profile 可用的 Tool 列表（按 Function Calling 格式，经 ProviderRequest 携带）
 
 **`ToolExecutor` 模块。** 执行 LLM 返回的 Tool 调用请求。从 `ToolRegistry` 找到对应 Tool，做 Sandbox 检查，执行 Tool，把结果包装成 `ToolResult` 返回给 ReAct 循环，并写入 `tool_invocations` 表。失败时按可重试策略返回错误信息，默认指数退避最多重试三次（对齐需求文档 8.2）。
 
