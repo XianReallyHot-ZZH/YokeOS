@@ -247,6 +247,7 @@ yokeos provider list / tool list / session list
 | macOS 上写子目录内文件**不触发**父目录级 WatchService 事件 | 「目录 CREATE 先到、AGENT.md 后落盘，靠后续事件二次注册收敛」的假设在 macOS 不成立——首次注册失败 WARN 后**永不收敛**（参照回写 5.2.3 同结论，其钉版树无真丢目录测试故未暴露；30 节集成测试实证） | Watcher 对 CREATE/MODIFY 注册失败走**有界延迟重试**（5×500ms，经执行器排队）主动收敛，耗尽才 WARN 放弃 |
 | 集成测试用 mock provider 但 AGENT.md 不写 `model:` 行 | `MockChatModel` 响应无 model 元数据 → `llm_calls.model` NOT NULL 约束炸 → invoke 500（30 节实证） | mock Agent 的 frontmatter 必须写 `model:` 行（任意值）——审计列非空是 day one 纪律的硬约束 |
 | 测试方法名数字段后缀被 Checkstyle `MethodName` 拦 | `xxx_400`/`xxx_404` 违段形态（下划线后跟数字）；字母段 `_notFound` 放行——19/28 节坑的细化（30 节再实证） | 后缀语义用英文词（`BadRequest`/`NotFound`），中文原语义进 `@DisplayName` |
+| create 路径漏 name 一致性校验 → 幽灵 Agent | 草稿 frontmatter name（模型起，常为中文）≠ create 的 name 参数时：注册键取 profile.name()、目录锚 name 参数——**错位上线**，列表可见但「查看/编辑」读 AGENT.md 400（30 节 IDEA 真跑实证）；E2E 测试的「人在环模拟」替用户改写了草稿 name，把真实路径掩盖 | create 与 update 同款加 `parse` 前置（name 不一致 400 零写入）+ 前端创建时自动把草稿 name 行改写为用户填的名字（防线 + 体验双层） |
 
 ---
 

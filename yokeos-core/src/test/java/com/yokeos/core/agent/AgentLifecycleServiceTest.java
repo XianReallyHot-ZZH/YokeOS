@@ -172,6 +172,26 @@ class AgentLifecycleServiceTest {
   }
 
   @Test
+  @DisplayName("create 草稿 name 与 name 参数不一致 → 400 零写入（30 节真跑实证：防幽灵 Agent）")
+  void createNameMismatchRejectedBeforeWrite() {
+    when(profileRegistry.exists("outfit-demo")).thenReturn(false);
+    org.mockito.Mockito.doThrow(
+            new IllegalArgumentException(
+                "AGENT.md frontmatter 的 name [晨间激励语助手] 与目标名 [outfit-demo] 不一致"))
+        .when(agentLoader)
+        .parse(any(), any(), any());
+
+    IllegalArgumentException thrown =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> lifecycle.create("outfit-demo", "---\nname: 晨间激励语助手\n---\n正文"));
+
+    assertTrue(thrown.getMessage().contains("不一致"), "可读原因引导统一后再提交");
+    verify(agentStore, never()).write(any(), any()); // 零写入
+    verify(profileRegistry, never()).register(any()); // 幽灵 Agent 不得上线
+  }
+
+  @Test
   @DisplayName("删除必须先停定时_再动索引和目录（坑二：顺序反了窗口期 cron 空转）")
   void deleteUnregistersTimerBeforeTouchingRegistryAndDir() {
     Profile profile = profileOf("demo");

@@ -79,9 +79,12 @@ async function createAgent() {
   creating.value = true
   createError.value = ''
   try {
+    // 草稿 frontmatter 的 name 自动对齐为用户填的名字（模型起的 name 常与目标名不一致——
+    // 注册键锚 frontmatter name、目录锚 name 参数，错位即「列表可见但读不到文件」的幽灵 Agent）
+    const canonical = draft.value.replace(/^name:.*$/m, `name: ${newName.value.trim()}`)
     await envelope('/api/v1/agents', {
       method: 'POST',
-      body: JSON.stringify({ name: newName.value.trim(), agentMarkdown: draft.value }),
+      body: JSON.stringify({ name: newName.value.trim(), agentMarkdown: canonical }),
     })
     showCreate.value = false
     sentence.value = ''

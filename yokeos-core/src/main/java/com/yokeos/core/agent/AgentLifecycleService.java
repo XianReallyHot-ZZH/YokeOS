@@ -171,6 +171,9 @@ public class AgentLifecycleService {
     if (profileRegistry.exists(name)) {
       throw new IllegalArgumentException("Agent 已存在: " + name);
     }
+    // frontmatter name 与 name 参数必须一致（analyze H1 补全）：注册键取 profile.name() 而目录/归档/注销都锚
+    // name 参数——错位即「列表可见但读不到 AGENT.md」的幽灵 Agent（30 节真跑实证：草稿 name 是模型起的中文名）
+    agentLoader.parse(agentMarkdown, name, knownProviderNames);
     Path agentDir = agentStore.write(name, agentMarkdown);
     try {
       return register(agentDir);
