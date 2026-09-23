@@ -1,6 +1,7 @@
 package com.yokeos.core.session;
 
 import com.yokeos.core.provider.ProviderResponse;
+import com.yokeos.core.provider.ToolCallRequest;
 import com.yokeos.core.tool.ToolResult;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,18 +61,21 @@ public final class Session {
   }
 
   /**
-   * 追加模型响应（先累积再判停——转满轮数的那几轮也全留痕）。
+   * 追加模型响应（先累积再判停——转满轮数的那几轮也全留痕）。31 节起连 toolCalls 一起存——结构化回传的配对源。
    *
    * @param response 本轮模型响应；text 为 null 按空串（既无文本也无工具请求的收尾边界）
    */
   public void appendAssistant(ProviderResponse response) {
     String content = response.text() == null ? "" : response.text();
-    messages.add(new Message("assistant", content, null));
+    messages.add(new Message("assistant", content, null, response.toolCalls(), null));
   }
 
-  /** 追加工具执行结果：成功存 content、失败存错误描述——成败都进历史，模型下一轮可见失败原因。 */
-  public void appendToolResult(String toolName, ToolResult result) {
+  /**
+   * 追加工具执行结果：成功存 content、失败存错误描述——成败都进历史，模型下一轮可见失败原因。 31 节起带 toolCallId（与 assistant.toolCalls
+   * 配对，协议层 ToolResponseMessage 的关联键）。
+   */
+  public void appendToolResult(ToolCallRequest call, ToolResult result) {
     String content = result.success() ? result.content() : result.errorMessage();
-    messages.add(new Message("tool", content, toolName));
+    messages.add(new Message("tool", content, call.name(), List.of(), call.id()));
   }
 }

@@ -312,7 +312,12 @@ class HumanTriggerFlowIntegrationTest {
             com.yokeos.core.profile.Profile.Settings.DEFAULT);
     try {
       provider.chat(
-          "it-fail-27", profile, new com.yokeos.core.provider.ProviderRequest("ping", List.of()));
+          "it-fail-27",
+          profile,
+          new com.yokeos.core.provider.ProviderRequest(
+              "ping",
+              List.of(new com.yokeos.core.session.Message("user", "ping", null)),
+              List.of()));
       throw new AssertionError("错 key 必须抛异常");
     } catch (RuntimeException expected) {
       // 401 家族异常（类型不锚死，26 节已钉 503 映射；本用例锚审计）

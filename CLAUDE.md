@@ -129,16 +129,18 @@ yokeos/
 ```
 用户消息（CLI / REST / 定时三入口 → 同一个 AgentService.process）
   → 追加到 Session 对话历史
-  → PromptBuilder 组装 Prompt（固定顺序）：
-      [1] system prompt（AGENT.md 正文 + Bootstrap + 引用 Skill 正文；末尾附当前日期时间）
-      [2] Memory（会话历史 + 长期记忆）
-      [3] 对话历史（按 max_history_turns 截断）
-      [4] 可用 Tool 列表（Function Calling 格式）
-  → ProviderService 调 LLM（写 llm_calls）
+  → PromptBuilder 组装 Prompt（系统段文本 + 结构化历史，31 节结构化回传）：
+      [1] system prompt（AGENT.md 正文 + Bootstrap + 引用 Skill 正文 + 末尾日期时间 + [2] 长期记忆）
+      [3] 对话历史（按 max_history_turns 截断，结构化消息清单原样传递——
+          assistant 带 toolCalls（含协议 id）、tool 带 toolCallId 配对；
+          provider 侧翻译成 SystemMessage/UserMessage/AssistantMessage/ToolResponseMessage，
+          不再拉平成单条 user 文本——拉平形态模型偶发复读同一工具调用，31 节实证修正）
+      [4] 可用 Tool 列表（Function Calling 格式，经 ProviderRequest 携带）
+  → ProviderService 调 LLM（写 llm_calls，响应的 tool call 保留协议 id）
   → [无 Tool 调用] → 返回最终响应
   → [有 Tool 调用] → ToolExecutor：
       Sandbox.enforce 校验 → 执行（内置进程内 / MCP 转发）→ 写 tool_invocations
-      → 结果追加进对话历史 → 回到组装 Prompt（默认最多 10 轮）
+      → 结果按 toolCallId 配对追加进对话历史 → 回到组装 Prompt（默认最多 10 轮）
 ```
 
 钟推（定时触发）落 Session 时 channel 与 user 固定为 `scheduler`，与人推复用同一条链路，不为定时新设概念。上下文超限简单截断（保留 system prompt + 最近 N 轮）。
@@ -248,6 +250,9 @@ yokeos provider list / tool list / session list
 | 集成测试用 mock provider 但 AGENT.md 不写 `model:` 行 | `MockChatModel` 响应无 model 元数据 → `llm_calls.model` NOT NULL 约束炸 → invoke 500（30 节实证） | mock Agent 的 frontmatter 必须写 `model:` 行（任意值）——审计列非空是 day one 纪律的硬约束 |
 | 测试方法名数字段后缀被 Checkstyle `MethodName` 拦 | `xxx_400`/`xxx_404` 违段形态（下划线后跟数字）；字母段 `_notFound` 放行——19/28 节坑的细化（30 节再实证） | 后缀语义用英文词（`BadRequest`/`NotFound`），中文原语义进 `@DisplayName` |
 | create 路径漏 name 一致性校验 → 幽灵 Agent | 草稿 frontmatter name（模型起，常为中文）≠ create 的 name 参数时：注册键取 profile.name()、目录锚 name 参数——**错位上线**，列表可见但「查看/编辑」读 AGENT.md 400（30 节 IDEA 真跑实证）；E2E 测试的「人在环模拟」替用户改写了草稿 name，把真实路径掩盖 | create 与 update 同款加 `parse` 前置（name 不一致 400 零写入）+ 前端创建时自动把草稿 name 行改写为用户填的名字（防线 + 体验双层） |
+| MCP 工具不进 frontmatter `tools:` 点名 → 模型看不见 | `PromptBuilder.availableTools` 只带点名工具——MCP server 的工具在全局注册表（`tool list`/`/api/v1/tools` 可见）但 frontmatter 不点名时**模型侧 schema 里根本没有它**；31 节 Demo 二曾因此 http_get 兜底连调 29 次、`fetch_tech_news` 零调用（19 节坑的 MCP 变体，REST 工具清单显示全局注册表误导人） | 用到哪个 MCP 工具就在 `tools:` 逐个点名（31 节实证）；对账时以模型真调到为准，不以注册表可见为准 |
+| MCP Python SDK 2.x 把 `FastMCP` 改名 `MCPServer` | `pip install mcp` 默认装 2.x——`from mcp.server.fastmcp import FastMCP` 直接 `ModuleNotFoundError`，stdio server 起不来（MCP 初始化失败被 WARN 跳过，Demo 哑） | 钉 `"mcp<2"`（1.x API）；或按 2.x 迁移写法改 import——写前查官方迁移指南（31 节实证） |
+| 会话历史拉平成单条 user 文本 → 模型复读同一工具调用 | `new Prompt(promptText, options)` 字节码即 `new UserMessage(text)`——协议视角**每轮都是第一轮**（无 assistant.tool_calls 轮、无 tool 角色配对），模型按「任务开头」先验重发例程第一步：同 prompt 时稳时不稳（digest 人推 2 次复读第 3 次收敛、钟推 8 连 notify 推 8 版日报；29 节线性小结果任务恰好次次读文本掩盖） | 31 节结构化回传：`ProviderRequest(systemPrompt, history, tools)` + `Message` 补 `toolCalls`/`toolCallId`，provider 侧翻 `SystemMessage`/`AssistantMessage(toolCalls)`/`ToolResponseMessage(id)`；存量无 id 的 tool 消息降级 user 文本兜底；`MockChatModel` 判轮随形态升级（看消息序列最后一条是谁） |
 
 ---
 

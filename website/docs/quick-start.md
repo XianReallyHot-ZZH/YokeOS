@@ -1,26 +1,29 @@
 # Quick Start
 
-> **Phase 1 in progress — updated as the implementation lands.** This page describes the **target usage** distilled from the document chain; it goes live together with the packaged runtime at the end of the Phase-1 sequence. Usable today: the full [initiation document chain](https://github.com/XianReallyHot-ZZH/YokeOS/tree/master/docs) and the acceptance evidence accumulating per unit.
+> **Phase 1 delivered (v0.1.0).** The runtime kernel is live: two daily demo agents run on schedule in a real environment, and every lesson has a traceable spec and acceptance report under [`specs/`](https://github.com/XianReallyHot-ZZH/YokeOS/tree/master/specs). Demo assets live in [`examples/demo/`](https://github.com/XianReallyHot-ZZH/YokeOS/tree/master/examples/demo). This page now describes real usage.
 
-## Target usage: a business Agent in five minutes
+## A business Agent in five minutes
 
-The design goal: initialize a workspace, write one `AGENT.md`, start chatting. Once Phase 1 completes, the full loop looks like this:
+The design goal: initialize a workspace, write one `AGENT.md`, start chatting. With the packaged runtime it looks like this:
 
 ```bash
+# 0 · Get the fat JAR (one file: all dependencies, config, and the web console).
+#    alias yokeos="java -jar yokeos-boot-0.1.0.jar" turns every command below into `yokeos …`
+
 # 1 · Initialize the workspace (idempotent: never overwrites what exists)
-yokeos init
+java -jar yokeos-boot-0.1.0.jar init
 
 # 2 · Create an Agent directory (generates a minimal AGENT.md template)
-yokeos profile create ops-agent
+java -jar yokeos-boot-0.1.0.jar profile create ops-agent
 
 # 3 · Edit AGENT.md: configure provider, tools, notifications, schedules;
 #     write the task instructions in the body
 
 # 4 · Chat with it
-yokeos chat --profile ops-agent
+java -jar yokeos-boot-0.1.0.jar chat --profile ops-agent
 
 # Or expose it over HTTP
-yokeos serve --port 8080        # REST API + web console
+java -jar yokeos-boot-0.1.0.jar serve --port 8080   # REST API + web console + cron
 ```
 
 **Prerequisites**: Java 21 and an LLM API key (DeepSeek / Qwen / Kimi / Ollama, etc.).
@@ -47,7 +50,7 @@ The three bootstrap files are loaded into the system prompt at agent startup: pr
 
 ## Two daily demos: the Phase-1 acceptance
 
-Early designs split acceptance into five demos, one per capability — but real scenarios never run capabilities in isolation. A compelling Agent stacks several capabilities together and runs on its own schedule. Phase 1's acceptance is therefore two end-to-end demos that run **every day without a human**, together covering all six core capabilities plus scheduling as the third trigger source:
+Early designs split acceptance into five demos, one per capability — but real scenarios never run capabilities in isolation. A compelling Agent stacks several capabilities together and runs on its own schedule. Phase 1's acceptance was therefore two end-to-end demos that run **every day without a human**, together covering all six core capabilities plus scheduling as the third trigger source — both live, with assets in `examples/demo/` and the audit evidence in the final acceptance report:
 
 ### Demo 1: daily weather (a bare AGENT.md)
 
@@ -75,7 +78,7 @@ Both demos are clock-pushed, but both support a manual catch-up run (`yokeos cha
 
 ## Milestone targets
 
-Phase 1 follows the reference implementation's public build sequence (lessons 16→31), **self-paced but in order**, with no calendar timeboxes. Each lesson's completion criterion is its demonstrable outcome:
+Phase 1 follows the reference implementation's public build sequence (lessons 16→31), **self-paced but in order**, with no calendar timeboxes. Each lesson's completion criterion is its demonstrable outcome — **all 16 lessons delivered (2026-09, v0.1.0)**, each with a spec and acceptance report under `specs/`:
 
 | # | Type | Capability | Demonstrable outcome |
 |----|------|---------|-----------|

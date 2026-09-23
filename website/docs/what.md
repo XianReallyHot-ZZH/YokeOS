@@ -46,7 +46,7 @@ Each capability's design is detailed under [Architecture](./architecture).
 
 The intended YokeOS workflow: drop a written `AGENT.md` into the workspace and get a business Agent that can chat, call tools, run on schedule, and push notifications — see [Quick Start](./quick-start).
 
-**Phase 1 is in progress**: what's delivered today is the initiation document chain (positioning, requirements, technical design, AI programming guide); the runtime kernel is being delivered unit by unit against a proven reference with equivalent acceptance — see the [Roadmap](./roadmap). These doc pages describe the target shape distilled from that chain, updated as the implementation lands.
+**Phase 1 is delivered (v0.1.0)**: the single-node runtime kernel is complete — delivered unit by unit against the proven reference with equivalent acceptance, two daily demo agents running on schedule in a real environment, packaged as one fat JAR — see the [Roadmap](./roadmap) and the per-lesson specs and acceptance evidence under [`specs/`](https://github.com/XianReallyHot-ZZH/YokeOS/tree/master/specs). These doc pages now describe the delivered shape.
 
 ## Relationship to OryxOS
 

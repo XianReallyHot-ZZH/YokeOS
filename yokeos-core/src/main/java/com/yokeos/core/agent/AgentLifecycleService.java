@@ -5,8 +5,10 @@ import com.yokeos.core.profile.Profile;
 import com.yokeos.core.profile.ProfileRegistry;
 import com.yokeos.core.provider.ProviderRequest;
 import com.yokeos.core.provider.ProviderService;
+import com.yokeos.core.session.Message;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -124,9 +126,17 @@ public class AgentLifecycleService {
             null,
             null);
     String sessionId = "agent-generation-" + System.nanoTime(); // 审计关联键（H4② 不涉：不进 Session）
-    String prompt = AGENT_AUTHOR_PROMPT.replace("{provider}", generationProvider) + sentence;
+    // 31 节结构化改造：一次性草稿请求——系统段承载作者指令，历史只带这句话（非会话，无工具）
     String text =
-        providerService.chat(sessionId, genProfile, new ProviderRequest(prompt, null)).text();
+        providerService
+            .chat(
+                sessionId,
+                genProfile,
+                new ProviderRequest(
+                    AGENT_AUTHOR_PROMPT.replace("{provider}", generationProvider),
+                    List.of(new Message("user", sentence, null)),
+                    List.of()))
+            .text();
     if (text == null || text.isBlank()) {
       throw new IllegalStateException("模型未返回内容"); // → 503
     }

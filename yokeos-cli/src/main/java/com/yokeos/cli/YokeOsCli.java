@@ -23,7 +23,8 @@ import picocli.CommandLine.Command;
             + "快速上手：yokeos init 初始化工作区 → yokeos profile create <name> 建 Agent"
             + " → yokeos chat 对话；任一命令加 --help 看详细用法",
     mixinStandardHelpOptions = true,
-    version = "0.1.0-SNAPSHOT",
+    // 31 节（specs/016 拍板④）：随发版 release 化，与父 pom 版本一致
+    version = "0.1.0",
     subcommands = {
       InitCommand.class,
       StatusCommand.class,

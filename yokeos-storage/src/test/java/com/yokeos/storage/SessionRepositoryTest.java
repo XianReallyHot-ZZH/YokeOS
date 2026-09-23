@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import com.yokeos.core.provider.ProviderResponse;
+import com.yokeos.core.provider.ToolCallRequest;
 import com.yokeos.core.tool.ToolResult;
 import jakarta.persistence.EntityManagerFactory;
 import java.nio.file.Files;
@@ -78,9 +79,10 @@ class SessionRepositoryTest {
   void threeRoleMessages_roundTripCompleteAndOrdered() {
     JpaSessionManager manager = new JpaSessionManager(repository);
     var session = manager.getOrCreate("cli", "msg", "weather");
+    ToolCallRequest call = new ToolCallRequest("call-st", "http_get", "{}");
     session.appendUser("查天气");
-    session.appendAssistant(new ProviderResponse("我先查一下", List.of()));
-    session.appendToolResult("http_get", ToolResult.ok("{\"temp\":26}"));
+    session.appendAssistant(new ProviderResponse(null, List.of(call)));
+    session.appendToolResult(call, ToolResult.ok("{\"temp\":26}"));
     session.appendAssistant(new ProviderResponse("北京 26 度，穿短袖", List.of()));
     manager.save(session);
 
@@ -89,9 +91,13 @@ class SessionRepositoryTest {
     assertEquals(4, restored.messages().size(), "零丢失");
     assertEquals("user", restored.messages().get(0).role());
     assertEquals("assistant", restored.messages().get(1).role());
+    assertEquals(
+        1, restored.messages().get(1).toolCalls().size(), "31 节：assistant 的 toolCalls 落库回读");
+    assertEquals("call-st", restored.messages().get(1).toolCalls().get(0).id());
     assertEquals("tool", restored.messages().get(2).role());
     assertEquals("http_get", restored.messages().get(2).toolName());
     assertEquals("{\"temp\":26}", restored.messages().get(2).content());
+    assertEquals("call-st", restored.messages().get(2).toolCallId(), "31 节：toolCallId 落库回读（配对不丢）");
     assertEquals("北京 26 度，穿短袖", restored.messages().get(3).content());
   }
 

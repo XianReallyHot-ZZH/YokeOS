@@ -23,7 +23,7 @@
 > **On the reference implementation**: YokeOS enters the agent-foundation category by building on a proven reference. Phase 1 replicates the runtime kernel of [oryx-labs/oryxos](https://github.com/oryx-labs/oryxos) section by section — same tech stack, same module boundaries, equivalent acceptance per unit. A later entrant of the same kind, the same stack, and the same anchors: we don't hide the starting point, and we don't re-claim design firsts the category has already proven. What's different lives on another axis — a fully spec-driven build with traceable specs and acceptance evidence for every unit.
 
 - **Target shape**: drop one directory into the workspace and get a working business Agent — defined in `AGENT.md`, with tools, MCP connectors, skills, memory, notifications, and cron scheduling. Private deployment on your own K8s, VMs, or bare metal.
-- **Where we are**: **Phase 1 is in progress** — the single-node runtime kernel is being delivered unit by unit against the reference's public build sequence. See the [roadmap](#roadmap) and the [docs](https://xianreallyhot-zzh.github.io/YokeOS/zh/).
+- **Where we are**: **Phase 1 is delivered (v0.1.0)** — the single-node runtime kernel is complete, delivered unit by unit against the reference's public build sequence with equivalent acceptance; two daily demo agents run on schedule in a real environment. See the [roadmap](#roadmap), [examples/demo](examples/demo/), and the [docs](https://xianreallyhot-zzh.github.io/YokeOS/zh/).
 
 ## Why YokeOS
 
@@ -87,8 +87,8 @@ Four layers: **access** (CLI Channel, REST API, `AgentScheduler` — three trigg
 
 The philosophy: **slow is fast — restrained and focused.** Make the single-node runtime kernel solid first, then grow distributed capabilities on top of it. Phase 1 deliberately pursues no product-level differentiation: deliver unit by unit against the proven reference, with equivalent acceptance, and let the engineering process itself be the deliverable.
 
-**Phase 1 — Single-node runtime kernel** 🚧 *(in progress)*
-A complete runtime kernel aligned with the reference: LLM routing, self-implemented ReAct, two-layer memory, tools + sandbox, notify + scheduling, REST API + web console. One directory = one Agent, dynamic management, multi-Agent coexistence, packaged distribution. Audit tables and whitelist sandbox in place from day one.
+**Phase 1 — Single-node runtime kernel** ✅ *(delivered · v0.1.0)*
+A complete runtime kernel aligned with the reference: LLM routing, self-implemented ReAct, two-layer memory, tools + sandbox, notify + scheduling, REST API + web console. One directory = one Agent, dynamic management, multi-Agent coexistence, packaged distribution. Audit tables and whitelist sandbox in place from day one. All 16 lessons (16→31) delivered with per-lesson specs and acceptance evidence in [`specs/`](specs/).
 
 **Phase 2 — Capability completion & distributed foundation** *(planned)*
 Knowledge base and semantic memory: document ingestion, chunking, vector retrieval. Stateless nodes, externalized state, multi-replica deployment for scale and availability. Platform baseline upgrade (Spring Boot 4 + Spring AI 2.0).
@@ -121,22 +121,30 @@ Modules are decoupled through interfaces — cross-module contracts live in `yok
 
 ## Quick Start
 
-> **Phase 1 is in progress.** This is the target shape of a YokeOS session, distilled from the requirements — it goes live together with the packaged runtime at the end of the Phase 1 sequence. What ships today: the initiation document chain (`docs/`), which every unit of the kernel is being built against.
-
-**Prerequisites**: Java 21, and an LLM API key (DeepSeek / Qwen / Kimi / Ollama / OpenAI-compatible).
+**Prerequisites**: Java 21, and an LLM API key (DeepSeek / Qwen / Kimi / Ollama / OpenAI-compatible). Everything below runs from one fat JAR — all dependencies, config, and the web console inside a single file (`alias yokeos="java -jar yokeos-boot-0.1.0.jar"` turns every command into `yokeos …`).
 
 ```bash
-# 1 · Initialize the workspace — creates .yokeos/ (idempotent, never overwrites)
-yokeos init
+# 0 · Build the fat JAR (or grab it from a release)
+mvn clean verify && ls yokeos-boot/target/yokeos-boot-0.1.0.jar
 
-# 2 · Create an Agent and edit its AGENT.md
-yokeos profile create ops-agent
+# 1 · Initialize a workspace — creates .yokeos/ (idempotent, never overwrites)
+java -jar yokeos-boot-0.1.0.jar init
 
-# 3 · Chat with it
-yokeos chat --profile ops-agent
+# 2 · Provide credentials as environment variables (never written to disk)
+export DEEPSEEK_API_KEY=...
+export TEAM_WEBHOOK_URL=https://webhook.site/<uuid>   # notify target for the demo agents
 
-# Or expose it over HTTP
-yokeos serve --port 8080        # REST API + web console
+# 3 · Drop in the two demo agents (weather via bare AGENT.md; digest via Skill + MCP)
+cp -r examples/demo/weather-daily      .yokeos/agents/
+cp -r examples/demo/daily-tech-digest  .yokeos/agents/
+cp -r examples/demo/skills/digest-format .yokeos/skills/
+#    and wire the news MCP server in .yokeos/mcp_servers.yaml — see examples/demo/README.md
+
+# 4 · Serve: REST API + web console + cron scheduling, one process
+java -jar yokeos-boot-0.1.0.jar serve --port 8080
+
+# 5 · Talk to an agent right now (manual catch-up run; clock-pushed runs share the same path)
+java -jar yokeos-boot-0.1.0.jar chat --profile weather-daily
 ```
 
 The initialized workspace:
@@ -159,7 +167,7 @@ The initialized workspace:
 
 ### What "done" looks like: two daily demos
 
-Phase 1's acceptance is two end-to-end demos that run **every day on their own**, together covering all six capabilities plus scheduling:
+Phase 1's acceptance was two end-to-end demos that run **every day on their own**, together covering all six capabilities plus scheduling — both live, assets in [`examples/demo/`](examples/demo/):
 
 1. **Daily weather** — a bare `AGENT.md` Agent: at 8:00 the scheduler triggers it, it fetches the weather over `http_get` (domain-whitelisted, audited), drafts outfit advice, and pushes it to an enterprise IM bot via `notify`. No human involved.
 2. **Daily tech digest** — an `AGENT.md` Agent that references a shared formatting Skill by name and pulls news through MCP. It remembers you care about AI and chips (via `save_memory` → `MEMORY.md`) and the digest reflects it. Zero Java code written by the business side.

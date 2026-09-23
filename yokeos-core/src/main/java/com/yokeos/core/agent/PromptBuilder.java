@@ -58,7 +58,11 @@ public final class PromptBuilder {
     this.memoryService = memoryService;
   }
 
-  /** 组装一次调用请求：拼好的单段文本 + Profile 点名的可用工具。 */
+  /**
+   * 组装一次调用请求：系统段文本（[1] ContextLoader 供给 + 日期时间行 + [2] 长期记忆位）+ 按轮截断的结构化历史 + Profile 点名的可用工具。31
+   * 节结构化改造：历史不再拉平进文本——assistant 的 toolCalls 与 tool 的 toolCallId 原样传递，provider 侧翻译成协议原生消息（拉平时代
+   * DeepSeek 偶发复读同一工具调用的根因修复）。
+   */
   public ProviderRequest build(Session session, Profile profile) {
     StringBuilder sb = new StringBuilder();
     sb.append(contextLoader.loadSystemPrompt(profile)).append('\n');
@@ -70,23 +74,10 @@ public final class PromptBuilder {
     if (!memoryContext.isBlank()) {
       sb.append(memoryContext).append('\n');
     }
-    for (Message message :
-        truncateByTurn(session.messages(), profile.settings().maxHistoryTurns())) {
-      appendMessage(sb, message);
-    }
-    return new ProviderRequest(sb.toString(), availableTools(profile));
-  }
-
-  private static void appendMessage(StringBuilder sb, Message message) {
-    if (message.toolName() == null) {
-      sb.append(message.role()).append(": ").append(message.content()).append('\n');
-    } else {
-      sb.append("tool[")
-          .append(message.toolName())
-          .append("]: ")
-          .append(message.content())
-          .append('\n');
-    }
+    return new ProviderRequest(
+        sb.toString(),
+        truncateByTurn(session.messages(), profile.settings().maxHistoryTurns()),
+        availableTools(profile));
   }
 
   /** 只带 Profile.tools 点名的工具（点名了但候选集没有的静略过——注册校验归 20 节 ToolRegistry）。 */

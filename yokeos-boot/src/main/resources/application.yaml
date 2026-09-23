@@ -81,7 +81,13 @@ yokeos:
     shell:
       allowed-commands: []       # 空 = 拒绝一切命令（诚实缺省：不存在有原则的默认命令集）
     http:
-      allowed-domains: []        # 空 = 拒绝一切出站域名；Provider 调 LLM 不在管辖（api.deepseek.com 无需在单）。
+      # 31 节（specs/016 拍板⑦）：演示域名预置缺省——30 分钟走查免改配置重打包。
+      # 三个均为低风险只读/推送端点（天气源 / 一次性收件端点 / 新闻源）；生产部署自行裁剪。
+      allowed-domains:
+        - api.open-meteo.com
+        - webhook.site
+        - hn.algolia.com
+        - localhost          # 本机演示收件端点（webhook.site 在部分网络被劫持时的替代；生产自行裁剪）
                                  # 切 mem0 档须把 mem0 host 加入本清单（否则记忆后端被自家拦，坑六/D9）
     # file.allowed-paths 缺省 = 当前工作区根（随 yokeos.root 解析，坑七：工作区随启动目录动态、静态写不了）。
     # 要覆盖时取消注释——覆盖后须自行包含工作区，否则 save_memory / 产出物写入被自家沙箱拦截（坑六）：

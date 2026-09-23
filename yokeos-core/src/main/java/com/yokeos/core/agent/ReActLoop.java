@@ -47,7 +47,7 @@ public final class ReActLoop {
       }
       for (ToolCallRequest call : response.toolCalls()) { // 一次多个按顺序执行，不并行（技 §4.3）
         ToolResult result = toolExecutor.execute(session.sessionId(), call);
-        session.appendToolResult(call.name(), result); // 失败结果同样回填，模型下一轮自行决定
+        session.appendToolResult(call, result); // 失败结果同样回填，模型下一轮自行决定
       }
     }
     return MAX_ITERATIONS_REPLY;
